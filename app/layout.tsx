@@ -12,10 +12,10 @@ const inter = Inter({ subsets: ["latin"] });
 // description: Defines the description for SEO and sharing
 // icons: Specifies the path to your custom logo to be used as the tab icon (favicon)
 export const metadata: Metadata = {
-  title: "UniCycle", // Set your project's professional name here
+  title: "UniCycle",
   description: "Campus Marketplace Platform",
   icons: {
-    icon: "/logo.png.jpeg", // Point to your custom logo file here
+    icon: "/logo.jpeg",
   },
 };
 
