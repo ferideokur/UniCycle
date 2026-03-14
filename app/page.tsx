@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation"; // 1. YENİ EKLENDİ: Yönlendirme için router
 
 // 📦 SİHİRLİ KATEGORİ HARİTASI
 const CATEGORY_MAP: Record<string, string[]> = {
@@ -81,6 +82,9 @@ export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+
+  // 2. YENİ EKLENDİ: Router'ı tanımlıyoruz
+  const router = useRouter();
 
   // 🧠 ÇİFT KATMANLI KATEGORİ HAFIZASI
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
@@ -164,6 +168,15 @@ export default function Home() {
     }
   };
 
+  // 3. YENİ EKLENDİ: Arama işlemini tetikleyen fonksiyon
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Sayfanın yenilenmesini engeller
+    if (searchTerm.trim() !== "") {
+      // Kullanıcıyı arama sayfasına parametre ile gönder
+      router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
+    }
+  };
+
   const filteredProducts = products.filter((p: any) => {
     const matchesSearch = p.title
       ?.toLowerCase()
@@ -206,7 +219,8 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="hidden md:flex flex-1 max-w-3xl relative group">
+            {/* 4. DEĞİŞTİRİLDİ: div yerine form kullandık ki Enter tuşu çalışsın */}
+            <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-3xl relative group">
               <input
                 type="text"
                 placeholder="Ürün, @üye veya ders notu ara..."
@@ -217,7 +231,9 @@ export default function Home() {
               <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">
                 🔍
               </span>
-            </div>
+              {/* Görünmez bir submit butonu ekliyoruz ki form Enter ile tetiklensin */}
+              <button type="submit" className="hidden">Ara</button>
+            </form>
 
             <div className="flex items-center gap-5">
               <Link
