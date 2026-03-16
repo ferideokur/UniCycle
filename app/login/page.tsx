@@ -127,6 +127,19 @@ export default function AuthPage() {
           },
         );
 
+        {/*BACKGROUND ANIMATION*/}
+  
+  <video
+  className="absolute inset-0 w-full h-full object-cover opacity-40"
+  autoPlay
+  muted
+  playsInline
+  loop
+>
+  <source src="/trade.mp4" type="video/mp4" />
+</video>
+
+
         const text = await response.text();
 
         if (response.ok) {
@@ -178,7 +191,17 @@ export default function AuthPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <main className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+      <video
+  autoPlay
+  muted
+ 
+  playsInline
+  className="absolute inset-0 w-full h-full object-cover opacity-40"
+  src="/trade.mp4"
+/>
+
+<div className="absolute inset-0 bg-black/30"></div>
       <div className="absolute top-8 left-8">
         <Link
           href="/"
@@ -188,7 +211,7 @@ export default function AuthPage() {
         </Link>
       </div>
 
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden border border-gray-100 mt-12 mb-12">
+      <div className="relative z-10 bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden border border-gray-100 mt-12 mb-12">
         <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 text-center border-b border-gray-100">
           <Link
             href="/"
