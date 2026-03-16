@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation"; // 🚀 YENİ EKLENDİ: Arama yönlendirmesi için
 
 const UNIVERSITIES = [
   "Acıbadem Üniversitesi", "Akdeniz Üniversitesi", "Anadolu Üniversitesi", "Ankara Üniversitesi", 
@@ -48,6 +49,10 @@ export default function ProfilePage() {
   // 🚀 GERÇEK VERİTABANINDAN GELECEK İLANLARI TUTAN HAFIZA
   const [myListings, setMyListings] = useState<any[]>([]);
   const [isLoadingListings, setIsLoadingListings] = useState(true);
+
+  // 🚀 YENİ EKLENDİ: Arama state'i ve router
+  const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
 
   const profileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -145,6 +150,14 @@ export default function ProfilePage() {
   const handleLogout = () => {
     localStorage.removeItem("user");
     window.location.href = "/"; 
+  };
+
+  // 🚀 YENİ EKLENDİ: Arama Submit Fonksiyonu
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim() !== "") {
+      router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "profile" | "cover") => {
@@ -248,7 +261,7 @@ export default function ProfilePage() {
   const displayUniversity = university === "Diğer..." ? customUniversity : university;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 relative">
+    <div className="min-h-screen bg-[#F8FAFC] pb-20 relative font-sans">
       
       {showToast && (
         <div className="fixed top-28 right-8 z-[200] bg-green-500 text-white px-6 py-3 rounded-2xl shadow-2xl font-bold animate-in fade-in slide-in-from-top-5 flex items-center gap-2">
@@ -256,30 +269,68 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 🚀 ÜST MENÜ */}
-      <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex justify-between items-center gap-4">
-          <Link href="/" className="hover:opacity-80 transition-opacity">
-            <Image src="/logo.png.jpeg" alt="UniCycle Logo" width={100} height={100} className="object-contain mix-blend-multiply contrast-125 py-1" priority />
-          </Link>
-          <div className="hidden md:flex flex-1 max-w-3xl px-12">
-            <div className="w-full relative">
-              <input type="text" placeholder="Ürün, @üye veya ders notu ara..." className="w-full bg-gray-100 text-gray-900 rounded-full py-2.5 px-6 pl-12 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-transparent" />
-              <span className="absolute left-4 top-3 text-gray-400 text-lg">🔍</span>
+      {/* 🚀 ÜST MENÜ (Anasayfa ile birebir aynı yapıldı) */}
+      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20 gap-6">
+            
+            {/* LOGO */}
+            <div className="flex-shrink-0">
+              <Link href="/" className="flex items-center gap-3 hover:scale-105 transition-transform group">
+                <Image
+                  src="/logo.jpeg"
+                  alt="UniCycle İkon"
+                  width={52}
+                  height={52}
+                  className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all rounded-md"
+                  priority
+                />
+                <span className="text-[32px] font-extrabold tracking-tight text-slate-800">
+                  Uni<span className="text-[#20B2AA]">Cycle</span>
+                </span>
+              </Link>
             </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/create-listing" className="hidden sm:block font-bold text-blue-600 hover:text-blue-700">+ İlan Ver</Link>
-            <button onClick={handleLogout} className="flex items-center gap-2 bg-red-50 text-red-600 px-5 py-2.5 rounded-full font-bold hover:bg-red-100 transition-colors">Çıkış Yap</button>
+
+            {/* ARAMA ÇUBUĞU */}
+            <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-3xl relative group">
+              <input
+                type="text"
+                placeholder="Ürün, @üye veya ders notu ara..."
+                className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-transparent font-medium"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                🔍
+              </span>
+              <button type="submit" className="hidden">Ara</button>
+            </form>
+
+            {/* BUTONLAR */}
+            <div className="flex items-center gap-5">
+              <Link
+                href="/create-listing"
+                className="hidden sm:flex font-black text-blue-600 hover:text-blue-800 items-center gap-1 transition-colors"
+              >
+                <span className="text-xl">+</span> İlan Ver
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="text-slate-400 hover:text-red-500 font-bold transition-colors text-sm"
+              >
+                Çıkış Yap
+              </button>
+            </div>
+
           </div>
         </div>
       </header>
 
       {/* 💼 VİTRİN */}
-      <div className="max-w-5xl mx-auto mt-6 bg-white rounded-t-3xl rounded-b-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="max-w-5xl mx-auto mt-6 bg-white rounded-t-[2.5rem] rounded-b-2xl shadow-sm border border-gray-200 overflow-hidden">
         
         {/* 1️⃣ KAPAK FOTOĞRAFI ALANI */}
-        <div className="h-64 w-full relative overflow-hidden bg-blue-600">
+        <div className="h-64 w-full relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700">
            {coverImage && (
              <img src={coverImage} alt="Kapak" className="w-full h-full object-cover" style={{ objectPosition: `center ${coverY}%` }} />
            )}
@@ -359,7 +410,7 @@ export default function ProfilePage() {
 
       {/* 🛍️ ALT KISIM (VİTRİNİM) */}
       <div className="max-w-5xl mx-auto mt-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
           
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-black text-gray-800">Vitrinim</h2>
@@ -377,7 +428,7 @@ export default function ProfilePage() {
               <p className="font-bold text-gray-500">Veritabanına bağlanılıyor...</p>
             </div>
           ) : myListings.length === 0 ? (
-            <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
+            <div className="text-center py-16 bg-gray-50 rounded-[2rem] border border-dashed border-gray-300">
               <span className="text-6xl block mb-4">🛍️</span>
               <h3 className="text-2xl font-bold text-gray-800">Vitrinin henüz boş!</h3>
               <p className="text-gray-500 font-medium mt-2 mb-8">Kullanmadığın eşyaları veya ders notlarını satarak hemen para kazanmaya başla.</p>

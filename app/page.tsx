@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation"; // 1. YENİ EKLENDİ: Yönlendirme için router
+import { useRouter } from "next/navigation"; 
 
 // 📦 SİHİRLİ KATEGORİ HARİTASI
 const CATEGORY_MAP: Record<string, string[]> = {
@@ -83,10 +83,8 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  // 2. YENİ EKLENDİ: Router'ı tanımlıyoruz
   const router = useRouter();
 
-  // 🧠 ÇİFT KATMANLI KATEGORİ HAFIZASI
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState("TÜMÜ");
 
@@ -97,6 +95,13 @@ export default function Home() {
   } | null>(null);
   const [likedProducts, setLikedProducts] = useState<number[]>([]);
 
+  // 🚀 CANLI ARAMA (LIVE SEARCH) HAFIZASI
+  const [liveResults, setLiveResults] = useState<{type: "user" | "product", item: any}[]>([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // ❤️ BİLDİRİM KALBİ HAFIZASI
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
   // 🌐 JAVA'DAN GERÇEK İLANLARI ÇEKME MOTORU
   const fetchAllListings = async () => {
     setIsLoading(true);
@@ -104,11 +109,8 @@ export default function Home() {
       const response = await fetch("http://localhost:8080/api/products");
       if (response.ok) {
         const data = await response.json();
-        // İlanları en yeniden en eskiye (ID'si büyükten küçüğe) sıralayalım
         data.sort((a: any, b: any) => b.id - a.id);
         setProducts(data);
-      } else {
-        console.error("Sunucudan ilanlar alınamadı.");
       }
     } catch (error) {
       console.error("Java'ya bağlanılamadı. Arka planda açık mı?", error);
@@ -127,10 +129,44 @@ export default function Home() {
       );
       setLikedProducts(likes);
     }
-
-    // Gerçek Veritabanından (Java) İlanları Çek
     fetchAllListings();
   }, []);
+
+  // 🚀 CANLI ARAMA ETKİSİ
+  useEffect(() => {
+    const fetchLive = async () => {
+      if (searchTerm.trim().length < 2) {
+        setLiveResults([]);
+        return;
+      }
+      try {
+        const isUserSearch = searchTerm.startsWith("@");
+        const query = isUserSearch ? searchTerm.substring(1).trim() : searchTerm.trim();
+        if (!query) return;
+
+        let combined: {type: "user" | "product", item: any}[] = [];
+
+        if (isUserSearch) {
+          const userRes = await fetch(`http://localhost:8080/api/users/search?q=${encodeURIComponent(query)}`);
+          if (userRes.ok) {
+            const users = await userRes.json();
+            combined = users.map((u: any) => ({ type: "user", item: u }));
+          }
+        } else {
+          const prodRes = await fetch(`http://localhost:8080/api/products/search?q=${encodeURIComponent(query)}`);
+          if (prodRes.ok) {
+            const products = await prodRes.json();
+            products.sort((a: any, b: any) => b.id - a.id);
+            combined = products.map((p: any) => ({ type: "product", item: p }));
+          }
+        }
+        setLiveResults(combined);
+      } catch (error) { console.error("Canlı arama hatası:", error); }
+    };
+    
+    const timer = setTimeout(() => fetchLive(), 300); 
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -168,20 +204,16 @@ export default function Home() {
     }
   };
 
-  // 3. YENİ EKLENDİ: Arama işlemini tetikleyen fonksiyon
   const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); // Sayfanın yenilenmesini engeller
+    e.preventDefault(); 
     if (searchTerm.trim() !== "") {
-      // Kullanıcıyı arama sayfasına parametre ile gönder
+      setIsDropdownOpen(false); 
       router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
     }
   };
 
   const filteredProducts = products.filter((p: any) => {
-    const matchesSearch = p.title
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase());
-
+    const matchesSearch = p.title?.toLowerCase().includes(searchTerm.toLowerCase());
     let matchesCategory = false;
     if (activeFilter === "TÜMÜ") {
       matchesCategory = true;
@@ -190,7 +222,6 @@ export default function Home() {
     } else {
       matchesCategory = p.category === activeFilter;
     }
-
     return matchesSearch && matchesCategory;
   });
 
@@ -201,68 +232,133 @@ export default function Home() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20 gap-6">
             <div className="flex-shrink-0">
-              <Link
-                href="/"
-                className="flex items-center gap-3 hover:scale-105 transition-transform group"
-              >
-                <Image
-                  src="/logo.jpeg"
-                  alt="UniCycle İkon"
-                  width={52}
-                  height={52}
-                  className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all rounded-md"
-                  priority
-                />
+              <Link href="/" className="flex items-center gap-3 hover:scale-105 transition-transform group">
+                <Image src="/logo.jpeg" alt="UniCycle İkon" width={52} height={52} className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all rounded-md" priority />
                 <span className="text-[32px] font-extrabold tracking-tight text-slate-800">
                   Uni<span className="text-[#20B2AA]">Cycle</span>
                 </span>
               </Link>
             </div>
 
-            {/* 4. DEĞİŞTİRİLDİ: div yerine form kullandık ki Enter tuşu çalışsın */}
-            <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-3xl relative group">
-              <input
-                type="text"
-                placeholder="Ürün, @üye veya ders notu ara..."
-                className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-transparent font-medium"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                🔍
-              </span>
-              {/* Görünmez bir submit butonu ekliyoruz ki form Enter ile tetiklensin */}
-              <button type="submit" className="hidden">Ara</button>
-            </form>
+            {/* 🚀 ZARİFLEŞTİRİLMİŞ ARAMA ÇUBUĞU VE AÇILIR MENÜ */}
+            <div className="hidden md:flex flex-1 max-w-3xl relative group z-50">
+              <form onSubmit={handleSearchSubmit} className="w-full relative">
+                <input
+                  type="text"
+                  placeholder="Ürün, @üye veya ders notu ara..."
+                  className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-transparent font-medium"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setIsDropdownOpen(true);
+                  }}
+                  onFocus={() => setIsDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+                />
+                <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                  🔍
+                </span>
+                <button type="submit" className="hidden">Ara</button>
+              </form>
 
-            <div className="flex items-center gap-5">
-              <Link
-                href="/create-listing"
-                className="hidden sm:flex font-black text-blue-600 hover:text-blue-800 items-center gap-1 transition-colors"
-              >
+              {/* 🌟 KİBAR VE ŞIK AÇILIR MENÜ (DROPDOWN) */}
+              {isDropdownOpen && liveResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+                  {liveResults.slice(0, 5).map((result, idx) => {
+                    if (result.type === "user") {
+                      return (
+                        <Link href={`/user/${result.item.id}`} key={`u-${result.item.id}-${idx}`} className="flex items-center gap-3 px-5 py-2 hover:bg-slate-50 transition-colors">
+                          <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0 text-sm">
+                            {result.item.fullName.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-800 text-sm">{result.item.fullName}</div>
+                            <div className="text-[11px] text-slate-500 font-medium">Kullanıcı • @{result.item.fullName.split(" ")[0].toLowerCase()}</div>
+                          </div>
+                        </Link>
+                      );
+                    } else {
+                      return (
+                        <Link href={`/listing-detail/${result.item.id}`} key={`p-${result.item.id}-${idx}`} className="flex items-center gap-3 px-5 py-2 hover:bg-slate-50 transition-colors">
+                          <div className="w-10 h-10 bg-slate-100 rounded-md overflow-hidden flex shrink-0 border border-slate-200">
+                            {result.item.photosBase64 && result.item.photosBase64[0] ? (
+                              <img src={result.item.photosBase64[0]} className="w-full h-full object-cover" />
+                            ) : <span className="m-auto text-lg">📦</span>}
+                          </div>
+                          <div className="flex-1 truncate">
+                            <div className="font-bold text-slate-800 truncate text-sm">{result.item.title}</div>
+                            <div className="text-[11px] font-bold text-blue-600 mt-0.5">
+                              {result.item.priceType === "fiyat" ? `₺${result.item.price}` : result.item.priceType === "takas" ? "Takas" : "Ücretsiz"}
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    }
+                  })}
+                  <div className="px-5 py-2.5 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors" onClick={handleSearchSubmit}>
+                    <span className="text-xs font-bold text-blue-600">Tüm sonuçları gör &rarr;</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 🚀 BUTONLAR VE BİLDİRİM KALBİ */}
+            <div className="flex items-center gap-4">
+              <Link href="/create-listing" className="hidden sm:flex font-black text-blue-600 hover:text-blue-800 items-center gap-1 transition-colors">
                 <span className="text-xl">+</span> İlan Ver
               </Link>
 
               {user ? (
-                <>
-                  <Link
-                    href="/profile"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all"
+                <div className="flex items-center gap-4 relative">
+                  
+                  {/* ❤️ BİLDİRİM KALBİ (TAM BURADA, YAN YANA) */}
+                  <button 
+                    onClick={() => setIsNotificationOpen(!isNotificationOpen)} 
+                    className="relative p-1.5 text-slate-400 hover:text-red-500 transition-colors" 
+                    title="Bildirimler"
                   >
+                    <svg className="w-7 h-7" fill={isNotificationOpen ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                    {/* Kırmızı Bildirim Noktası */}
+                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+                  </button>
+
+                  {/* 🔔 BİLDİRİM DROPDOWN MENÜSÜ */}
+                  {isNotificationOpen && (
+                    <div className="absolute top-full right-0 mt-4 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                      <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <span className="font-bold text-slate-800">Bildirimler</span>
+                        <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">2 Yeni</span>
+                      </div>
+                      <div className="max-h-80 overflow-y-auto">
+                        <div className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center">
+                          <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-lg shrink-0">🌸</div>
+                          <div className="flex-1">
+                            <p className="text-sm text-slate-700"><span className="font-bold">Sude Özcan</span> seni takip etmeye başladı.</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">2 saat önce</p>
+                          </div>
+                        </div>
+                        <div className="px-4 py-3 hover:bg-slate-50 cursor-pointer flex gap-3 items-center">
+                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-lg shrink-0">📦</div>
+                          <div className="flex-1">
+                            <p className="text-sm text-slate-700"><span className="font-bold">Feride Okur</span> yeni bir ilan ekledi: "Java Notları"</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">5 saat önce</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <Link href="/profile" className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all">
                     👤 {user.fullName.split(" ")[0]}
                   </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="text-slate-400 hover:text-red-500 font-bold transition-colors text-sm"
-                  >
+                  <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 font-bold transition-colors text-sm">
                     Çıkış
                   </button>
-                </>
+                </div>
               ) : (
-                <Link
-                  href="/login"
-                  className="flex items-center gap-2 bg-slate-800 text-white px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors"
-                >
+                <Link href="/login" className="flex items-center gap-2 bg-slate-800 text-white px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors">
                   Giriş Yap
                 </Link>
               )}
@@ -307,9 +403,7 @@ export default function Home() {
                     }`}
                   >
                     <span className="truncate">{mainCat}</span>
-                    <span
-                      className={`text-xs transition-transform duration-300 ml-2 ${isExpanded ? "rotate-90 text-blue-600" : "text-slate-400"}`}
-                    >
+                    <span className={`text-xs transition-transform duration-300 ml-2 ${isExpanded ? "rotate-90 text-blue-600" : "text-slate-400"}`}>
                       ▶
                     </span>
                   </button>
@@ -418,12 +512,8 @@ export default function Home() {
           {/* ⏳ PROFESYONEL İSKELET YÜKLEME (SKELETON LOADING) EKRANI */}
           {isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mt-4">
-              {/* 8 adet boş, yanıp sönen (pulse) kart iskeleti */}
               {[...Array(8)].map((_, i) => (
-                <div
-                  key={i}
-                  className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col animate-pulse"
-                >
+                <div key={i} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col animate-pulse">
                   <div className="aspect-[4/5] bg-slate-200 w-full"></div>
                   <div className="p-4 flex-1 flex flex-col gap-4">
                     <div className="flex justify-between items-center mt-1">
@@ -455,94 +545,42 @@ export default function Home() {
                 Sanki kampüste kimse bu kategoride bir şey satmıyor. İlk adımı
                 sen atmaya ne dersin?
               </p>
-              <Link
-                href="/create-listing"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-black py-4 px-10 rounded-2xl transition shadow-xl shadow-blue-200 inline-block hover:-translate-y-1"
-              >
+              <Link href="/create-listing" className="bg-blue-600 hover:bg-blue-700 text-white font-black py-4 px-10 rounded-2xl transition shadow-xl shadow-blue-200 inline-block hover:-translate-y-1">
                 Hemen İlan Ver
               </Link>
             </div>
           ) : (
-            /* 📦 GERÇEK ÜRÜN KARTLARI (JAVA'DAN GELEN VERİLER) */
+            /* 📦 GERÇEK ÜRÜN KARTLARI */
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
               {filteredProducts.map((p: any) => {
                 const isLiked = likedProducts.includes(p.id);
 
                 return (
-                  <Link
-                    href={`/listing-detail/${p.id}`}
-                    key={p.id}
-                    className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 border border-slate-100 flex flex-col"
-                  >
-                    {/* FOTOĞRAF ALANI */}
+                  <Link href={`/listing-detail/${p.id}`} key={p.id} className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 border border-slate-100 flex flex-col">
                     <div className="aspect-[4/5] relative overflow-hidden bg-slate-100">
                       {p.photosBase64 && p.photosBase64.length > 0 ? (
-                        <img
-                          src={p.photosBase64[0]}
-                          alt={p.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        />
+                        <img src={p.photosBase64[0]} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-6xl">
-                          📦
-                        </div>
+                        <div className="w-full h-full flex items-center justify-center text-6xl">📦</div>
                       )}
 
-                      {p.priceType === "takas" && (
-                        <div className="absolute top-3 left-3 bg-purple-600 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-md uppercase tracking-wider backdrop-blur-sm">
-                          Takas
-                        </div>
-                      )}
-                      {p.priceType === "ucretsiz" && (
-                        <div className="absolute top-3 left-3 bg-green-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-md uppercase tracking-wider backdrop-blur-sm">
-                          Ücretsiz
-                        </div>
-                      )}
+                      {p.priceType === "takas" && <div className="absolute top-3 left-3 bg-purple-600 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-md uppercase tracking-wider backdrop-blur-sm">Takas</div>}
+                      {p.priceType === "ucretsiz" && <div className="absolute top-3 left-3 bg-green-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-md uppercase tracking-wider backdrop-blur-sm">Ücretsiz</div>}
 
-                      {/* ❤️ BEĞENİ BUTONU */}
-                      <button
-                        onClick={(e) => toggleLike(e, p.id)}
-                        className={`absolute top-3 right-3 p-2.5 rounded-full shadow-md backdrop-blur-md transition-all hover:scale-110 active:scale-95 z-10 ${
-                          isLiked
-                            ? "bg-red-500/90 text-white"
-                            : "bg-white/90 text-gray-400 hover:text-red-500"
-                        }`}
-                      >
-                        <svg
-                          className="w-5 h-5 fill-current"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                        </svg>
+                      <button onClick={(e) => toggleLike(e, p.id)} className={`absolute top-3 right-3 p-2.5 rounded-full shadow-md backdrop-blur-md transition-all hover:scale-110 active:scale-95 z-10 ${isLiked ? "bg-red-500/90 text-white" : "bg-white/90 text-gray-400 hover:text-red-500"}`}>
+                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
                       </button>
                     </div>
 
-                    {/* BİLGİ ALANI */}
                     <div className="p-4 flex-1 flex flex-col">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider line-clamp-1 pr-2">
-                          {p.category}
-                        </span>
-                        <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md shrink-0">
-                          @{p.user ? p.user.fullName.split(" ")[0] : "Öğrenci"}
-                        </span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider line-clamp-1 pr-2">{p.category}</span>
+                        <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md shrink-0">@{p.user ? p.user.fullName.split(" ")[0] : "Öğrenci"}</span>
                       </div>
-
-                      <h2 className="text-sm font-bold text-slate-800 line-clamp-2 leading-snug mb-3 group-hover:text-blue-600 transition-colors">
-                        {p.title}
-                      </h2>
-
+                      <h2 className="text-sm font-bold text-slate-800 line-clamp-2 leading-snug mb-3 group-hover:text-blue-600 transition-colors">{p.title}</h2>
                       <div className="mt-auto flex items-end justify-between">
-                        <div className="text-lg font-black text-slate-900 tracking-tight">
-                          {p.priceType === "fiyat"
-                            ? `₺${p.price}`
-                            : p.priceType === "takas"
-                              ? "Takas"
-                              : "Bedava"}
-                        </div>
-                        <div className="text-[10px] font-bold text-slate-400 border border-slate-200 px-2 py-1 rounded-lg">
-                          {p.itemCondition ? p.itemCondition.split(" ")[0] : ""}
-                        </div>
+                        <div className="text-lg font-black text-slate-900 tracking-tight">{p.priceType === "fiyat" ? `₺${p.price}` : p.priceType === "takas" ? "Takas" : "Bedava"}</div>
+                        <div className="text-[10px] font-bold text-slate-400 border border-slate-200 px-2 py-1 rounded-lg">{p.itemCondition ? p.itemCondition.split(" ")[0] : ""}</div>
                       </div>
                     </div>
                   </Link>
@@ -553,64 +591,33 @@ export default function Home() {
         </section>
       </div>
 
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `.custom-scrollbar::-webkit-scrollbar { height: 0px; }`,
-        }}
-      />
+      <style dangerouslySetInnerHTML={{ __html: `.custom-scrollbar::-webkit-scrollbar { height: 0px; }` }} />
 
       {/* 🌊 AÇIK RENK, MİNİMALİST FOOTER */}
       <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 rounded-t-[3rem] shadow-sm">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="mb-4">
-              <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
-                Uni<span className="text-[#20B2AA]">Cycle</span>
-              </span>
+              <span className="text-3xl font-extrabold text-slate-800 tracking-tight">Uni<span className="text-[#20B2AA]">Cycle</span></span>
             </div>
             <p className="text-sm font-medium text-slate-500 max-w-sm">
-              Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
-              öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
+              Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
             </p>
           </div>
           <div>
             <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
             <ul className="space-y-2 text-sm font-medium text-slate-500">
-              <li>
-                <button className="hover:text-blue-600 transition-colors">
-                  Nasıl Çalışır?
-                </button>
-              </li>
-              <li>
-                <button className="hover:text-blue-600 transition-colors">
-                  Güvenlik İpuçları
-                </button>
-              </li>
-              <li>
-                <button className="hover:text-blue-600 transition-colors">
-                  Kampüs Kuralları
-                </button>
-              </li>
+              <li><button className="hover:text-blue-600 transition-colors">Nasıl Çalışır?</button></li>
+              <li><button className="hover:text-blue-600 transition-colors">Güvenlik İpuçları</button></li>
+              <li><button className="hover:text-blue-600 transition-colors">Kampüs Kuralları</button></li>
             </ul>
           </div>
           <div>
             <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
             <ul className="space-y-2 text-sm font-medium text-slate-500">
-              <li>
-                <button className="hover:text-blue-600 transition-colors">
-                  Destek Merkezi
-                </button>
-              </li>
-              <li>
-                <button className="hover:text-blue-600 transition-colors">
-                  Bize Ulaşın
-                </button>
-              </li>
-              <li>
-                <button className="hover:text-blue-600 transition-colors">
-                  S.S.S.
-                </button>
-              </li>
+              <li><button className="hover:text-blue-600 transition-colors">Destek Merkezi</button></li>
+              <li><button className="hover:text-blue-600 transition-colors">Bize Ulaşın</button></li>
+              <li><button className="hover:text-blue-600 transition-colors">S.S.S.</button></li>
             </ul>
           </div>
         </div>
