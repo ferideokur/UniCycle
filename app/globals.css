@@ -24,7 +24,6 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
-/* Next.js'in inatçı geliştirici "N" ikonunu zorla gizler */
 nextjs-portal {
   display: none !important;
 }
