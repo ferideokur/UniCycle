@@ -1,178 +1,113 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import Link from "next/link";
-
 import Image from "next/image";
-
 import { useRouter } from "next/navigation";
 
 // 📦 SİHİRLİ KATEGORİ HARİTASI
-
 const CATEGORY_MAP: Record<string, string[]> = {
   "📚 Akademik & Okul": [
     "Ders Notları & Özetler",
-
     "Çıkmış Sorular",
-
     "Ders & Sınav Kitapları",
-
     "Yabancı Dil (YDS/TOEFL vb.)",
-
     "Kırtasiye & Çizim Malzemeleri",
-
     "Laboratuvar & Mimarlık Malzemeleri",
   ],
-
   "👗 Kadın": [
     "Kadın Üst Giyim",
-
     "Kadın Alt Giyim",
-
     "Kadın Dış Giyim",
-
     "Kadın Ayakkabı",
-
     "Kadın Çanta",
-
     "Kadın Aksesuar & Takı",
-
     "Abiye & Mezuniyet Elbisesi",
   ],
-
   "👔 Erkek": [
     "Erkek Üst Giyim",
-
     "Erkek Alt Giyim",
-
     "Erkek Dış Giyim",
-
     "Erkek Ayakkabı",
-
     "Erkek Çanta & Cüzdan",
-
     "Erkek Aksesuar & Saat",
-
     "Takım Elbise",
   ],
-
   "💄 Kozmetik & Bakım": [
     "Makyaj Ürünleri",
-
     "Parfüm & Deodorant",
-
     "Cilt & Yüz Bakımı",
-
     "Saç Bakımı & Şekillendirici",
-
     "Unisex Bakım",
   ],
-
   "📱 Elektronik & Teknoloji": [
     "Cep Telefonu",
-
     "Telefon Aksesuar & Kılıf",
-
     "Bilgisayar & Laptop",
-
     "Tablet",
-
     "Kulaklık & Ses Sistemleri",
-
     "Akıllı Saat & Bileklik",
-
     "Oyun Bilgisayarı & Ekipman",
-
     "Kamera & Fotoğraf Makinesi",
   ],
-
   "🏠 Yaşam, Ev & Yurt": [
     "Öğrenci Evi Mobilyası",
-
     "Yurt Eşyaları",
-
     "Küçük Ev Aletleri",
-
     "Mutfak Gereçleri",
-
     "Kupa & Termos",
-
     "Nevresim & Yatak Örtüsü",
-
     "Ev Dekorasyon",
   ],
-
   "🎸 Hobi, Oyun & Spor": [
     "Roman & Okuma Kitabı",
-
     "Kutu Oyunları",
-
     "PlayStation / Konsol Oyunları",
-
     "Spor & Kamp Malzemeleri",
-
     "Müzik Aletleri",
-
     "Bisiklet & Scooter",
-
     "Etkinlik & Konser Bileti",
   ],
-
   "🎒 Kampüs İçi Hizmet": [
     "Özel Ders Verenler",
-
     "Çeviri & Ödev Yardımı",
-
     "Ev Arkadaşı Arayanlar",
-
     "Eşya Kiralama",
-
     "Kayıp Eşya",
-
     "Diğer Her Şey",
   ],
 };
 
 export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
-
   const [searchTerm, setSearchTerm] = useState("");
-
   const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
 
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
-
   const [activeFilter, setActiveFilter] = useState("TÜMÜ");
 
   const [user, setUser] = useState<{
     id: number;
-
     fullName: string;
-
     email: string;
   } | null>(null);
 
   const [likedProducts, setLikedProducts] = useState<number[]>([]);
 
   // 🚀 CANLI ARAMA (LIVE SEARCH) HAFIZASI
-
   const [liveResults, setLiveResults] = useState<
     { type: "user" | "product"; item: any }[]
   >([]);
-
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // 🔔 BİLDİRİM VE AÇILIR MENÜ HAFIZASI
-
+  // 🔔 BİLDİRİM VE AÇILIR MENÜ (KARE PANEL) HAFIZASI
   const [notificationsCount, setNotificationsCount] = useState(0);
-
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notificationsList, setNotificationsList] = useState<any[]>([]);
 
   // 🌐 JAVA'DAN GERÇEK İLANLARI ÇEKME MOTORU
-
   const fetchAllListings = async () => {
     setIsLoading(true);
 
@@ -184,7 +119,6 @@ export default function Home() {
 
         if (Array.isArray(data)) {
           data.sort((a: any, b: any) => b.id - a.id);
-
           setProducts(data);
         }
       }
@@ -201,22 +135,18 @@ export default function Home() {
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-
         setUser(parsedUser);
 
         const likes = JSON.parse(
           localStorage.getItem(`likes_${parsedUser.email}`) || "[]",
         );
-
         setLikedProducts(likes);
 
-        // 🔔 Bildirimlerin SADECE SAYISINI çek
-
+        // 🔔 GERÇEK BİLDİRİMLERİ ÇEK (Panelin içi için)
         fetch(
           `http://localhost:8080/api/interaction/notifications/${parsedUser.id}`,
         )
           .then((res) => res.json())
-
           .then((data) => {
             if (Array.isArray(data)) {
               const deletedNotifs = JSON.parse(
@@ -229,20 +159,19 @@ export default function Home() {
 
               const activeNotifs = data.filter(
                 (n: any) => !deletedNotifs.includes(n.id),
-              );
+              ).reverse(); // En yeniler en üste
 
               const unreadNotifs = activeNotifs.filter(
                 (n: any) => !seenNotifs.includes(n.id),
               );
 
               setNotificationsCount(unreadNotifs.length);
+              setNotificationsList(activeNotifs); 
             }
           })
-
           .catch((err) => console.error("Bildirimler çekilemedi:", err));
 
         // Bildirim Sayfasından dönünce sayacı sıfırlama dinleyicisi
-
         window.addEventListener("notificationsSeen", () =>
           setNotificationsCount(0),
         );
@@ -260,12 +189,10 @@ export default function Home() {
   }, []);
 
   // 🚀 CANLI ARAMA ETKİSİ
-
   useEffect(() => {
     const fetchLive = async () => {
       if (searchTerm.trim().length < 2) {
         setLiveResults([]);
-
         return;
       }
 
@@ -323,24 +250,18 @@ export default function Home() {
 
   const handleLogout = () => {
     localStorage.removeItem("user");
-
     setUser(null);
-
     setLikedProducts([]);
-
     window.location.href = "/";
   };
 
   // 💖 BEĞENİ VE BİLDİRİM GÖNDERME MOTORU
-
   const toggleLike = async (e: React.MouseEvent, productObject: any) => {
     e.stopPropagation();
-
     e.preventDefault();
 
     if (!user) {
       alert("Beğenmek için giriş yapmalısın!");
-
       return;
     }
 
@@ -354,17 +275,13 @@ export default function Home() {
       newLikes.push(productObject.id);
 
       // 🚀 BİLDİRİM GÖNDERME: İlan sahibi kendisi değilse bildirim at
-
       if (productObject.user && productObject.user.id !== user.id) {
         try {
           await fetch("http://localhost:8080/api/interaction/notifications", {
             method: "POST",
-
             headers: { "Content-Type": "application/json" },
-
             body: JSON.stringify({
               userId: productObject.user.id,
-
               message: `${user.fullName}, "${productObject.title}" adlı ilanını beğendi.`,
             }),
           });
@@ -375,18 +292,15 @@ export default function Home() {
     }
 
     setLikedProducts(newLikes);
-
     localStorage.setItem(`likes_${user.email}`, JSON.stringify(newLikes));
   };
 
   const handleMainCategoryClick = (mainCat: string) => {
     if (expandedGroup === mainCat) {
       setExpandedGroup(null);
-
       setActiveFilter("TÜMÜ");
     } else {
       setExpandedGroup(mainCat);
-
       setActiveFilter(mainCat);
     }
   };
@@ -396,7 +310,6 @@ export default function Home() {
 
     if (searchTerm.trim() !== "") {
       setIsDropdownOpen(false);
-
       router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
     }
   };
@@ -422,7 +335,6 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#F8FAFC] pb-20 font-sans">
       {/* 🚀 ÜST MENÜ */}
-
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20 gap-6">
@@ -447,7 +359,6 @@ export default function Home() {
             </div>
 
             {/* 🚀 ZARİFLEŞTİRİLMİŞ ARAMA ÇUBUĞU VE AÇILIR MENÜ */}
-
             <div className="hidden md:flex flex-1 max-w-3xl relative group z-50">
               <form onSubmit={handleSearchSubmit} className="w-full relative">
                 <input
@@ -457,7 +368,6 @@ export default function Home() {
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
-
                     setIsDropdownOpen(true);
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
@@ -474,7 +384,6 @@ export default function Home() {
               </form>
 
               {/* 🌟 KİBAR VE ŞIK AÇILIR MENÜ (DROPDOWN) */}
-
               {isDropdownOpen && liveResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
                   {liveResults.slice(0, 5).map((result, idx) => {
@@ -553,7 +462,6 @@ export default function Home() {
             </div>
 
             {/* 🚀 BUTONLAR */}
-
             <div className="flex items-center gap-4">
               <Link
                 href="/create-listing"
@@ -564,44 +472,33 @@ export default function Home() {
 
               {user ? (
                 <div className="flex items-center gap-4 relative">
-                  {/* 🔔 BİLDİRİM ÇANI VE DROPDOWN (İki kodun mükemmel birleşimi) */}
-
+                  
+                  {/* 🔔 YENİ VE DÜZELTİLMİŞ ZİL BUTONU VE KARE PANEL 🔔 */}
                   <div className="relative">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                       className="relative w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors"
                       title="Bildirimler"
                     >
-                      <svg
-                        className="w-5 h-5 text-slate-600"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                        ></path>
+                      <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                       </svg>
-
+                      
+                      {/* Kırmızı Bildirim Sayacı */}
                       {notificationsCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
+                        <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
                           {notificationsCount}
                         </span>
                       )}
                     </button>
 
-                    {/* 🔔 AÇILIR BİLDİRİM MENÜSÜ */}
-
+                    {/* 📦 KARE BİLDİRİM PANELİ (AÇILIR MENÜ) */}
                     {isNotificationOpen && (
                       <div className="absolute top-full right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                           <span className="font-bold text-slate-800">
                             Bildirimler
                           </span>
-
                           {notificationsCount > 0 && (
                             <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
                               {notificationsCount} Yeni
@@ -609,40 +506,37 @@ export default function Home() {
                           )}
                         </div>
 
-                        <div className="max-h-80 overflow-y-auto">
-                          <div className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center">
-                            <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-lg shrink-0">
-                              🌸
+                        <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                          {notificationsList.length === 0 ? (
+                            <div className="px-4 py-8 text-center text-slate-500 text-sm font-medium">
+                              Şu an hiç bildirimin yok.
                             </div>
+                          ) : (
+                            notificationsList.slice(0, 5).map((notif) => {
+                              let icon = "✨"; let bg = "bg-blue-100"; let text = "text-blue-600";
+                              const msgLower = notif.message.toLowerCase();
+                              if (msgLower.includes("takip")) { icon = "🌸"; bg = "bg-pink-100"; text = "text-pink-600"; }
+                              else if (msgLower.includes("ilan") || msgLower.includes("ekledi")) { icon = "📦"; bg = "bg-orange-100"; text = "text-orange-600"; }
+                              else if (msgLower.includes("beğen") || msgLower.includes("favori")) { icon = "❤️"; bg = "bg-red-100"; text = "text-red-600"; }
+                              else if (msgLower.includes("yorum")) { icon = "💬"; bg = "bg-green-100"; text = "text-green-600"; }
 
-                            <div className="flex-1">
-                              <p className="text-sm text-slate-700">
-                                <span className="font-bold">Sude Özcan</span>{" "}
-                                seni takip etmeye başladı.
-                              </p>
-
-                              <p className="text-[10px] text-slate-400 mt-0.5">
-                                2 saat önce
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-lg shrink-0">
-                              📦
-                            </div>
-
-                            <div className="flex-1">
-                              <p className="text-sm text-slate-700">
-                                <span className="font-bold">Feride Okur</span>{" "}
-                                yeni bir ilan ekledi: "Java Notları"
-                              </p>
-
-                              <p className="text-[10px] text-slate-400 mt-0.5">
-                                5 saat önce
-                              </p>
-                            </div>
-                          </div>
+                              return (
+                                <div key={notif.id} className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center">
+                                  <div className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} text-lg shrink-0`}>
+                                    {icon}
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="text-sm text-slate-700">
+                                      {notif.message}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400 mt-0.5">
+                                      {notif.createdAt ? new Date(notif.createdAt).toLocaleDateString('tr-TR') : "Yeni"}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
                         </div>
 
                         <Link
@@ -688,10 +582,8 @@ export default function Home() {
       </header>
 
       {/* 🖥️ ANA DÜZEN (Sol Menü + Sağ İçerik) */}
-
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-8 flex gap-8 items-start">
         {/* 🗂️ AKORDEON SOL MENÜ */}
-
         <aside className="w-72 hidden lg:block sticky top-28 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
           <h3 className="font-black text-lg text-slate-800 mb-5 pl-2">
             Kategoriler
@@ -702,7 +594,6 @@ export default function Home() {
               <button
                 onClick={() => {
                   setExpandedGroup(null);
-
                   setActiveFilter("TÜMÜ");
                 }}
                 className={`w-full text-left px-4 py-3 rounded-xl font-bold transition-all mb-2 ${activeFilter === "TÜMÜ" ? "bg-blue-600 text-white shadow-md" : "text-slate-600 hover:bg-slate-50"}`}
@@ -713,7 +604,6 @@ export default function Home() {
 
             {Object.entries(CATEGORY_MAP).map(([mainCat, subCats]) => {
               const isExpanded = expandedGroup === mainCat;
-
               const isMainActive = activeFilter === mainCat;
 
               return (
@@ -764,14 +654,12 @@ export default function Home() {
         </aside>
 
         {/* 🛍️ SAĞ İÇERİK ALANI */}
-
         <section className="flex-1 min-w-0">
           <div className="block lg:hidden mb-6">
             <div className="flex overflow-x-auto custom-scrollbar gap-2 pb-2">
               <button
                 onClick={() => {
                   setExpandedGroup(null);
-
                   setActiveFilter("TÜMÜ");
                 }}
                 className={`whitespace-nowrap px-5 py-2.5 rounded-full font-bold text-sm ${activeFilter === "TÜMÜ" ? "bg-blue-600 text-white" : "bg-white text-slate-600 border border-slate-200"}`}
@@ -847,7 +735,6 @@ export default function Home() {
           </div>
 
           {/* ⏳ PROFESYONEL İSKELET YÜKLEME */}
-
           {isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mt-4">
               {[...Array(8)].map((_, i) => (
@@ -937,8 +824,7 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* Kalp butonuna tıklandığında hem favoriye alacak hem de karşı tarafa bildirim atacak (Code 1'den alındı) */}
-
+                      {/* Kalp butonuna tıklandığında hem favoriye alacak hem de karşı tarafa bildirim atacak */}
                       <button
                         onClick={(e) => toggleLike(e, p)}
                         className={`absolute top-3 right-3 p-2.5 rounded-full shadow-md backdrop-blur-md transition-all hover:scale-110 active:scale-95 z-10 ${isLiked ? "bg-red-500/90 text-white" : "bg-white/90 text-gray-400 hover:text-red-500"}`}
@@ -999,7 +885,6 @@ export default function Home() {
       />
 
       {/* 🌊 AÇIK RENK, MİNİMALİST FOOTER */}
-
       <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 rounded-t-[3rem] shadow-sm">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
@@ -1024,13 +909,11 @@ export default function Home() {
                   Nasıl Çalışır?
                 </button>
               </li>
-
               <li>
                 <button className="hover:text-blue-600 transition-colors">
                   Güvenlik İpuçları
                 </button>
               </li>
-
               <li>
                 <button className="hover:text-blue-600 transition-colors">
                   Kampüs Kuralları
@@ -1048,13 +931,11 @@ export default function Home() {
                   Destek Merkezi
                 </button>
               </li>
-
               <li>
                 <button className="hover:text-blue-600 transition-colors">
                   Bize Ulaşın
                 </button>
               </li>
-
               <li>
                 <button className="hover:text-blue-600 transition-colors">
                   S.S.S.
