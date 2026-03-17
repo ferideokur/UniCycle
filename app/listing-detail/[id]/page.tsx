@@ -772,14 +772,17 @@ export default function ListingDetailPage() {
               </div>
             </div>
 
-            {/* SATICI PROFİL KARTI */}
+            {/* 🚀 SATICI PROFİL KARTI - ZARİF VE OKSUZ */}
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-              <div className="flex items-center gap-4 border-b border-slate-100 pb-6 mb-6">
-                <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl font-black shadow-inner">
+              <Link
+                href={`/user/${product.user?.id}`}
+                className="flex items-center gap-4 group border-b border-slate-100 pb-6 mb-6 hover:bg-slate-50 p-3 -mx-3 rounded-2xl transition-all cursor-pointer"
+              >
+                <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl font-black shadow-inner group-hover:scale-105 transition-transform shrink-0">
                   {sellerName.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <h3 className="text-lg font-extrabold text-slate-800 capitalize">
+                <div className="flex-1">
+                  <h3 className="text-lg font-extrabold text-slate-800 capitalize group-hover:text-blue-600 transition-colors line-clamp-1">
                     {sellerName}
                   </h3>
                   <div className="flex items-center gap-1 text-sm font-bold text-slate-400 mt-1">
@@ -787,7 +790,7 @@ export default function ListingDetailPage() {
                     Onaylı
                   </div>
                 </div>
-              </div>
+              </Link>
 
               {isOwner ? (
                 <div className="w-full bg-green-50 text-green-700 font-black py-4 rounded-xl border border-green-200 flex items-center justify-center gap-2 text-sm shadow-sm">
@@ -809,6 +812,66 @@ export default function ListingDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* 🌊 AÇIK RENK, MİNİMALİST FOOTER */}
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-16 rounded-t-[3rem] shadow-sm">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="col-span-1 md:col-span-2">
+            <div className="mb-4">
+              <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
+                Uni<span className="text-[#20B2AA]">Cycle</span>
+              </span>
+            </div>
+            <p className="text-sm font-medium text-slate-500 max-w-sm">
+              Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
+              öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
+            </p>
+          </div>
+          <div>
+            <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
+            <ul className="space-y-2 text-sm font-medium text-slate-500">
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Nasıl Çalışır?
+                </button>
+              </li>
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Güvenlik İpuçları
+                </button>
+              </li>
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Kampüs Kuralları
+                </button>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
+            <ul className="space-y-2 text-sm font-medium text-slate-500">
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Destek Merkezi
+                </button>
+              </li>
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Bize Ulaşın
+                </button>
+              </li>
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  S.S.S.
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
+          © 2026 UniCycle. Tüm hakları saklıdır.
+        </div>
+      </footer>
 
       <style
         dangerouslySetInnerHTML={{
