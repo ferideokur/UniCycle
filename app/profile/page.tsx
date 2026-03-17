@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation"; // 🚀 YENİ EKLENDİ: Arama yönlendirmesi için
+import { useRouter } from "next/navigation"; 
 
 const UNIVERSITIES = [
   "Acıbadem Üniversitesi", "Akdeniz Üniversitesi", "Anadolu Üniversitesi", "Ankara Üniversitesi", 
@@ -46,16 +46,51 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  // 🚀 GERÇEK VERİTABANINDAN GELECEK İLANLARI TUTAN HAFIZA
   const [myListings, setMyListings] = useState<any[]>([]);
   const [isLoadingListings, setIsLoadingListings] = useState(true);
 
-  // 🚀 YENİ EKLENDİ: Arama state'i ve router
   const [searchTerm, setSearchTerm] = useState("");
-  const router = useRouter();
+  const [liveResults, setLiveResults] = useState<{type: "user" | "product", item: any}[]>([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
+  // 🔔 BİLDİRİM SAYACI
+  const [notificationsCount, setNotificationsCount] = useState(0);
 
+  // 💬 CHAT (MESAJLAŞMA) PANELİ HAFIZALARI
+  const [isMessagesListOpen, setIsMessagesListOpen] = useState(false);
+  const [activeChatUser, setActiveChatUser] = useState<{id: number, name: string} | null>(null);
+  const [chatInput, setChatInput] = useState("");
+  const [messages, setMessages] = useState<{id: number, text: string, isMine: boolean}[]>([]);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  // Örnek Gelen Kutusu (İleride Backend'e bağlanabilir)
+  const [inboxChats] = useState([
+    { id: 1, name: "Feride Okur", lastMsg: "Kitap duruyor mu?", time: "12:45", unread: 2 },
+    { id: 2, name: "Ali Yılmaz", lastMsg: "Fiyatta indirim olur mu?", time: "Dün", unread: 0 },
+    { id: 3, name: "Zeynep Çelik", lastMsg: "Teşekkürler, iyi dersler.", time: "Pzt", unread: 0 }
+  ]);
+
+  const router = useRouter();
   const profileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // 🔔 BİLDİRİM SAYACINI GÜNCELLEYEN SİSTEM
+  const updateNotificationCount = (userId: number) => {
+    fetch(`http://localhost:8080/api/interaction/notifications/${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const deletedNotifs = JSON.parse(localStorage.getItem(`deletedNotifs_${userId}`) || "[]");
+          const seenNotifs = JSON.parse(localStorage.getItem(`seenNotifs_${userId}`) || "[]");
+          
+          // Silinmemiş ve okunmamış olanları filtrele ve sayısını belirle
+          const activeNotifs = data.filter((n: any) => !deletedNotifs.includes(n.id));
+          const unreadNotifs = activeNotifs.filter((n: any) => !seenNotifs.includes(n.id));
+          setNotificationsCount(unreadNotifs.length);
+        }
+      })
+      .catch(err => console.error("Bildirimler çekilemedi:", err));
+  };
 
   const loadProfileData = () => {
     const storedUser = localStorage.getItem("user");
@@ -64,7 +99,6 @@ export default function ProfilePage() {
       setUser(parsedUser);
       setNewName(parsedUser.fullName); 
 
-      // Profil Görsel vs Ayarları (Local'den çekiliyor şimdilik)
       const userProfileKey = `profile_${parsedUser.email}`;
       const savedProfile = localStorage.getItem(userProfileKey);
 
@@ -87,12 +121,16 @@ export default function ProfilePage() {
         if (data.coverY) setCoverY(data.coverY);
       }
 
-      // 🚀 JAVA'DAN GERÇEK İLANLARI ÇEKME FONKSİYONUNU ÇAĞIR
       fetchMyRealListings(parsedUser.id);
+      
+      // Bildirim sayacını çek
+      updateNotificationCount(parsedUser.id);
+
+      // Dinleyici: Bildirimler sayfasında 'Görüldü' tetiklenirse sayacı sıfırla
+      window.addEventListener('notificationsSeen', () => setNotificationsCount(0));
     }
   };
 
-  // 🌐 JAVA'YA BAĞLANAN VE İLANLARI ÇEKEN KISIM
   const fetchMyRealListings = async (userId: number) => {
     setIsLoadingListings(true);
     try {
@@ -111,10 +149,9 @@ export default function ProfilePage() {
     }
   };
 
-  // 🗑️ JAVA'YA "BU İLANI SİL" EMRİ VEREN MOTOR
   const handleDeleteListing = async (productId: number, e: React.MouseEvent) => {
     e.preventDefault(); 
-    e.stopPropagation(); // Karta tıklamayı engeller, sadece butona tıklar
+    e.stopPropagation(); 
 
     const isConfirmed = window.confirm("Bu ilanı tamamen silmek istediğine emin misin? Bu işlem geri alınamaz.");
     if (!isConfirmed) return;
@@ -125,7 +162,6 @@ export default function ProfilePage() {
       });
 
       if (response.ok) {
-        // Ekranda o an gördüğümüz listeden de sildiğimiz ilanı anında uçuruyoruz!
         setMyListings(prevListings => prevListings.filter(listing => listing.id !== productId));
         alert("İlan başarıyla silindi! 🗑️");
       } else {
@@ -139,6 +175,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     loadProfileData();
+    return () => window.removeEventListener('notificationsSeen', () => setNotificationsCount(0));
   }, []);
 
   const handleCancel = () => {
@@ -152,13 +189,53 @@ export default function ProfilePage() {
     window.location.href = "/"; 
   };
 
-  // 🚀 YENİ EKLENDİ: Arama Submit Fonksiyonu
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim() !== "") {
       router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
     }
   };
+
+  useEffect(() => {
+    const fetchLive = async () => {
+      if (searchTerm.trim().length < 2) { setLiveResults([]); return; }
+      try {
+        const isUserSearch = searchTerm.startsWith("@");
+        const query = isUserSearch ? searchTerm.substring(1).trim() : searchTerm.trim();
+        if (!query) return;
+
+        let combined: {type: "user" | "product", item: any}[] = [];
+
+        if (isUserSearch) {
+          const userRes = await fetch(`http://localhost:8080/api/users/search?q=${encodeURIComponent(query)}`);
+          if (userRes.ok) {
+            const users = await userRes.json();
+            if(Array.isArray(users)) combined = users.map((u: any) => ({ type: "user", item: u }));
+          }
+        } else {
+          const prodRes = await fetch(`http://localhost:8080/api/products/search?q=${encodeURIComponent(query)}`);
+          if (prodRes.ok) {
+            const products = await prodRes.json();
+            if(Array.isArray(products)) {
+              products.sort((a: any, b: any) => b.id - a.id);
+              combined = products.map((p: any) => ({ type: "product", item: p }));
+            }
+          }
+        }
+        setLiveResults(combined);
+      } catch (error) { console.error("Canlı arama hatası:", error); }
+    };
+    
+    const timer = setTimeout(() => fetchLive(), 300); 
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Yeni mesaj geldiğinde chat'in en altına kaydır
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [messages, activeChatUser]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "profile" | "cover") => {
     const file = e.target.files?.[0];
@@ -257,6 +334,32 @@ export default function ProfilePage() {
     }
   };
 
+  // 💬 CHAT AÇMA VE MESAJ GÖNDERME FONKSİYONLARI
+  const openChatWith = (chatUser: {id: number, name: string}) => {
+    setActiveChatUser(chatUser);
+    setIsMessagesListOpen(false);
+    setMessages([
+      { id: 1, text: `Merhaba, ilanınızla ilgileniyorum.`, isMine: false },
+    ]);
+  };
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const newMsg = { id: Date.now(), text: chatInput, isMine: true };
+    setMessages((prev) => [...prev, newMsg]);
+    setChatInput("");
+
+    setTimeout(() => {
+      setMessages((prev) => [...prev, { 
+        id: Date.now() + 1, 
+        text: "Mesajınız iletildi.", 
+        isMine: false 
+      }]);
+    }, 1000);
+  };
+
   const defaultAvatar = `https://ui-avatars.com/api/?name=${user ? user.fullName : "Kullanıcı"}&background=0D8ABC&color=fff&size=256`;
   const displayUniversity = university === "Diğer..." ? customUniversity : university;
 
@@ -269,67 +372,90 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 🚀 ÜST MENÜ (Anasayfa ile birebir aynı yapıldı) */}
+      {/* 🚀 ÜST MENÜ NAVBAR */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20 gap-6">
             
-            {/* LOGO */}
             <div className="flex-shrink-0">
               <Link href="/" className="flex items-center gap-3 hover:scale-105 transition-transform group">
-                <Image
-                  src="/logo.jpeg"
-                  alt="UniCycle İkon"
-                  width={52}
-                  height={52}
-                  className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all rounded-md"
-                  priority
-                />
+                <Image src="/logo.jpeg" alt="UniCycle İkon" width={52} height={52} className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all rounded-md" priority />
                 <span className="text-[32px] font-extrabold tracking-tight text-slate-800">
                   Uni<span className="text-[#20B2AA]">Cycle</span>
                 </span>
               </Link>
             </div>
 
-            {/* ARAMA ÇUBUĞU */}
-            <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-3xl relative group">
-              <input
-                type="text"
-                placeholder="Ürün, @üye veya ders notu ara..."
-                className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-transparent font-medium"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                🔍
-              </span>
-              <button type="submit" className="hidden">Ara</button>
-            </form>
+            <div className="hidden md:flex flex-1 max-w-3xl relative group z-50">
+              <form onSubmit={handleSearchSubmit} className="w-full relative">
+                <input
+                  type="text"
+                  placeholder="Ürün, @üye veya ders notu ara..."
+                  className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-transparent font-medium"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setIsDropdownOpen(true);
+                  }}
+                  onFocus={() => setIsDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+                />
+                <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">🔍</span>
+                <button type="submit" className="hidden">Ara</button>
+              </form>
 
-            {/* BUTONLAR */}
+              {isDropdownOpen && liveResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+                  {liveResults.slice(0, 5).map((result, idx) => (
+                     <Link href={result.type === "user" ? `/user/${result.item.id}` : `/listing-detail/${result.item.id}`} key={idx} className="flex items-center gap-3 px-5 py-2 hover:bg-slate-50 transition-colors">
+                       <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0 text-sm">
+                         {result.type === "user" ? result.item.fullName.charAt(0).toUpperCase() : '📦'}
+                       </div>
+                       <div>
+                         <div className="font-bold text-slate-800 text-sm">{result.item.fullName || result.item.title}</div>
+                       </div>
+                     </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center gap-5">
-              <Link
-                href="/create-listing"
-                className="hidden sm:flex font-black text-blue-600 hover:text-blue-800 items-center gap-1 transition-colors"
-              >
+              <Link href="/create-listing" className="hidden sm:flex font-black text-blue-600 hover:text-blue-800 items-center gap-1 transition-colors">
                 <span className="text-xl">+</span> İlan Ver
               </Link>
-              <button
-                onClick={handleLogout}
-                className="text-slate-400 hover:text-red-500 font-bold transition-colors text-sm"
-              >
-                Çıkış Yap
-              </button>
+              
+              {user && (
+                 <>
+                   {/* 🚨 YENİ BİLDİRİMLER SAYFASI BUTONU 🚨 */}
+                   <Link href="/notifications" className="relative w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors">
+                     <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                     </svg>
+                     {notificationsCount > 0 && (
+                       <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
+                         {notificationsCount}
+                       </span>
+                     )}
+                   </Link>
+
+                   <Link href="/profile" className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm ml-2 text-sm transition-all">
+                     👤 Hesabım
+                   </Link>
+                   <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 font-bold transition-colors text-sm ml-2">
+                     Çıkış Yap
+                   </button>
+                 </>
+              )}
             </div>
 
           </div>
         </div>
       </header>
 
-      {/* 💼 VİTRİN */}
+      {/* 💼 VİTRİN VE PROFİL BİLGİLERİ */}
       <div className="max-w-5xl mx-auto mt-6 bg-white rounded-t-[2.5rem] rounded-b-2xl shadow-sm border border-gray-200 overflow-hidden">
         
-        {/* 1️⃣ KAPAK FOTOĞRAFI ALANI */}
         <div className="h-64 w-full relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700">
            {coverImage && (
              <img src={coverImage} alt="Kapak" className="w-full h-full object-cover" style={{ objectPosition: `center ${coverY}%` }} />
@@ -347,7 +473,6 @@ export default function ProfilePage() {
         <div className="px-8 pb-8">
           <div className="flex justify-between items-end -mt-16 mb-4 relative z-10">
             
-            {/* 2️⃣ PROFİL FOTOĞRAFI ALANI */}
             <div 
               onClick={() => isEditMode && setActiveModal("profile")}
               className={`w-36 h-36 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100 relative flex items-center justify-center ${isEditMode ? "cursor-pointer group" : ""}`}
@@ -360,7 +485,6 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* 3️⃣ KİLİT/DÜZENLEME MODU BUTONLARI */}
             <div className="flex gap-3 mb-2">
               {isEditMode && (
                 <button 
@@ -397,7 +521,6 @@ export default function ProfilePage() {
             </p>
           </div>
 
-          {/* 🚀 ÜRÜN SAYACI */}
           <div className="flex gap-6 mt-6 pt-6 border-t border-gray-100">
             <div className="cursor-pointer hover:underline">
               <span className="font-black text-gray-900 mr-1">{myListings.length}</span>
@@ -408,7 +531,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* 🛍️ ALT KISIM (VİTRİNİM) */}
       <div className="max-w-5xl mx-auto mt-6">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
           
@@ -421,7 +543,6 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* YÜKLENİYOR DURUMU */}
           {isLoadingListings ? (
             <div className="text-center py-16">
               <span className="animate-spin text-4xl block mb-4">⏳</span>
@@ -437,12 +558,10 @@ export default function ProfilePage() {
               </Link>
             </div>
           ) : (
-            /* 🚀 EĞER İLAN VARSA KARTLARI DİZ */
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
               {myListings.map((listing) => (
                 <div key={listing.id} className="group cursor-pointer">
                   
-                  {/* Ürün Fotoğrafı */}
                   <div className="aspect-[4/5] rounded-2xl overflow-hidden bg-gray-100 mb-3 border border-gray-200 relative shadow-sm group-hover:shadow-md transition-shadow">
                     {listing.photosBase64 && listing.photosBase64.length > 0 ? (
                       <img src={listing.photosBase64[0]} alt={listing.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -450,11 +569,9 @@ export default function ProfilePage() {
                       <div className="w-full h-full flex items-center justify-center bg-gray-200 text-3xl">📦</div>
                     )}
                     
-                    {/* Fiyat Tipi Rozetleri */}
                     {listing.priceType === "takas" && <div className="absolute top-2 left-2 bg-purple-600 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase shadow-sm">Takaslık</div>}
                     {listing.priceType === "ucretsiz" && <div className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase shadow-sm">Ücretsiz</div>}
 
-                    {/* 🗑️ YENİ EKLENEN SİL BUTONU */}
                     <button 
                       onClick={(e) => handleDeleteListing(listing.id, e)} 
                       className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
@@ -464,7 +581,6 @@ export default function ProfilePage() {
                     </button>
                   </div>
                   
-                  {/* Ürün Bilgileri */}
                   <div>
                     <h3 className="text-sm font-bold text-gray-800 line-clamp-1 mb-1" title={listing.title}>{listing.title}</h3>
                     <p className="text-xs text-gray-500 mb-1 line-clamp-1">{listing.category}</p>
@@ -481,9 +597,103 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* ---------------------------------------------------------------------------------- */}
-      {/* 🛠️ MODÜLER DÜZENLEME PENCERELERİ (Değişmedi) */}
-      {/* ---------------------------------------------------------------------------------- */}
+      {/* ---------------------------------------------------------------------- */}
+      {/* 💬 SAĞ ALT SABİT MESAJLAŞMA (INBOX) SİSTEMİ */}
+      {/* ---------------------------------------------------------------------- */}
+      
+      {/* 1. MESAJLAR BUTONU */}
+      {!isMessagesListOpen && !activeChatUser && (
+        <button 
+          onClick={() => setIsMessagesListOpen(true)}
+          className="fixed bottom-6 right-6 z-[9990] bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 hover:bg-blue-700 transition-all group"
+        >
+          <svg className="w-7 h-7 group-hover:animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+          <span className="absolute top-0 right-0 bg-red-500 w-4 h-4 text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">2</span>
+        </button>
+      )}
+
+      {/* 2. GELEN KUTUSU LİSTESİ */}
+      {isMessagesListOpen && (
+        <div className="fixed bottom-0 right-4 sm:right-8 w-80 sm:w-[350px] h-[450px] bg-white rounded-t-2xl shadow-[0_-5px_40px_rgba(0,0,0,0.2)] border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
+          <div className="bg-slate-800 text-white px-5 py-4 flex justify-between items-center shadow-md">
+            <h3 className="font-extrabold text-base flex items-center gap-2">💬 Mesajlar</h3>
+            <button onClick={() => setIsMessagesListOpen(false)} className="text-white/60 hover:text-white font-bold text-lg">✕</button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto flex flex-col divide-y divide-slate-100 bg-white">
+            {inboxChats.map((chat) => (
+              <div 
+                key={chat.id} 
+                onClick={() => openChatWith(chat)}
+                className="p-4 flex items-center gap-3 hover:bg-slate-50 cursor-pointer transition-colors"
+              >
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-600 border border-blue-200">
+                  {chat.name.charAt(0)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center mb-0.5">
+                    <span className={`font-bold truncate text-sm ${chat.unread > 0 ? "text-slate-900" : "text-slate-700"}`}>{chat.name}</span>
+                    <span className="text-[10px] font-bold text-slate-400">{chat.time}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className={`text-xs truncate ${chat.unread > 0 ? "font-bold text-slate-800" : "text-slate-500"}`}>{chat.lastMsg}</p>
+                    {chat.unread > 0 && <span className="bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ml-2 shrink-0">{chat.unread}</span>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 3. AKTİF SOHBET PENCERESİ */}
+      {activeChatUser && (
+        <div className="fixed bottom-0 right-4 sm:right-8 w-80 sm:w-[350px] h-[450px] bg-white rounded-t-2xl shadow-[0_-5px_40px_rgba(0,0,0,0.2)] border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10">
+          
+          <div className="bg-blue-600 text-white px-4 py-3 rounded-t-2xl flex justify-between items-center shadow-md">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => { setActiveChatUser(null); setIsMessagesListOpen(true); }}
+                className="text-white/80 hover:text-white mr-1 font-black"
+                title="Geri Dön"
+              >
+                &larr;
+              </button>
+              <div className="relative">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-sm font-bold border border-white/30">
+                  {activeChatUser.name.charAt(0)}
+                </div>
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-blue-600 rounded-full"></span>
+              </div>
+              <div>
+                <h3 className="font-bold text-sm leading-none">{activeChatUser.name}</h3>
+                <span className="text-[10px] text-blue-100">Çevrimiçi</span>
+              </div>
+            </div>
+            <button onClick={() => setActiveChatUser(null)} className="text-white/80 hover:text-white transition-colors font-bold text-lg">✕</button>
+          </div>
+
+          <div ref={chatScrollRef} className="flex-1 bg-slate-50 p-4 overflow-y-auto flex flex-col gap-3 custom-scrollbar">
+            <div className="text-center text-[10px] text-slate-400 font-bold bg-slate-100 rounded-full w-max mx-auto px-3 py-1 mb-2">Bugün</div>
+            {messages.map((msg) => (
+              <div key={msg.id} className={`max-w-[80%] rounded-2xl px-4 py-2 text-[13px] shadow-sm ${msg.isMine ? "bg-blue-600 text-white self-end rounded-br-sm" : "bg-white text-slate-800 border border-slate-100 self-start rounded-bl-sm"}`}>
+                {msg.text}
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-slate-100 flex items-center gap-2">
+            <input 
+              type="text" placeholder="Bir mesaj yaz..." 
+              className="flex-1 bg-slate-100 text-slate-800 text-sm px-4 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={chatInput} onChange={(e) => setChatInput(e.target.value)}
+            />
+            <button type="submit" disabled={!chatInput.trim()} className="w-10 h-10 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-full flex items-center justify-center transition-colors shrink-0 shadow-sm">
+              <svg className="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* 📸 MODAL 1: SADECE KAPAK FOTOĞRAFI DÜZENLEYİCİ */}
       {activeModal === "cover" && (
