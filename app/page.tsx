@@ -107,6 +107,17 @@ export default function Home() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notificationsList, setNotificationsList] = useState<any[]>([]);
 
+  // 📜 ALT MENÜ (FOOTER) POP-UP HAFIZASI
+  const [infoModal, setInfoModal] = useState<{isOpen: boolean, title: string, content: string}>({
+    isOpen: false,
+    title: "",
+    content: ""
+  });
+
+  const openInfoModal = (title: string, content: string) => {
+    setInfoModal({ isOpen: true, title, content });
+  };
+
   // 🌐 JAVA'DAN GERÇEK İLANLARI ÇEKME MOTORU
   const fetchAllListings = async () => {
     setIsLoading(true);
@@ -314,6 +325,39 @@ export default function Home() {
     }
   };
 
+  // 🗓️ PİRİ REİS AKADEMİK TAKVİMİNE GÖRE AKILLI BANNER ALGORİTMASI 🗓️
+  const getBannerContent = () => {
+    const today = new Date();
+    const month = today.getMonth() + 1; // Aylar 1-12 arası
+    const year = today.getFullYear();
+
+    if (year === 2025 && (month === 9 || month === 10)) {
+      return { tag: "YENİ DÖNEM", title: "Güz Dönemi Başladı!", desc: "Kampüse hoş geldin! Ders notları, kitaplar ve eşyalar UniCycle'da seni bekliyor.", btn: "İlanları Keşfet", filterGroup: null, filterItem: "TÜMÜ", icon: "🎒" };
+    } else if (year === 2025 && month === 11) {
+      return { tag: "SINAV HAFTASI", title: "Güz Vizeleri Geldi Çattı!", desc: "Sınav stresi yapma! Üst dönemlerin ders notları ve özetleriyle hemen çalışmaya başla.", btn: "Ders Notlarını İncele", filterGroup: "📚 Akademik & Okul", filterItem: "Ders Notları & Özetler", icon: "📝" };
+    } else if ((year === 2025 && month === 12) || (year === 2026 && month === 1)) {
+      return { tag: "FİNAL DÖNEMİ", title: "Finaller Kapıda!", desc: "Dönemi kurtaran o son çıkmış sorular burada! Hemen incele, finalleri rahat geç.", btn: "Çıkmış Sorulara Bak", filterGroup: "📚 Akademik & Okul", filterItem: "Çıkmış Sorular", icon: "🎓" };
+    } else if (year === 2026 && (month === 2 || month === 3)) {
+      return { tag: "BAHAR DÖNEMİ", title: "Bahar Dönemi Başladı!", desc: "Eksik kitaplarını ve laboratuvar malzemelerini kampüsten uygun fiyata temin et.", btn: "Kitapları Keşfet", filterGroup: "📚 Akademik & Okul", filterItem: "Ders & Sınav Kitapları", icon: "📚" };
+    } else if (year === 2026 && month === 4) { // NİSAN: VİZE DÖNEMİ
+      return { tag: "VİZE HAFTASI", title: "Bahar Vizeleri Başlıyor!", desc: "Vizelere az kaldı! Piri Reis'in en güncel ders notları ve özetleriyle sınavlara bomba gibi hazırlan.", btn: "Notları İncele", filterGroup: "📚 Akademik & Okul", filterItem: "Ders Notları & Özetler", icon: "✍️" };
+    } else if (year === 2026 && (month === 5 || month === 6)) { // MAYIS-HAZİRAN: FİNAL DÖNEMİ
+      return { tag: "FİNAL DÖNEMİ", title: "Final Haftası Yaklaşıyor!", desc: "Yaz tatiline çıkmadan önceki son viraj! Çıkmış sorularla son tekrarlarını yap.", btn: "Çıkmış Sorular", filterGroup: "📚 Akademik & Okul", filterItem: "Çıkmış Sorular", icon: "🎯" };
+    } else { // TEMMUZ-AĞUSTOS: YAZ TATİLİ
+      return { tag: "YAZ TATİLİ", title: "Kampüste Yaz Geldi!", desc: "Kullanmadığın ders kitaplarını ve eşyalarını satarak tatil harçlığını çıkarmanın tam zamanı.", btn: "Hemen İlan Ver", link: "/create-listing", icon: "🏖️" };
+    }
+  };
+
+  const bannerData = getBannerContent();
+
+const handleBannerClick = () => {
+    if (bannerData.link) {
+      router.push(bannerData.link);
+    } else {
+      setExpandedGroup(bannerData.filterGroup || null);
+      setActiveFilter(bannerData.filterItem || "TÜMÜ");
+    }
+  };
   const filteredProducts = products.filter((p: any) => {
     const matchesSearch = p.title
       ?.toLowerCase()
@@ -338,10 +382,17 @@ export default function Home() {
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20 gap-6">
+            
+            {/* ✨ DÜZELTİLMİŞ LOGO KISMI (TIKLANINCA SIFIRLAR) ✨ */}
             <div className="flex-shrink-0">
               <Link
                 href="/"
-                className="flex items-center gap-3 hover:scale-105 transition-transform group"
+                onClick={() => {
+                  setActiveFilter("TÜMÜ");
+                  setExpandedGroup(null);
+                  setSearchTerm("");
+                }}
+                className="flex items-center gap-3 hover:scale-105 transition-transform group cursor-pointer"
               >
                 <Image
                   src="/logo.jpeg"
@@ -693,29 +744,29 @@ export default function Home() {
             )}
           </div>
 
+          {/* 🌟🌟 DİNAMİK BANNER (TAKViM BAĞLANTILI) 🌟🌟 */}
           {activeFilter === "TÜMÜ" && searchTerm === "" && (
             <div className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2.5rem] p-8 md:p-12 mb-10 text-white shadow-xl relative overflow-hidden flex items-center">
               <div className="relative z-10 max-w-lg">
-                <span className="bg-white/20 backdrop-blur-sm text-white font-black px-4 py-1.5 rounded-full text-xs mb-4 inline-block tracking-widest">
-                  YENİ DÖNEM BAŞLIYOR
+                <span className="bg-white/20 backdrop-blur-sm text-white font-black px-4 py-1.5 rounded-full text-xs mb-4 inline-block tracking-widest uppercase">
+                  {bannerData.tag}
                 </span>
 
                 <h2 className="text-4xl md:text-5xl font-black mb-4 leading-tight tracking-tight">
-                  Vizeler Yaklaşıyor!
+                  {bannerData.title}
                 </h2>
 
                 <p className="text-lg font-medium opacity-90 mb-6 leading-relaxed">
-                  Üst dönemlerin ders notlarını, çıkmış sorularını ve
-                  kitaplarını hemen keşfet. Hazır notlar seni bekliyor.
+                  {bannerData.desc}
                 </p>
 
-                <button className="bg-white text-blue-700 font-black px-8 py-3.5 rounded-full shadow-lg hover:scale-105 transition-transform">
-                  Notları İncele
+                <button onClick={handleBannerClick} className="bg-white text-blue-700 font-black px-8 py-3.5 rounded-full shadow-lg hover:scale-105 transition-transform">
+                  {bannerData.btn}
                 </button>
               </div>
 
               <div className="absolute right-0 -bottom-10 opacity-20 md:opacity-40 text-[150px] md:text-[220px] leading-none transform -rotate-12">
-                📚
+                {bannerData.icon}
               </div>
             </div>
           )}
@@ -884,6 +935,26 @@ export default function Home() {
         }}
       />
 
+      {/* 📜 FOOTER BİLGİ POP-UP'I (MODAL) */}
+      {infoModal.isOpen && (
+        <div className="fixed inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h2 className="text-xl font-black text-slate-800">{infoModal.title}</h2>
+              <button onClick={() => setInfoModal({ ...infoModal, isOpen: false })} className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors">✕</button>
+            </div>
+            <div className="p-8 text-slate-600 font-medium whitespace-pre-wrap leading-relaxed max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {infoModal.content}
+            </div>
+            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button onClick={() => setInfoModal({ ...infoModal, isOpen: false })} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl transition-colors shadow-md">
+                Anladım
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 🌊 AÇIK RENK, MİNİMALİST FOOTER */}
       <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 rounded-t-[3rem] shadow-sm">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -905,17 +976,17 @@ export default function Home() {
 
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button onClick={() => openInfoModal("Nasıl Çalışır?", "UniCycle'da alışveriş yapmak çok kolay!\n\n1. Kendi üniversitenin e-postasıyla kayıt ol.\n2. İhtiyacın olmayan eşyalarını ilan olarak ekle.\n3. Kampüsündeki diğer öğrencilerle mesajlaşarak güvenle alışveriş yap!")} className="hover:text-blue-600 transition-colors">
                   Nasıl Çalışır?
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button onClick={() => openInfoModal("Güvenlik İpuçları", "Alışverişlerinde güvenliğin için şu kurallara dikkat et:\n\n• Sadece kampüs içindeki güvenli ve kalabalık alanlarda (kütüphane, kafeterya vb.) buluşun.\n• Kimseye önceden para veya kapora göndermeyin.\n• Şüpheli durumlarda ilanları bize şikayet edin.")} className="hover:text-blue-600 transition-colors">
                   Güvenlik İpuçları
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button onClick={() => openInfoModal("Kampüs Kuralları", "Bu platform tamamen öğrencilere aittir.\n\n• Saygılı bir iletişim dili kullanmak zorunludur.\n• Sadece yasal ve kampüs kurallarına uygun ürünler satılabilir (Ders notu, kitap, eşya vb.).\n• Kopya veya telif hakkı ihlali içeren materyallerin satışı yasaktır.")} className="hover:text-blue-600 transition-colors">
                   Kampüs Kuralları
                 </button>
               </li>
@@ -927,17 +998,17 @@ export default function Home() {
 
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button onClick={() => openInfoModal("Destek Merkezi", "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin. Bütün taleplere 24 saat içinde geri dönüş sağlıyoruz.")} className="hover:text-blue-600 transition-colors">
                   Destek Merkezi
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button onClick={() => openInfoModal("Bize Ulaşın", "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67")} className="hover:text-blue-600 transition-colors">
                   Bize Ulaşın
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button onClick={() => openInfoModal("Sıkça Sorulan Sorular", "S: Üye olmak ücretli mi?\nC: Hayır, UniCycle üniversite öğrencileri için tamamen ücretsizdir.\n\nS: Kargo ile ürün gönderebilir miyim?\nC: Platformumuz kampüs içi elden teslim odaklıdır ancak satıcı ile anlaşırsanız kargo da yapabilirsiniz.")} className="hover:text-blue-600 transition-colors">
                   S.S.S.
                 </button>
               </li>
