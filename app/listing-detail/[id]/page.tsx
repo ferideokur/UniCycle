@@ -45,7 +45,7 @@ export default function ListingDetailPage() {
 
   // 🔔 Navbar sayacını güncelleyen akıllı fonksiyon
   const updateNotificationCount = (userId: number) => {
-    fetch(`http://localhost:8080/api/interaction/notifications/${userId}`)
+    fetch(`https://unicycle-api.onrender.com/api/interaction/notifications/${userId}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
@@ -87,7 +87,7 @@ export default function ListingDetailPage() {
     }
 
     // İlan detayını çekiyoruz
-    fetch("http://localhost:8080/api/products")
+    fetch("https://unicycle-api.onrender.com/api/products")
       .then((res) => res.json())
       .then((data) => {
         const foundProduct = data.find((p: any) => p.id.toString() === id);
@@ -123,7 +123,7 @@ export default function ListingDetailPage() {
         let combined: { type: "user" | "product"; item: any }[] = [];
         if (isUserSearch) {
           const userRes = await fetch(
-            `http://localhost:8080/api/users/search?q=${encodeURIComponent(query)}`,
+            `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
           );
           if (userRes.ok) {
             const data = await userRes.json();
@@ -132,7 +132,7 @@ export default function ListingDetailPage() {
           }
         } else {
           const prodRes = await fetch(
-            `http://localhost:8080/api/products/search?q=${encodeURIComponent(query)}`,
+            `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`,
           );
           if (prodRes.ok) {
             const products = await prodRes.json();
@@ -171,7 +171,7 @@ export default function ListingDetailPage() {
   const fetchComments = async () => {
     try {
       const res = await fetch(
-        `http://localhost:8080/api/comments/product/${id}`,
+        `https://unicycle-api.onrender.com/api/comments/product/${id}`,
       );
       if (res.ok) setComments(await res.json());
     } catch (err) {
@@ -211,7 +211,7 @@ export default function ListingDetailPage() {
       // Bildirim Gönder (Kendisi değilse)
       if (product && product.user && product.user.id !== currentUser.id) {
         try {
-          await fetch("http://localhost:8080/api/interaction/notifications", {
+          await fetch("https://unicycle-api.onrender.com/api/interaction/notifications", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -242,7 +242,7 @@ export default function ListingDetailPage() {
     setIsSubmittingComment(true);
 
     try {
-      const res = await fetch("http://localhost:8080/api/comments", {
+      const res = await fetch("https://unicycle-api.onrender.com/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -260,7 +260,7 @@ export default function ListingDetailPage() {
         // Bildirim Gönder (Kendisi değilse)
         if (product && product.user && product.user.id !== currentUser.id) {
           try {
-            await fetch("http://localhost:8080/api/interaction/notifications", {
+            await fetch("https://unicycle-api.onrender.com/api/interaction/notifications", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -284,7 +284,7 @@ export default function ListingDetailPage() {
     if (!window.confirm("Bu yorumu silmek istediğinize emin misiniz?")) return;
     try {
       const res = await fetch(
-        `http://localhost:8080/api/comments/${commentId}`,
+        `https://unicycle-api.onrender.com/api/comments/${commentId}`,
         { method: "DELETE" },
       );
       if (res.ok) {

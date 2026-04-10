@@ -200,7 +200,7 @@ export default function CreateListingPage() {
 
     try {
       // 🚀 JAVA'YA İSTEK ATIYORUZ (Doğru adres: /api/products)
-      const response = await fetch("http://localhost:8080/api/products", {
+      const response = await fetch("https://unicycle-api.onrender.com/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(listingPayload),

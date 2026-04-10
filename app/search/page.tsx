@@ -45,7 +45,7 @@ function SearchContent() {
 
         // Bildirim Sayısını Çek
         fetch(
-          `http://localhost:8080/api/interaction/notifications/${parsedUser.id}`,
+          `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
         )
           .then((res) => res.json())
           .then((data) => {
@@ -100,7 +100,7 @@ function SearchContent() {
         if (isUserSearch) {
           setSearchType("users");
           const res = await fetch(
-            `http://localhost:8080/api/users/search?q=${encodeURIComponent(cleanQuery)}`,
+            `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(cleanQuery)}`,
           );
           if (res.ok) {
             const data = await res.json();
@@ -109,7 +109,7 @@ function SearchContent() {
         } else {
           setSearchType("products");
           const res = await fetch(
-            `http://localhost:8080/api/products/search?q=${encodeURIComponent(cleanQuery)}`,
+            `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(cleanQuery)}`,
           );
           if (res.ok) {
             const data = await res.json();
@@ -160,7 +160,7 @@ function SearchContent() {
       // Bildirim Gönder
       if (productObject.user && productObject.user.id !== user.id) {
         try {
-          await fetch("http://localhost:8080/api/interaction/notifications", {
+          await fetch("https://unicycle-api.onrender.com/api/interaction/notifications", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

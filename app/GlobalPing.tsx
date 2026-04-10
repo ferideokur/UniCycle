@@ -13,13 +13,13 @@ export default function GlobalPing() {
         const userId = parsedUser.id;
 
         // 1. SİTEYE GİRER GİRMEZ İLK SİNYAL (Ben buradayım!)
-        fetch(`http://localhost:8080/api/users/${userId}/ping`, {
+        fetch(`https://unicycle-api.onrender.com/api/users/${userId}/ping`, {
           method: "POST",
         }).catch((e) => console.log("Ping hatası:", e));
 
         // 2. HER 1 DAKİKADA BİR TEKRARLAYAN SİNYAL (Hala buradayım!)
         pingTimer = setInterval(() => {
-          fetch(`http://localhost:8080/api/users/${userId}/ping`, {
+          fetch(`https://unicycle-api.onrender.com/api/users/${userId}/ping`, {
             method: "POST",
           }).catch((e) => console.log("Ping hatası:", e));
         }, 60000);

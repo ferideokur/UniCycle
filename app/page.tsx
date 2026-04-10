@@ -123,7 +123,7 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/products");
+      const response = await fetch("https://unicycle-api.onrender.com/api/products");
 
       if (response.ok) {
         const data = await response.json();
@@ -155,7 +155,7 @@ export default function Home() {
 
         // 🔔 GERÇEK BİLDİRİMLERİ ÇEK (Panelin içi için)
         fetch(
-          `http://localhost:8080/api/interaction/notifications/${parsedUser.id}`,
+          `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
         )
           .then((res) => res.json())
           .then((data) => {
@@ -220,7 +220,7 @@ export default function Home() {
 
         if (isUserSearch) {
           const userRes = await fetch(
-            `http://localhost:8080/api/users/search?q=${encodeURIComponent(query)}`,
+            `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
           );
 
           if (userRes.ok) {
@@ -231,7 +231,7 @@ export default function Home() {
           }
         } else {
           const prodRes = await fetch(
-            `http://localhost:8080/api/products/search?q=${encodeURIComponent(query)}`,
+            `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`,
           );
 
           if (prodRes.ok) {
@@ -288,7 +288,7 @@ export default function Home() {
       // 🚀 BİLDİRİM GÖNDERME: İlan sahibi kendisi değilse bildirim at
       if (productObject.user && productObject.user.id !== user.id) {
         try {
-          await fetch("http://localhost:8080/api/interaction/notifications", {
+          await fetch("https://unicycle-api.onrender.com/api/interaction/notifications", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

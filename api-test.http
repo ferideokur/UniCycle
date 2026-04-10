@@ -1,15 +1,15 @@
 ### 1. ADIM: Tüm İlanları Listele (Buradan ID'leri bulacağız)
-GET http://localhost:8080/api/products
+GET https://unicycle-api.onrender.com/api/products
 
 ### --------------------------------------------------------
 
 ### 2. ADIM: İstemediğin İlanları Sil (X, Y ve Z yerine bulduğun numaraları yaz)
 
 ### 1. İlanı Sil
-DELETE http://localhost:8080/api/products/3
+DELETE https://unicycle-api.onrender.com/api/products/3
 
 ### 2. İlanı Sil
-DELETE http://localhost:8080/api/products/4
+DELETE https://unicycle-api.onrender.com/api/products/4
 
 ### 3. İlanı Sil
-DELETE http://localhost:8080/api/products/5
+DELETE https://unicycle-api.onrender.com/api/products/5

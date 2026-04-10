@@ -49,7 +49,7 @@ export default function PublicProfilePage() {
 
         // Bildirimleri çek
         fetch(
-          `http://localhost:8080/api/interaction/notifications/${parsedUser.id}`,
+          `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
         )
           .then((res) => res.json())
           .then((data) => {
@@ -72,7 +72,7 @@ export default function PublicProfilePage() {
     const fetchData = async () => {
       try {
         // Kullanıcı bilgisini çek (Önbelleği kırarak her seferinde güncel veriyi alırız)
-        const userRes = await fetch(`http://localhost:8080/api/users/${id}`, {
+        const userRes = await fetch(`https://unicycle-api.onrender.com/api/users/${id}`, {
           cache: "no-store",
         });
         if (!userRes.ok) throw new Error("Kullanıcı bulunamadı");
@@ -84,7 +84,7 @@ export default function PublicProfilePage() {
         if (savedProfile) setProfileData(JSON.parse(savedProfile));
 
         // Kullanıcının ilanlarını çek
-        const prodRes = await fetch("http://localhost:8080/api/products");
+        const prodRes = await fetch("https://unicycle-api.onrender.com/api/products");
         if (prodRes.ok) {
           const allProducts = await prodRes.json();
           if (Array.isArray(allProducts)) {
@@ -119,7 +119,7 @@ export default function PublicProfilePage() {
         let combined: any[] = [];
         if (isUserSearch) {
           const res = await fetch(
-            `http://localhost:8080/api/users/search?q=${encodeURIComponent(query)}`,
+            `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
           );
           if (res.ok) {
             const data = await res.json();
@@ -128,7 +128,7 @@ export default function PublicProfilePage() {
           }
         } else {
           const res = await fetch(
-            `http://localhost:8080/api/products/search?q=${encodeURIComponent(query)}`,
+            `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`,
           );
           if (res.ok) {
             const data = await res.json();
@@ -164,7 +164,7 @@ export default function PublicProfilePage() {
     if (currentUser) {
       try {
         await fetch(
-          `http://localhost:8080/api/users/${currentUser.id}/logout`,
+          `https://unicycle-api.onrender.com/api/users/${currentUser.id}/logout`,
           { method: "POST" },
         );
       } catch (e) {
@@ -193,7 +193,7 @@ export default function PublicProfilePage() {
     setIsFollowing(newFollowState);
 
     try {
-      await fetch("http://localhost:8080/api/interaction/follow", {
+      await fetch("https://unicycle-api.onrender.com/api/interaction/follow", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -213,7 +213,7 @@ export default function PublicProfilePage() {
       );
 
       if (newFollowState) {
-        await fetch("http://localhost:8080/api/interaction/notifications", {
+        await fetch("https://unicycle-api.onrender.com/api/interaction/notifications", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

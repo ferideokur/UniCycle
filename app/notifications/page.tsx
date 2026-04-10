@@ -26,7 +26,7 @@ export default function NotificationsPage() {
       setCurrentUser(parsedUser);
 
       // Bildirimleri çek
-      fetch(`http://localhost:8080/api/interaction/notifications/${parsedUser.id}`)
+      fetch(`https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`)
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) {
@@ -62,7 +62,7 @@ export default function NotificationsPage() {
     const deletedNotifs = JSON.parse(localStorage.getItem(`deletedNotifs_${currentUser.id}`) || "[]");
     localStorage.setItem(`deletedNotifs_${currentUser.id}`, JSON.stringify([...deletedNotifs, notificationId]));
     try {
-      await fetch(`http://localhost:8080/api/interaction/notifications/${notificationId}`, { method: "DELETE" });
+      await fetch(`https://unicycle-api.onrender.com/api/interaction/notifications/${notificationId}`, { method: "DELETE" });
     } catch (err) { console.error("Backend silme hatası:", err); }
   };
 

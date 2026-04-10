@@ -78,7 +78,7 @@ export default function ProfilePage() {
   // 💬 GERÇEK VERİTABANI: GELEN KUTUSUNU ÇEK (INBOX)
   const fetchInbox = async (userId: number) => {
     try {
-      const res = await fetch(`http://localhost:8080/api/messages/inbox/${userId}`);
+      const res = await fetch(`https://unicycle-api.onrender.com/api/messages/inbox/${userId}`);
       if (res.ok) {
         const data = await res.json();
         setInboxChats(data);
@@ -92,7 +92,7 @@ export default function ProfilePage() {
   const fetchChatHistory = async (otherUserId: number) => {
     if (!user) return;
     try {
-      const res = await fetch(`http://localhost:8080/api/messages/history?user1Id=${user.id}&user2Id=${otherUserId}`);
+      const res = await fetch(`https://unicycle-api.onrender.com/api/messages/history?user1Id=${user.id}&user2Id=${otherUserId}`);
       if (res.ok) {
         const data = await res.json();
         const formattedMsgs = data.map((m: any) => ({
@@ -140,7 +140,7 @@ export default function ProfilePage() {
       fetchInbox(parsedUser.id); // Sayfa açılır açılmaz gerçek mesaj kutusunu çek
       
       // 🔔 Bildirimleri Çek
-      fetch(`http://localhost:8080/api/interaction/notifications/${parsedUser.id}`)
+      fetch(`https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {
@@ -160,7 +160,7 @@ export default function ProfilePage() {
   const fetchMyRealListings = async (userId: number) => {
     setIsLoadingListings(true);
     try {
-      const response = await fetch("http://localhost:8080/api/products");
+      const response = await fetch("https://unicycle-api.onrender.com/api/products");
       if (response.ok) {
         const allProducts = await response.json();
         const myOwnProducts = allProducts.filter((product: any) => product.user && product.user.id === userId);
@@ -179,7 +179,7 @@ export default function ProfilePage() {
     const isConfirmed = window.confirm("Bu ilanı tamamen silmek istediğine emin misin? Bu işlem geri alınamaz.");
     if (!isConfirmed) return;
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${productId}`, { method: "DELETE" });
+      const response = await fetch(`https://unicycle-api.onrender.com/api/products/${productId}`, { method: "DELETE" });
       if (response.ok) {
         setMyListings(prevListings => prevListings.filter(listing => listing.id !== productId));
         alert("İlan başarıyla silindi! 🗑️");
@@ -234,13 +234,13 @@ export default function ProfilePage() {
 
         let combined: {type: "user" | "product", item: any}[] = [];
         if (isUserSearch) {
-          const userRes = await fetch(`http://localhost:8080/api/users/search?q=${encodeURIComponent(query)}`);
+          const userRes = await fetch(`https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`);
           if (userRes.ok) {
             const users = await userRes.json();
             if(Array.isArray(users)) combined = users.map((u: any) => ({ type: "user", item: u }));
           }
         } else {
-          const prodRes = await fetch(`http://localhost:8080/api/products/search?q=${encodeURIComponent(query)}`);
+          const prodRes = await fetch(`https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`);
           if (prodRes.ok) {
             const products = await prodRes.json();
             if(Array.isArray(products)) {
@@ -351,7 +351,7 @@ export default function ProfilePage() {
     setMessages(prev => [...prev, { id: Date.now(), text: content, isMine: true }]);
 
     try {
-      const res = await fetch("http://localhost:8080/api/messages/send", {
+      const res = await fetch("https://unicycle-api.onrender.com/api/messages/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
