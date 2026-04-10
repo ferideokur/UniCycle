@@ -377,11 +377,12 @@ const handleBannerClick = () => {
   });
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] pb-20 font-sans">
+    // 🔥 DÜZELTME 1: Taşıyıcıya w-full ve overflow-x-hidden eklendi.
+    <main className="min-h-screen bg-[#F8FAFC] pb-20 font-sans w-full overflow-x-hidden flex flex-col">
       {/* 🚀 ÜST MENÜ */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20 gap-6">
+          <div className="flex justify-between items-center h-20 gap-2 sm:gap-6">
             
             {/* ✨ DÜZELTİLMİŞ LOGO KISMI (TIKLANINCA SIFIRLAR) ✨ */}
             <div className="flex-shrink-0">
@@ -392,18 +393,19 @@ const handleBannerClick = () => {
                   setExpandedGroup(null);
                   setSearchTerm("");
                 }}
-                className="flex items-center gap-3 hover:scale-105 transition-transform group cursor-pointer"
+                className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
               >
                 <Image
                   src="/logo.jpeg"
                   alt="UniCycle İkon"
-                  width={52}
-                  height={52}
-                  className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all rounded-md"
+                  width={44}
+                  height={44}
+                  className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all rounded-md sm:w-[52px] sm:h-[52px]"
                   priority
                 />
 
-                <span className="text-[32px] font-extrabold tracking-tight text-slate-800">
+                {/* 🔥 DÜZELTME 2: Logo yazısı mobilde küçültüldü */}
+                <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
                   Uni<span className="text-[#20B2AA]">Cycle</span>
                 </span>
               </Link>
@@ -512,8 +514,8 @@ const handleBannerClick = () => {
               )}
             </div>
 
-            {/* 🚀 BUTONLAR */}
-            <div className="flex items-center gap-4">
+            {/* 🚀 BUTONLAR (Mobilde gap daraltıldı) */}
+            <div className="flex items-center gap-3 sm:gap-4">
               <Link
                 href="/create-listing"
                 className="hidden sm:flex font-black text-blue-600 hover:text-blue-800 items-center gap-1 transition-colors"
@@ -522,13 +524,13 @@ const handleBannerClick = () => {
               </Link>
 
               {user ? (
-                <div className="flex items-center gap-4 relative">
+                <div className="flex items-center gap-2 sm:gap-4 relative">
                   
                   {/* 🔔 YENİ VE DÜZELTİLMİŞ ZİL BUTONU VE KARE PANEL 🔔 */}
                   <div className="relative">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                      className="relative w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors"
+                      className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors"
                       title="Bildirimler"
                     >
                       <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -545,7 +547,7 @@ const handleBannerClick = () => {
 
                     {/* 📦 KARE BİLDİRİM PANELİ (AÇILIR MENÜ) */}
                     {isNotificationOpen && (
-                      <div className="absolute top-full right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                           <span className="font-bold text-slate-800">
                             Bildirimler
@@ -603,9 +605,9 @@ const handleBannerClick = () => {
 
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all"
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all"
                   >
-                    <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">
                       👤
                     </div>
 
@@ -614,7 +616,7 @@ const handleBannerClick = () => {
 
                   <button
                     onClick={handleLogout}
-                    className="text-slate-400 hover:text-red-500 font-bold transition-colors text-sm"
+                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm"
                   >
                     Çıkış
                   </button>
@@ -622,7 +624,7 @@ const handleBannerClick = () => {
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center gap-2 bg-slate-800 text-white px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm"
+                  className="flex items-center gap-2 bg-slate-800 text-white px-5 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm"
                 >
                   Giriş Yap
                 </Link>
@@ -633,7 +635,7 @@ const handleBannerClick = () => {
       </header>
 
       {/* 🖥️ ANA DÜZEN (Sol Menü + Sağ İçerik) */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-8 flex gap-8 items-start">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8 flex gap-8 items-start w-full">
         {/* 🗂️ AKORDEON SOL MENÜ */}
         <aside className="w-72 hidden lg:block sticky top-28 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
           <h3 className="font-black text-lg text-slate-800 mb-5 pl-2">
@@ -705,15 +707,16 @@ const handleBannerClick = () => {
         </aside>
 
         {/* 🛍️ SAĞ İÇERİK ALANI */}
-        <section className="flex-1 min-w-0">
+        <section className="flex-1 min-w-0 w-full">
+          {/* 🔥 DÜZELTME 3: Mobil kategoriler ekran kenarlarına taşırıldı (Native hissi) */}
           <div className="block lg:hidden mb-6">
-            <div className="flex overflow-x-auto custom-scrollbar gap-2 pb-2">
+            <div className="flex overflow-x-auto custom-scrollbar gap-2 pb-2 -mx-4 px-4">
               <button
                 onClick={() => {
                   setExpandedGroup(null);
                   setActiveFilter("TÜMÜ");
                 }}
-                className={`whitespace-nowrap px-5 py-2.5 rounded-full font-bold text-sm ${activeFilter === "TÜMÜ" ? "bg-blue-600 text-white" : "bg-white text-slate-600 border border-slate-200"}`}
+                className={`whitespace-nowrap px-5 py-2.5 rounded-full font-bold text-sm ${activeFilter === "TÜMÜ" ? "bg-blue-600 text-white shadow-sm" : "bg-white text-slate-600 border border-slate-200"}`}
               >
                 Tümü
               </button>
@@ -722,7 +725,7 @@ const handleBannerClick = () => {
                 <button
                   key={cat}
                   onClick={() => handleMainCategoryClick(cat)}
-                  className={`whitespace-nowrap px-5 py-2.5 rounded-full font-bold text-sm ${expandedGroup === cat ? "bg-blue-600 text-white" : "bg-white text-slate-600 border border-slate-200"}`}
+                  className={`whitespace-nowrap px-5 py-2.5 rounded-full font-bold text-sm ${expandedGroup === cat ? "bg-blue-600 text-white shadow-sm" : "bg-white text-slate-600 border border-slate-200"}`}
                 >
                   {cat}
                 </button>
@@ -730,7 +733,7 @@ const handleBannerClick = () => {
             </div>
 
             {expandedGroup && CATEGORY_MAP[expandedGroup] && (
-              <div className="flex overflow-x-auto custom-scrollbar gap-2 mt-2 pb-2 animate-in fade-in">
+              <div className="flex overflow-x-auto custom-scrollbar gap-2 mt-2 pb-2 -mx-4 px-4 animate-in fade-in">
                 {CATEGORY_MAP[expandedGroup].map((subCat) => (
                   <button
                     key={subCat}
@@ -746,33 +749,33 @@ const handleBannerClick = () => {
 
           {/* 🌟🌟 DİNAMİK BANNER (TAKViM BAĞLANTILI) 🌟🌟 */}
           {activeFilter === "TÜMÜ" && searchTerm === "" && (
-            <div className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2.5rem] p-8 md:p-12 mb-10 text-white shadow-xl relative overflow-hidden flex items-center">
+            <div className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 md:p-12 mb-8 sm:mb-10 text-white shadow-xl relative overflow-hidden flex items-center">
               <div className="relative z-10 max-w-lg">
-                <span className="bg-white/20 backdrop-blur-sm text-white font-black px-4 py-1.5 rounded-full text-xs mb-4 inline-block tracking-widest uppercase">
+                <span className="bg-white/20 backdrop-blur-sm text-white font-black px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-[10px] sm:text-xs mb-3 sm:mb-4 inline-block tracking-widest uppercase">
                   {bannerData.tag}
                 </span>
 
-                <h2 className="text-4xl md:text-5xl font-black mb-4 leading-tight tracking-tight">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 sm:mb-4 leading-tight tracking-tight">
                   {bannerData.title}
                 </h2>
 
-                <p className="text-lg font-medium opacity-90 mb-6 leading-relaxed">
+                <p className="text-base sm:text-lg font-medium opacity-90 mb-5 sm:mb-6 leading-relaxed">
                   {bannerData.desc}
                 </p>
 
-                <button onClick={handleBannerClick} className="bg-white text-blue-700 font-black px-8 py-3.5 rounded-full shadow-lg hover:scale-105 transition-transform">
+                <button onClick={handleBannerClick} className="bg-white text-blue-700 font-black px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-lg hover:scale-105 transition-transform text-sm sm:text-base">
                   {bannerData.btn}
                 </button>
               </div>
 
-              <div className="absolute right-0 -bottom-10 opacity-20 md:opacity-40 text-[150px] md:text-[220px] leading-none transform -rotate-12">
+              <div className="absolute right-0 -bottom-10 opacity-20 md:opacity-40 text-[120px] sm:text-[150px] md:text-[220px] leading-none transform -rotate-12 pointer-events-none">
                 {bannerData.icon}
               </div>
             </div>
           )}
 
-          <div className="flex justify-between items-end mb-6 pb-4">
-            <h3 className="text-2xl font-black text-slate-800 tracking-tight">
+          <div className="flex justify-between items-end mb-4 sm:mb-6 pb-2 sm:pb-4">
+            <h3 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">
               {searchTerm
                 ? `"${searchTerm}" araması`
                 : activeFilter === "TÜMÜ"
@@ -780,67 +783,65 @@ const handleBannerClick = () => {
                   : `${activeFilter}`}
             </h3>
 
-            <div className="text-sm font-bold text-slate-500 hover:text-blue-600 cursor-pointer transition-colors">
+            <div className="text-xs sm:text-sm font-bold text-slate-500 hover:text-blue-600 cursor-pointer transition-colors">
               Sırala: En Yeni ▾
             </div>
           </div>
 
-          {/* ⏳ PROFESYONEL İSKELET YÜKLEME */}
+          {/* ⏳ PROFESYONEL İSKELET YÜKLEME (Gap ve Grid düzeltildi) */}
           {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mt-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mt-4">
               {[...Array(8)].map((_, i) => (
                 <div
                   key={i}
-                  className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col animate-pulse"
+                  className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col animate-pulse"
                 >
                   <div className="aspect-[4/5] bg-slate-200 w-full"></div>
 
-                  <div className="p-4 flex-1 flex flex-col gap-4">
+                  <div className="p-3 sm:p-4 flex-1 flex flex-col gap-3 sm:gap-4">
                     <div className="flex justify-between items-center mt-1">
-                      <div className="h-2.5 bg-slate-200 rounded-full w-1/3"></div>
-
-                      <div className="h-5 bg-slate-100 rounded-md w-1/4"></div>
+                      <div className="h-2 sm:h-2.5 bg-slate-200 rounded-full w-1/3"></div>
+                      <div className="h-4 sm:h-5 bg-slate-100 rounded-md w-1/4"></div>
                     </div>
 
-                    <div className="space-y-2.5 mt-2">
-                      <div className="h-3.5 bg-slate-200 rounded-full w-5/6"></div>
-
-                      <div className="h-3.5 bg-slate-200 rounded-full w-4/6"></div>
+                    <div className="space-y-2 mt-1 sm:mt-2">
+                      <div className="h-3 sm:h-3.5 bg-slate-200 rounded-full w-5/6"></div>
+                      <div className="h-3 sm:h-3.5 bg-slate-200 rounded-full w-4/6"></div>
                     </div>
 
-                    <div className="mt-auto flex items-end justify-between pt-6">
-                      <div className="h-5 bg-slate-300 rounded-full w-1/3"></div>
-
-                      <div className="h-4 bg-slate-100 rounded-md w-1/4 border border-slate-200"></div>
+                    <div className="mt-auto flex items-end justify-between pt-4 sm:pt-6">
+                      <div className="h-4 sm:h-5 bg-slate-300 rounded-full w-1/3"></div>
+                      <div className="h-3 sm:h-4 bg-slate-100 rounded-md w-1/4 border border-slate-200"></div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-[3rem] border border-slate-100 shadow-sm mt-4">
-              <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-5xl mx-auto mb-6">
+            <div className="text-center py-12 sm:py-20 bg-white rounded-3xl sm:rounded-[3rem] border border-slate-100 shadow-sm mt-4 px-4">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-slate-50 rounded-full flex items-center justify-center text-4xl sm:text-5xl mx-auto mb-4 sm:mb-6">
                 🕵️‍♀️
               </div>
 
-              <h3 className="text-2xl font-black text-slate-800 mb-3">
+              <h3 className="text-xl sm:text-2xl font-black text-slate-800 mb-2 sm:mb-3">
                 Buralar biraz ıssız...
               </h3>
 
-              <p className="text-slate-500 font-medium text-lg mb-8 max-w-md mx-auto">
+              <p className="text-slate-500 font-medium text-sm sm:text-lg mb-6 sm:mb-8 max-w-md mx-auto">
                 Sanki kampüste kimse bu kategoride bir şey satmıyor. İlk adımı
                 sen atmaya ne dersin?
               </p>
 
               <Link
                 href="/create-listing"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-black py-4 px-10 rounded-2xl transition shadow-xl shadow-blue-200 inline-block hover:-translate-y-1"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-black py-3 sm:py-4 px-8 sm:px-10 rounded-xl sm:rounded-2xl transition shadow-xl shadow-blue-200 inline-block hover:-translate-y-1 text-sm sm:text-base"
               >
                 Hemen İlan Ver
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            // 🔥 DÜZELTME 4: 2'li İlan Grid'i mobil için mükemmelleştirildi (gap-3, p-3, rounded-2xl)
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {filteredProducts.map((p: any) => {
                 const isLiked = likedProducts.includes(p.id);
 
@@ -848,7 +849,7 @@ const handleBannerClick = () => {
                   <Link
                     href={`/listing-detail/${p.id}`}
                     key={p.id}
-                    className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 border border-slate-100 flex flex-col"
+                    className="group bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 border border-slate-100 flex flex-col"
                   >
                     <div className="aspect-[4/5] relative overflow-hidden bg-slate-100">
                       {p.photosBase64 && p.photosBase64.length > 0 ? (
@@ -858,30 +859,29 @@ const handleBannerClick = () => {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-6xl">
+                        <div className="w-full h-full flex items-center justify-center text-4xl sm:text-6xl">
                           📦
                         </div>
                       )}
 
                       {p.priceType === "takas" && (
-                        <div className="absolute top-3 left-3 bg-purple-600 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-md uppercase tracking-wider backdrop-blur-sm">
+                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-purple-600 text-white text-[9px] sm:text-[10px] font-black px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-lg shadow-md uppercase tracking-wider backdrop-blur-sm">
                           Takas
                         </div>
                       )}
 
                       {p.priceType === "ucretsiz" && (
-                        <div className="absolute top-3 left-3 bg-green-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-md uppercase tracking-wider backdrop-blur-sm">
+                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-green-500 text-white text-[9px] sm:text-[10px] font-black px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-lg shadow-md uppercase tracking-wider backdrop-blur-sm">
                           Ücretsiz
                         </div>
                       )}
 
-                      {/* Kalp butonuna tıklandığında hem favoriye alacak hem de karşı tarafa bildirim atacak */}
                       <button
                         onClick={(e) => toggleLike(e, p)}
-                        className={`absolute top-3 right-3 p-2.5 rounded-full shadow-md backdrop-blur-md transition-all hover:scale-110 active:scale-95 z-10 ${isLiked ? "bg-red-500/90 text-white" : "bg-white/90 text-gray-400 hover:text-red-500"}`}
+                        className={`absolute top-2 right-2 sm:top-3 sm:right-3 p-2 sm:p-2.5 rounded-full shadow-md backdrop-blur-md transition-all hover:scale-110 active:scale-95 z-10 ${isLiked ? "bg-red-500/90 text-white" : "bg-white/90 text-gray-400 hover:text-red-500"}`}
                       >
                         <svg
-                          className="w-5 h-5 fill-current"
+                          className="w-4 h-4 sm:w-5 sm:h-5 fill-current"
                           viewBox="0 0 24 24"
                         >
                           <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
@@ -889,13 +889,13 @@ const handleBannerClick = () => {
                       </button>
                     </div>
 
-                    <div className="p-4 flex-1 flex flex-col">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider line-clamp-1 pr-2">
+                    <div className="p-3 sm:p-4 flex-1 flex flex-col">
+                      <div className="flex justify-between items-center mb-1.5 sm:mb-2 gap-1">
+                        <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider line-clamp-1 flex-1">
                           {p.category}
                         </span>
 
-                        <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md shrink-0">
+                        <span className="text-[10px] sm:text-xs font-bold text-blue-600 bg-blue-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md shrink-0">
                           @
                           {p.user && p.user.fullName
                             ? p.user.fullName.split(" ")[0]
@@ -903,12 +903,12 @@ const handleBannerClick = () => {
                         </span>
                       </div>
 
-                      <h2 className="text-sm font-bold text-slate-800 line-clamp-2 leading-snug mb-3 group-hover:text-blue-600 transition-colors">
+                      <h2 className="text-xs sm:text-sm font-bold text-slate-800 line-clamp-2 leading-snug mb-2 sm:mb-3 group-hover:text-blue-600 transition-colors">
                         {p.title}
                       </h2>
 
                       <div className="mt-auto flex items-end justify-between">
-                        <div className="text-lg font-black text-slate-900 tracking-tight">
+                        <div className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
                           {p.priceType === "fiyat"
                             ? `₺${p.price}`
                             : p.priceType === "takas"
@@ -916,7 +916,7 @@ const handleBannerClick = () => {
                               : "Bedava"}
                         </div>
 
-                        <div className="text-[10px] font-bold text-slate-400 border border-slate-200 px-2 py-1 rounded-lg">
+                        <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 border border-slate-200 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md sm:rounded-lg">
                           {p.itemCondition ? p.itemCondition.split(" ")[0] : ""}
                         </div>
                       </div>
@@ -939,15 +939,15 @@ const handleBannerClick = () => {
       {infoModal.isOpen && (
         <div className="fixed inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h2 className="text-xl font-black text-slate-800">{infoModal.title}</h2>
+            <div className="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h2 className="text-lg sm:text-xl font-black text-slate-800">{infoModal.title}</h2>
               <button onClick={() => setInfoModal({ ...infoModal, isOpen: false })} className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors">✕</button>
             </div>
-            <div className="p-8 text-slate-600 font-medium whitespace-pre-wrap leading-relaxed max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <div className="p-6 sm:p-8 text-sm sm:text-base text-slate-600 font-medium whitespace-pre-wrap leading-relaxed max-h-[60vh] overflow-y-auto custom-scrollbar">
               {infoModal.content}
             </div>
-            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
-              <button onClick={() => setInfoModal({ ...infoModal, isOpen: false })} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl transition-colors shadow-md">
+            <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button onClick={() => setInfoModal({ ...infoModal, isOpen: false })} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base">
                 Anladım
               </button>
             </div>
@@ -956,25 +956,25 @@ const handleBannerClick = () => {
       )}
 
       {/* 🌊 AÇIK RENK, MİNİMALİST FOOTER */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 rounded-t-[3rem] shadow-sm">
+      <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-6 mt-10 rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-2">
-            <div className="mb-4">
-              <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
+          <div className="col-span-1 md:col-span-2 text-center md:text-left">
+            <div className="mb-3 sm:mb-4">
+              <span className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">
                 Uni<span className="text-[#20B2AA]">Cycle</span>
               </span>
             </div>
 
-            <p className="text-sm font-medium text-slate-500 max-w-sm">
+            <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
               öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
             </p>
           </div>
 
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4">Platform</h4>
 
-            <ul className="space-y-2 text-sm font-medium text-slate-500">
+            <ul className="space-y-2 text-xs sm:text-sm font-medium text-slate-500">
               <li>
                 <button onClick={() => openInfoModal("Nasıl Çalışır?", "UniCycle'da alışveriş yapmak çok kolay!\n\n1. Kendi üniversitenin e-postasıyla kayıt ol.\n2. İhtiyacın olmayan eşyalarını ilan olarak ekle.\n3. Kampüsündeki diğer öğrencilerle mesajlaşarak güvenle alışveriş yap!")} className="hover:text-blue-600 transition-colors">
                   Nasıl Çalışır?
@@ -993,10 +993,10 @@ const handleBannerClick = () => {
             </ul>
           </div>
 
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4">İletişim</h4>
 
-            <ul className="space-y-2 text-sm font-medium text-slate-500">
+            <ul className="space-y-2 text-xs sm:text-sm font-medium text-slate-500">
               <li>
                 <button onClick={() => openInfoModal("Destek Merkezi", "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin. Bütün taleplere 24 saat içinde geri dönüş sağlıyoruz.")} className="hover:text-blue-600 transition-colors">
                   Destek Merkezi
@@ -1016,7 +1016,7 @@ const handleBannerClick = () => {
           </div>
         </div>
 
-        <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
+        <div className="max-w-[1400px] mx-auto mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-100 text-center text-[10px] sm:text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>
