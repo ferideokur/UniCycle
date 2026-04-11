@@ -85,18 +85,23 @@ export default function AuthPage() {
   const [customUniversity, setCustomUniversity] = useState(""); // Diğer seçilirse
 
   const [message, setMessage] = useState("");
+  
+  // 🌟 YENİ EKLENEN PROFESYONEL ÖZELLİK: Yükleniyor Hafızası
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setMessage("İşlem yapılıyor, bekle...");
+    setIsLoading(true);
+    setMessage("⏳ İşlem yapılıyor, lütfen bekleyin...");
 
     if (!isLogin) {
       // 🛑 1. KURAL: SOYADI ZORUNLULUĞU (En az 2 kelime)
       const nameParts = fullName.trim().split(/\s+/);
       if (nameParts.length < 2) {
         setMessage(
-          "❌ Lütfen adınızı ve soyadınızı aralarında boşluk bırakarak tam yazın (Örn: Feride Okur).",
+          "❌ Lütfen adınızı ve soyadınızı aralarında boşluk bırakarak tam yazın (Örn: Feride Okur)."
         );
+        setIsLoading(false);
         return;
       }
 
@@ -105,6 +110,7 @@ export default function AuthPage() {
       if (university === "Diğer...") {
         if (customUniversity.trim() === "") {
           setMessage("❌ Lütfen üniversitenizin adını tam olarak yazın.");
+          setIsLoading(false);
           return;
         }
         finalUniversity = customUniversity.trim();
@@ -124,21 +130,8 @@ export default function AuthPage() {
               password: password,
               university: finalUniversity,
             }),
-          },
+          }
         );
-
-        {/*BACKGROUND ANIMATION*/}
-  
-  <video
-  className="absolute inset-0 w-full h-full object-cover opacity-40"
-  autoPlay
-  muted
-  playsInline
-  loop
->
-  <source src="/trade.mp4" type="video/mp4" />
-</video>
-
 
         const text = await response.text();
 
@@ -148,12 +141,17 @@ export default function AuthPage() {
           setEmail("");
           setPassword("");
           setCustomUniversity("");
-          setTimeout(() => setIsLogin(true), 2000);
+          setTimeout(() => {
+            setIsLogin(true);
+            setMessage("");
+          }, 2000);
         } else {
           setMessage("❌ " + text);
         }
       } catch (error) {
         setMessage("❌ Sunucuya bağlanılamadı. Arka planda Java çalışıyor mu?");
+      } finally {
+        setIsLoading(false);
       }
     } else {
       // --- GİRİŞ YAPMA (LOGIN) İŞLEMİ ---
@@ -186,74 +184,92 @@ export default function AuthPage() {
         }
       } catch (error) {
         setMessage("❌ Sunucuya bağlanılamadı. Arka planda Java çalışıyor mu?");
+      } finally {
+        setIsLoading(false);
       }
     }
   };
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+    <main className="relative min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 overflow-x-hidden bg-slate-900 w-full">
+      
+      {/* 🎬 DÜZELTİLEN ARKA PLAN VİDEOSU */}
       <video
-  autoPlay
-  muted
- 
-  playsInline
-  className="absolute inset-0 w-full h-full object-cover opacity-40"
-  src="/trade.mp4"
-/>
+        autoPlay
+        muted
+        playsInline
+        loop
+        className="absolute inset-0 w-full h-full object-cover opacity-50 z-0"
+      >
+        <source src="/trade.mp4" type="video/mp4" />
+      </video>
 
-<div className="absolute inset-0 bg-black/30"></div>
-      <div className="absolute top-8 left-8">
+      {/* KARARTMA EFEKTİ (Videonun üstüne karanlık bir tül çekiyoruz ki form net okunsun) */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/80 z-0"></div>
+      
+      {/* 🚀 BUZLU CAM EFEKTLİ GERİ DÖN BUTONU */}
+      <div className="absolute top-6 left-4 sm:top-8 sm:left-8 z-50">
         <Link
           href="/"
-          className="text-gray-400 hover:text-blue-600 font-bold flex items-center gap-2 transition-colors"
+          className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-bold flex items-center gap-2 hover:bg-white/20 hover:scale-105 transition-all text-xs sm:text-sm shadow-xl"
         >
-          <span>←</span> Ana Sayfaya Dön
+          <span>&larr;</span> Ana Sayfaya Dön
         </Link>
       </div>
 
-      <div className="relative z-10 bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden border border-gray-100 mt-12 mb-12">
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 text-center border-b border-gray-100">
+      {/* 💼 GİRİŞ / KAYIT KARTI (Premium Apple Stili) */}
+      <div className="relative z-10 bg-white w-full max-w-[420px] rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] overflow-hidden border border-white/20 my-10 animate-in fade-in zoom-in-95 duration-500">
+        
+        {/* HEADER KISMI */}
+        <div className="bg-gradient-to-b from-blue-50/80 to-white p-6 sm:p-8 text-center border-b border-slate-100">
           <Link
             href="/"
-            className="flex justify-center items-center gap-3 hover:scale-105 transition-transform mb-4"
+            className="flex justify-center items-center gap-2.5 hover:scale-105 transition-transform mb-4 inline-flex"
           >
             <Image
               src="/logo.jpeg"
               alt="UniCycle İkon"
-              width={56}
-              height={56}
-              className="object-contain drop-shadow-sm"
+              width={52}
+              height={52}
+              className="object-contain drop-shadow-sm rounded-[12px]"
               priority
             />
-            <span className="text-4xl font-extrabold tracking-tight text-slate-800">
+            <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-800">
               Uni<span className="text-[#20B2AA]">Cycle</span>
             </span>
           </Link>
-          <h1 className="text-2xl font-black text-blue-900">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">
             {isLogin ? "Tekrar Hoş Geldin! 👋" : "UniCycle'a Katıl! 🚀"}
           </h1>
-          <p className="text-gray-500 text-sm mt-2 font-medium">
+          <p className="text-slate-500 text-xs sm:text-sm mt-2 font-medium px-2 leading-relaxed">
             {isLogin
-              ? "Kampüs pazaryerine giriş yap."
+              ? "Kampüs pazar yerine hızlıca giriş yap."
               : "Öğrenci e-postan ve okulunla saniyeler içinde kayıt ol."}
           </p>
         </div>
 
-        <div className="p-8">
+        {/* FORM KISMI */}
+        <div className="p-6 sm:p-8">
           {message && (
             <div
-              className={`mb-4 p-3 rounded-xl text-sm font-bold text-center ${message.includes("✅") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+              className={`mb-5 p-3.5 rounded-xl text-xs sm:text-sm font-bold text-center animate-in fade-in slide-in-from-top-2 ${
+                message.includes("✅")
+                  ? "bg-green-50 text-green-600 border border-green-100"
+                  : message.includes("⏳")
+                  ? "bg-blue-50 text-blue-600 border border-blue-100"
+                  : "bg-red-50 text-red-600 border border-red-100"
+              }`}
             >
               {message}
             </div>
           )}
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
             {!isLogin && (
-              <>
+              <div className="space-y-4 sm:space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 {/* 🚀 İSİM SOYİSİM */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                  <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     İsim ve Soyisim
                   </label>
                   <input
@@ -261,23 +277,23 @@ export default function AuthPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Örn: Feride Okur"
-                    className="w-full bg-gray-50 text-gray-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-gray-200"
+                    className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-slate-200 text-sm font-semibold"
                     required={!isLogin}
                   />
-                  <p className="text-xs text-gray-400 mt-1 font-medium">
+                  <p className="text-[10px] sm:text-xs text-slate-400 mt-1.5 font-medium px-1">
                     Güvenlik için soyadınızı girmek zorunludur.
                   </p>
                 </div>
 
                 {/* 🚀 ÜNİVERSİTE SEÇİMİ */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                  <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     Üniversiteniz
                   </label>
                   <select
                     value={university}
                     onChange={(e) => setUniversity(e.target.value)}
-                    className="w-full bg-gray-50 text-gray-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-gray-200 font-semibold"
+                    className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-slate-200 font-semibold text-sm appearance-none cursor-pointer"
                   >
                     {UNIVERSITIES.map((uni, idx) => (
                       <option key={idx} value={uni}>
@@ -289,8 +305,8 @@ export default function AuthPage() {
 
                 {/* EĞER "DİĞER" SEÇİLİRSE GÖZÜKEN KUTU */}
                 {university === "Diğer..." && (
-                  <div className="animate-fade-in">
-                    <label className="block text-sm font-bold text-blue-700 mb-1.5">
+                  <div className="animate-in fade-in slide-in-from-top-2">
+                    <label className="block text-[11px] sm:text-xs font-bold text-[#20B2AA] mb-1.5 uppercase tracking-wider px-1">
                       Okulunuzun Adı
                     </label>
                     <input
@@ -298,16 +314,16 @@ export default function AuthPage() {
                       value={customUniversity}
                       onChange={(e) => setCustomUniversity(e.target.value)}
                       placeholder="Örn: X Teknik Üniversitesi"
-                      className="w-full bg-blue-50 text-blue-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-blue-200 font-semibold placeholder-blue-300"
+                      className="w-full bg-teal-50 text-teal-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-teal-200 font-bold placeholder-teal-300 text-sm"
                       required={!isLogin && university === "Diğer..."}
                     />
                   </div>
                 )}
-              </>
+              </div>
             )}
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1.5">
+              <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                 Üniversite E-Postası
               </label>
               <input
@@ -315,13 +331,13 @@ export default function AuthPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="isim@ogrenci.edu.tr"
-                className="w-full bg-gray-50 text-gray-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-gray-200"
+                className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-slate-200 text-sm font-semibold"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1.5">
+              <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                 Şifre
               </label>
               <input
@@ -329,20 +345,21 @@ export default function AuthPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-gray-50 text-gray-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-gray-200"
+                className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-slate-200 text-sm font-bold tracking-widest"
                 required
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-lg py-3.5 rounded-xl transition-colors shadow-md mt-4"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-blue-600 to-[#20B2AA] hover:from-blue-700 hover:to-teal-600 disabled:opacity-70 text-white font-black text-base sm:text-lg py-3.5 sm:py-4 rounded-xl sm:rounded-2xl transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 mt-4"
             >
-              {isLogin ? "Giriş Yap" : "Hesap Oluştur"}
+              {isLoading ? "⏳ Bekleyiniz..." : (isLogin ? "Giriş Yap" : "Hesap Oluştur")}
             </button>
           </form>
 
-          <div className="mt-8 text-center text-sm font-medium text-gray-600">
+          <div className="mt-6 sm:mt-8 text-center text-xs sm:text-sm font-medium text-slate-500 bg-slate-50 py-3.5 rounded-xl border border-slate-100">
             {isLogin ? "Hesabın yok mu?" : "Zaten hesabın var mı?"}
             <button
               type="button"
@@ -350,7 +367,7 @@ export default function AuthPage() {
                 setIsLogin(!isLogin);
                 setMessage("");
               }}
-              className="ml-1.5 font-black text-blue-600 hover:text-blue-800 transition-colors"
+              className="ml-1.5 font-black text-blue-600 hover:text-[#20B2AA] transition-colors"
             >
               {isLogin ? "Hemen Kayıt Ol" : "Giriş Yap"}
             </button>
