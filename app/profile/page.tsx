@@ -364,7 +364,6 @@ export default function ProfilePage() {
   const displayUniversity = university === "Diğer..." ? customUniversity : university;
 
   return (
-    // 🔥 YATAY KAYMA (TAŞMA) ENGELİ EKLİ
     <div className="min-h-screen bg-[#F8FAFC] pb-20 relative font-sans w-full overflow-x-hidden flex flex-col">
       
       {showToast && (
@@ -373,12 +372,10 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 🚀 ANASAYFA İLE %100 AYNI HİZALAMAYA SAHİP ÜST MENÜ NAVBAR */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
-            {/* Logo */}
             <div className="flex-shrink-0">
               <Link href="/" className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer">
                 <Image src="/logo.jpeg" alt="UniCycle İkon" width={36} height={36} className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all rounded-md sm:w-[52px] sm:h-[52px]" priority />
@@ -388,7 +385,6 @@ export default function ProfilePage() {
               </Link>
             </div>
 
-            {/* Masaüstü Arama Çubuğu */}
             <div className="hidden md:flex flex-1 max-w-3xl relative group z-50">
               <form onSubmit={handleSearchSubmit} className="w-full relative">
                 <input type="text" placeholder="Ürün, @üye veya ders notu ara..." className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-transparent font-medium" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => setIsDropdownOpen(true)} onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)} />
@@ -415,29 +411,28 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Sağ Butonlar (Zil, Profil, İlan Ver - Shrink-0 Korumasıyla) */}
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              <Link href="/create-listing" className="hidden sm:flex font-black text-[#20B2AA] hover:text-blue-800 items-center gap-1 transition-colors">
+              <Link href="/create-listing" className="hidden md:flex font-black text-blue-600 hover:text-blue-800 items-center gap-1 transition-colors">
                 <span className="text-xl">+</span> İlan Ver
               </Link>
               
               {user ? (
-                 <div className="flex items-center gap-1 sm:gap-4 shrink-0">
+                 <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                    
-                   {/* Bildirim Zili */}
                    <div className="relative shrink-0">
-                     <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-slate-600 hover:text-blue-600 transition-colors shrink-0" title="Bildirimler">
-                       <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                     <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors shrink-0" title="Bildirimler">
+                       <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                       </svg>
                        {notificationsCount > 0 && (
-                         <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-orange-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full border-2 border-white">
+                         <span className="absolute top-0 right-0 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 text-white text-[9px] sm:text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
                            {notificationsCount}
                          </span>
                        )}
                      </button>
 
-                     {/* Kare Bildirim Paneli */}
                      {isNotificationOpen && (
-                       <div className="absolute top-full right-[-20px] sm:right-0 mt-3 w-[300px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                       <div className="absolute top-full right-[-10px] sm:right-0 mt-3 w-[280px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                          <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                            <span className="font-bold text-slate-800">Bildirimler</span>
                            {notificationsCount > 0 && (
@@ -476,7 +471,6 @@ export default function ProfilePage() {
                      )}
                    </div>
 
-                   {/* Profil Butonu (Tam Daire) */}
                    <Link href="/profile" className="flex items-center justify-center gap-2 bg-blue-600 text-white w-9 h-9 sm:w-auto sm:h-auto sm:px-5 sm:py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm transition-all shrink-0">
                      <div className="w-4 h-4 sm:w-5 sm:h-5 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs shrink-0">👤</div>
                      <span className="hidden sm:block ml-2 text-sm">Hesabım</span>
@@ -490,14 +484,13 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Sadece Mobil İçin Arama Çubuğu */}
-          <div className="md:hidden pb-3 pt-1 w-full relative z-40">
+          <div className="md:hidden pb-3 pt-2 w-full relative z-40">
             <form onSubmit={handleSearchSubmit} className="w-full relative">
-              <input type="text" placeholder="Ürün, @üye veya ders notu ara..." className="w-full bg-slate-100 text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-transparent font-medium text-sm" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => setIsDropdownOpen(true)} onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)} />
+              <input type="text" placeholder="Ürün, @üye veya ders notu ara..." className="w-full bg-slate-100 text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-transparent font-medium text-sm" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => setIsDropdownOpen(true)} onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)} />
               <span className="absolute left-3 top-2.5 text-slate-400">🔍</span>
             </form>
             {isDropdownOpen && liveResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
                 {liveResults.slice(0, 4).map((result, idx) => (
                   <Link href={result.type === "user" ? `/user/${result.item.id}` : `/listing-detail/${result.item.id}`} key={`mob-${idx}`} className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50">
                     <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
@@ -513,10 +506,7 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      {/* 💼 VİTRİN VE PROFİL BİLGİLERİ */}
       <div className="max-w-5xl mx-auto mt-0 sm:mt-6 bg-white sm:rounded-t-[2.5rem] sm:rounded-b-2xl shadow-sm border-0 sm:border border-gray-200 overflow-hidden w-full relative">
-        
-        {/* 🔥 Kapak Fotoğrafı */}
         <div className="h-32 sm:h-64 w-full relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700">
            {coverImage && <img src={coverImage} alt="Kapak" className="w-full h-full object-cover" style={{ objectPosition: `center ${coverY}%` }} />}
            {isEditMode && (
@@ -527,14 +517,12 @@ export default function ProfilePage() {
         </div>
 
         <div className="px-4 sm:px-8 pb-6 sm:pb-8 relative">
-          {/* 🔥 Profil Fotoğrafı ve Butonlar */}
           <div className="flex justify-between items-end -mt-12 sm:-mt-16 mb-4 relative z-10">
             <div onClick={() => isEditMode && setActiveModal("profile")} className={`w-24 h-24 sm:w-36 sm:h-36 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100 relative flex items-center justify-center shrink-0 ${isEditMode ? "cursor-pointer group" : ""}`}>
               <img src={profileImage || defaultAvatar} alt="Profil" className="w-full h-full object-cover origin-center" style={{ transform: `scale(${profileZoom}) rotate(${profileRotate}deg)` }} />
               {isEditMode && <div className="absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity animate-in fade-in"><span className="text-white text-xl sm:text-3xl">📷</span></div>}
             </div>
 
-            {/* Düzenle Butonları */}
             <div className="flex gap-1.5 sm:gap-3 mb-1 sm:mb-2 shrink-0">
               {isEditMode && (
                 <button onClick={() => setActiveModal("info")} className="bg-blue-50 border border-blue-100 text-blue-600 hover:bg-blue-100 font-bold py-1.5 px-3 sm:py-2 sm:px-5 rounded-full transition shadow-sm flex items-center gap-1 sm:gap-2 text-[10px] sm:text-base whitespace-nowrap">
@@ -586,10 +574,10 @@ export default function ProfilePage() {
               <Link href="/create-listing" className="bg-blue-600 hover:bg-blue-700 text-white font-black py-2.5 sm:py-3.5 px-6 sm:px-8 rounded-full transition shadow-md inline-block text-xs sm:text-base">İlk İlanını Ver</Link>
             </div>
           ) : (
-            // 🔥 TIKLANABİLİR, MOBİLDE 2'Lİ İLAN VİTRİNİ
+            // 🔥 TIKLANABİLİR, MOBİLDE YAN YANA 2'Lİ İLAN VİTRİNİ
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {myListings.map((listing) => (
-                <Link href={`/listing-detail/${listing.id}`} key={listing.id} className="group cursor-pointer block">
+                <Link href={`/listing-detail/${listing.id}`} key={listing.id} className="group block cursor-pointer">
                   <div className="aspect-[4/5] rounded-xl sm:rounded-2xl overflow-hidden bg-gray-100 mb-2 sm:mb-3 border border-gray-200 relative shadow-sm group-hover:shadow-md transition-shadow">
                     {listing.photosBase64 && listing.photosBase64.length > 0 ? (
                       <img src={listing.photosBase64[0]} alt={listing.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -598,7 +586,7 @@ export default function ProfilePage() {
                     {listing.priceType === "takas" && <div className="absolute top-2 left-2 bg-purple-600 text-white text-[9px] sm:text-[10px] font-black px-2 py-1 rounded-md uppercase shadow-sm">Takaslık</div>}
                     {listing.priceType === "ucretsiz" && <div className="absolute top-2 left-2 bg-green-500 text-white text-[9px] sm:text-[10px] font-black px-2 py-1 rounded-md uppercase shadow-sm">Ücretsiz</div>}
 
-                    {/* Silme Butonu Tıklanabilir Kalması İçin */}
+                    {/* Silme Butonu (Tıklanabilir ve Linki Engeller) */}
                     <button onClick={(e) => handleDeleteListing(listing.id, e)} className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white p-1.5 sm:p-2 rounded-full shadow-lg opacity-100 lg:opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 z-10" title="İlanı Sil">🗑️</button>
                   </div>
                   <div>
@@ -614,34 +602,34 @@ export default function ProfilePage() {
       </div>
 
       {/* ---------------------------------------------------------------------- */}
-      {/* 💬 GERÇEK VERİTABANI İLE MESAJLAŞMA (INBOX) SİSTEMİ - ŞIK UYGULAMA GÖRÜNÜMÜ */}
+      {/* 💬 GERÇEK VERİTABANI İLE MESAJLAŞMA SİSTEMİ - %100 DÜZELTİLDİ */}
       {/* ---------------------------------------------------------------------- */}
       
       {!isMessagesListOpen && !activeChatUser && (
         <button 
           onClick={() => setIsMessagesListOpen(true)}
-          className="fixed bottom-6 right-4 sm:right-6 z-[9990] bg-[#20B2AA] text-white w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 hover:bg-teal-700 transition-all group"
+          className="fixed bottom-6 right-4 sm:right-6 z-[9990] bg-[#20B2AA] text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 hover:bg-teal-700 transition-all group"
         >
-          <svg className="w-7 h-7 sm:w-8 sm:h-8 group-hover:animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+          <svg className="w-6 h-6 sm:w-7 sm:h-7 group-hover:animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
           
           {totalUnreadMessages > 0 && (
-            <span className="absolute top-0 right-0 bg-red-500 w-5 h-5 sm:w-6 sm:h-6 text-[10px] sm:text-xs font-bold flex items-center justify-center rounded-full border-2 border-white">
+            <span className="absolute top-0 right-0 bg-red-500 w-4 h-4 sm:w-5 sm:h-5 text-[9px] sm:text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
               {totalUnreadMessages}
             </span>
           )}
         </button>
       )}
 
-      {/* 2. GERÇEK GELEN KUTUSU LİSTESİ - MOBİLDE %55 EKRAN, YUVARLATILMIŞ KÖŞELER */}
+      {/* 🔥 2. GERÇEK GELEN KUTUSU LİSTESİ - MAVİ BAŞLIK VE KÜÇÜK BOYUT */}
       {isMessagesListOpen && (
         <div className="fixed bottom-0 right-0 sm:right-4 md:right-8 w-full sm:w-80 md:w-[350px] h-[55vh] sm:h-[450px] bg-white rounded-t-3xl sm:rounded-2xl shadow-[0_-15px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
           
-          {/* Mobil İçin Gri Tutma Çubuğu */}
-          <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mt-3 mb-1 sm:hidden"></div>
-
-          <div className="bg-white text-[#20B2AA] px-5 py-3 flex justify-between items-center border-b border-slate-100">
-            <h3 className="font-extrabold text-base flex items-center gap-2">💬 Mesajlar</h3>
-            <button onClick={() => setIsMessagesListOpen(false)} className="text-slate-400 hover:text-slate-800 font-bold text-2xl leading-none">✕</button>
+          {/* LACİVERT HEADER */}
+          <div className="bg-blue-600 text-white px-4 sm:px-5 py-4 sm:py-4 flex justify-between items-center shadow-md relative pt-6 sm:pt-4">
+            <div className="w-12 h-1.5 bg-white/40 rounded-full absolute top-2 left-1/2 -translate-x-1/2 sm:hidden z-50"></div>
+            
+            <h3 className="font-bold text-base sm:text-lg flex items-center gap-2">💬 Mesajlar</h3>
+            <button onClick={() => setIsMessagesListOpen(false)} className="text-white/80 hover:text-white font-bold text-2xl sm:text-xl leading-none">✕</button>
           </div>
           
           <div className="flex-1 overflow-y-auto flex flex-col divide-y divide-slate-100 bg-white custom-scrollbar">
@@ -652,19 +640,19 @@ export default function ProfilePage() {
             ) : (
               inboxChats.map((chat) => (
                 <div key={chat.id} onClick={() => openChatWith(chat)} className="p-4 flex items-center gap-3 hover:bg-slate-50 cursor-pointer transition-colors">
-                  <div className="w-12 h-12 sm:w-12 sm:h-12 bg-blue-50 rounded-full flex items-center justify-center font-bold text-blue-600 border border-blue-100 text-base sm:text-lg shrink-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-600 border border-blue-200 text-sm sm:text-base shrink-0">
                     {chat.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-0.5">
                       <span className={`font-bold truncate text-sm ${chat.unread > 0 ? "text-slate-900" : "text-slate-700"}`}>{chat.name}</span>
-                      <span className="text-[10px] sm:text-xs font-bold text-slate-400">
+                      <span className="text-[9px] sm:text-[10px] font-bold text-slate-400">
                         {new Date(chat.time).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <p className={`text-xs truncate ${chat.unread > 0 ? "font-bold text-slate-800" : "text-slate-500"}`}>{chat.lastMsg}</p>
-                      {chat.unread > 0 && <span className="bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ml-2 shrink-0">{chat.unread}</span>}
+                      {chat.unread > 0 && <span className="bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ml-2 shrink-0">{chat.unread}</span>}
                     </div>
                   </div>
                 </div>
@@ -674,36 +662,35 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 3. GERÇEK AKTİF SOHBET PENCERESİ - MOBİLDE %55 EKRAN, YUVARLATILMIŞ KÖŞELER */}
+      {/* 🔥 3. GERÇEK AKTİF SOHBET PENCERESİ - MAVİ BAŞLIK VE KÜÇÜK BOYUT */}
       {activeChatUser && (
         <div className="fixed bottom-0 right-0 sm:right-4 md:right-8 w-full sm:w-80 md:w-[350px] h-[55vh] sm:h-[450px] bg-white rounded-t-3xl sm:rounded-2xl shadow-[0_-15px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
           
-          {/* Mobil İçin Tutma Çubuğu (Zemine Yedirilmiş) */}
-          <div className="w-12 h-1.5 bg-white/40 rounded-full absolute top-2 left-1/2 -translate-x-1/2 sm:hidden z-50"></div>
-
           <div className="bg-blue-600 text-white px-4 sm:px-5 py-4 sm:py-4 flex justify-between items-center shadow-md relative pt-6 sm:pt-4">
-            <div className="flex items-center gap-3 sm:gap-3">
-              <button onClick={() => { setActiveChatUser(null); setIsMessagesListOpen(true); }} className="text-white/80 hover:text-white mr-1 sm:mr-1 font-black text-2xl sm:text-xl">&larr;</button>
+            <div className="w-12 h-1.5 bg-white/40 rounded-full absolute top-2 left-1/2 -translate-x-1/2 sm:hidden z-50"></div>
+            
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button onClick={() => { setActiveChatUser(null); setIsMessagesListOpen(true); }} className="text-white/80 hover:text-white mr-0.5 sm:mr-1 font-black text-xl sm:text-lg">&larr;</button>
               <div className="relative">
-                <div className="w-10 h-10 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center text-sm sm:text-base font-bold border border-white/30">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white/20 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold border border-white/30">
                   {activeChatUser.name.charAt(0).toUpperCase()}
                 </div>
-                <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-blue-600 rounded-full"></span>
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-blue-600 rounded-full"></span>
               </div>
               <div>
-                <h3 className="font-bold text-sm sm:text-base leading-none">{activeChatUser.name}</h3>
-                <span className="text-[10px] sm:text-xs text-blue-100">Çevrimiçi</span>
+                <h3 className="font-bold text-xs sm:text-sm leading-none">{activeChatUser.name}</h3>
+                <span className="text-[9px] sm:text-[10px] text-blue-100">Çevrimiçi</span>
               </div>
             </div>
-            <button onClick={() => setActiveChatUser(null)} className="text-white/80 hover:text-white transition-colors font-bold text-2xl sm:text-xl">✕</button>
+            <button onClick={() => setActiveChatUser(null)} className="text-white/80 hover:text-white transition-colors font-bold text-xl sm:text-lg leading-none">✕</button>
           </div>
 
-          <div ref={chatScrollRef} className="flex-1 bg-slate-50 p-4 sm:p-5 overflow-y-auto flex flex-col gap-3 sm:gap-4 custom-scrollbar">
+          <div ref={chatScrollRef} className="flex-1 bg-slate-50 p-3 sm:p-4 overflow-y-auto flex flex-col gap-2 sm:gap-3 custom-scrollbar">
             {messages.length === 0 ? (
               <div className="text-center text-[10px] sm:text-xs text-slate-400 font-bold bg-slate-100 rounded-full w-max mx-auto px-4 py-1.5 mb-2">Henüz mesaj yok. İlk adımı sen at!</div>
             ) : (
               messages.map((msg) => (
-                <div key={msg.id} className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-4 sm:px-4 py-2.5 text-sm sm:text-[14px] shadow-sm ${msg.isMine ? "bg-blue-600 text-white self-end rounded-br-sm" : "bg-white text-slate-800 border border-slate-100 self-start rounded-bl-sm"}`}>
+                <div key={msg.id} className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 sm:px-4 py-2.5 text-xs sm:text-[13px] shadow-sm ${msg.isMine ? "bg-blue-600 text-white self-end rounded-br-sm" : "bg-white text-slate-800 border border-slate-100 self-start rounded-bl-sm"}`}>
                   {msg.text}
                 </div>
               ))
@@ -723,7 +710,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 📸 MODALLAR AYNEN KORUNDU SADECE RESPONSIVE YAPILDI */}
+      {/* 📸 MODALLAR AYNEN KORUNDU */}
       {/* MODAL 1: KAPAK */}
       {activeModal === "cover" && (
         <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
