@@ -108,22 +108,28 @@ export default function Home() {
   const [notificationsList, setNotificationsList] = useState<any[]>([]);
 
   // 📜 ALT MENÜ (FOOTER) POP-UP HAFIZASI
-  const [infoModal, setInfoModal] = useState<{isOpen: boolean, title: string, content: string}>({
+  const [infoModal, setInfoModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    content: string;
+  }>({
     isOpen: false,
     title: "",
-    content: ""
+    content: "",
   });
 
   const openInfoModal = (title: string, content: string) => {
     setInfoModal({ isOpen: true, title, content });
   };
 
-  // 🌐 JAVA'DAN GERÇEK İLANLARI ÇEKME MOTORU
+  // 🌐 JAVA'DAN GERÇEK İLANLARI ÇEKME MOTORU (CANLIYA ÇEVRİLDİ)
   const fetchAllListings = async () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://unicycle-api.onrender.com/api/products");
+      const response = await fetch(
+        "https://unicycle-api.onrender.com/api/products",
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -153,7 +159,7 @@ export default function Home() {
         );
         setLikedProducts(likes);
 
-        // 🔔 GERÇEK BİLDİRİMLERİ ÇEK (Panelin içi için)
+        // 🔔 GERÇEK BİLDİRİMLERİ ÇEK (CANLIYA ÇEVRİLDİ)
         fetch(
           `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
         )
@@ -168,16 +174,16 @@ export default function Home() {
                 localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
               );
 
-              const activeNotifs = data.filter(
-                (n: any) => !deletedNotifs.includes(n.id),
-              ).reverse(); // En yeniler en üste
+              const activeNotifs = data
+                .filter((n: any) => !deletedNotifs.includes(n.id))
+                .reverse(); // En yeniler en üste
 
               const unreadNotifs = activeNotifs.filter(
                 (n: any) => !seenNotifs.includes(n.id),
               );
 
               setNotificationsCount(unreadNotifs.length);
-              setNotificationsList(activeNotifs); 
+              setNotificationsList(activeNotifs);
             }
           })
           .catch((err) => console.error("Bildirimler çekilemedi:", err));
@@ -199,7 +205,7 @@ export default function Home() {
       );
   }, []);
 
-  // 🚀 CANLI ARAMA ETKİSİ
+  // 🚀 CANLI ARAMA ETKİSİ (CANLIYA ÇEVRİLDİ)
   useEffect(() => {
     const fetchLive = async () => {
       if (searchTerm.trim().length < 2) {
@@ -266,7 +272,7 @@ export default function Home() {
     window.location.href = "/";
   };
 
-  // 💖 BEĞENİ VE BİLDİRİM GÖNDERME MOTORU
+  // 💖 BEĞENİ VE BİLDİRİM GÖNDERME MOTORU (CANLIYA ÇEVRİLDİ)
   const toggleLike = async (e: React.MouseEvent, productObject: any) => {
     e.stopPropagation();
     e.preventDefault();
@@ -277,25 +283,53 @@ export default function Home() {
     }
 
     let newLikes = [...likedProducts];
-
     const isAlreadyLiked = newLikes.includes(productObject.id);
 
     if (isAlreadyLiked) {
       newLikes = newLikes.filter((id) => id !== productObject.id);
+
+      // 🚀 YENİ: SQL'den Beğeniyi Silmesi İçin Java'ya İstek (CANLI)
+      try {
+        await fetch(
+          `https://unicycle-api.onrender.com/api/interaction/likes?userId=${user.id}&productId=${productObject.id}`,
+          {
+            method: "DELETE",
+          },
+        );
+      } catch (err) {
+        console.error("Beğeni silinemedi:", err);
+      }
     } else {
       newLikes.push(productObject.id);
 
-      // 🚀 BİLDİRİM GÖNDERME: İlan sahibi kendisi değilse bildirim at
+      // 🚀 YENİ: SQL'e Beğeniyi Kaydetmesi İçin Java'ya İstek (CANLI)
+      try {
+        await fetch("https://unicycle-api.onrender.com/api/interaction/likes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            productId: productObject.id,
+          }),
+        });
+      } catch (err) {
+        console.error("Beğeni kaydedilemedi:", err);
+      }
+
+      // 🚀 BİLDİRİM GÖNDERME
       if (productObject.user && productObject.user.id !== user.id) {
         try {
-          await fetch("https://unicycle-api.onrender.com/api/interaction/notifications", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              userId: productObject.user.id,
-              message: `${user.fullName}, "${productObject.title}" adlı ilanını beğendi.`,
-            }),
-          });
+          await fetch(
+            "https://unicycle-api.onrender.com/api/interaction/notifications",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId: productObject.user.id,
+                message: `${user.fullName}, "${productObject.title}" adlı ilanını beğendi.`,
+              }),
+            },
+          );
         } catch (err) {
           console.error("Bildirim gönderilemedi:", err);
         }
@@ -332,25 +366,86 @@ export default function Home() {
     const year = today.getFullYear();
 
     if (year === 2025 && (month === 9 || month === 10)) {
-      return { tag: "YENİ DÖNEM", title: "Güz Dönemi Başladı!", desc: "Kampüse hoş geldin! Ders notları, kitaplar ve eşyalar UniCycle'da seni bekliyor.", btn: "İlanları Keşfet", filterGroup: null, filterItem: "TÜMÜ", icon: "🎒" };
+      return {
+        tag: "YENİ DÖNEM",
+        title: "Güz Dönemi Başladı!",
+        desc: "Kampüse hoş geldin! Ders notları, kitaplar ve eşyalar UniCycle'da seni bekliyor.",
+        btn: "İlanları Keşfet",
+        filterGroup: null,
+        filterItem: "TÜMÜ",
+        icon: "🎒",
+      };
     } else if (year === 2025 && month === 11) {
-      return { tag: "SINAV HAFTASI", title: "Güz Vizeleri Geldi Çattı!", desc: "Sınav stresi yapma! Üst dönemlerin ders notları ve özetleriyle hemen çalışmaya başla.", btn: "Ders Notlarını İncele", filterGroup: "📚 Akademik & Okul", filterItem: "Ders Notları & Özetler", icon: "📝" };
-    } else if ((year === 2025 && month === 12) || (year === 2026 && month === 1)) {
-      return { tag: "FİNAL DÖNEMİ", title: "Finaller Kapıda!", desc: "Dönemi kurtaran o son çıkmış sorular burada! Hemen incele, finalleri rahat geç.", btn: "Çıkmış Sorulara Bak", filterGroup: "📚 Akademik & Okul", filterItem: "Çıkmış Sorular", icon: "🎓" };
+      return {
+        tag: "SINAV HAFTASI",
+        title: "Güz Vizeleri Geldi Çattı!",
+        desc: "Sınav stresi yapma! Üst dönemlerin ders notları ve özetleriyle hemen çalışmaya başla.",
+        btn: "Ders Notlarını İncele",
+        filterGroup: "📚 Akademik & Okul",
+        filterItem: "Ders Notları & Özetler",
+        icon: "📝",
+      };
+    } else if (
+      (year === 2025 && month === 12) ||
+      (year === 2026 && month === 1)
+    ) {
+      return {
+        tag: "FİNAL DÖNEMİ",
+        title: "Finaller Kapıda!",
+        desc: "Dönemi kurtaran o son çıkmış sorular burada! Hemen incele, finalleri rahat geç.",
+        btn: "Çıkmış Sorulara Bak",
+        filterGroup: "📚 Akademik & Okul",
+        filterItem: "Çıkmış Sorular",
+        icon: "🎓",
+      };
     } else if (year === 2026 && (month === 2 || month === 3)) {
-      return { tag: "BAHAR DÖNEMİ", title: "Bahar Dönemi Başladı!", desc: "Eksik kitaplarını ve laboratuvar malzemelerini kampüsten uygun fiyata temin et.", btn: "Kitapları Keşfet", filterGroup: "📚 Akademik & Okul", filterItem: "Ders & Sınav Kitapları", icon: "📚" };
-    } else if (year === 2026 && month === 4) { // NİSAN: VİZE DÖNEMİ
-      return { tag: "VİZE HAFTASI", title: "Bahar Vizeleri Başlıyor!", desc: "Vizelere az kaldı! Piri Reis'in en güncel ders notları ve özetleriyle sınavlara bomba gibi hazırlan.", btn: "Notları İncele", filterGroup: "📚 Akademik & Okul", filterItem: "Ders Notları & Özetler", icon: "✍️" };
-    } else if (year === 2026 && (month === 5 || month === 6)) { // MAYIS-HAZİRAN: FİNAL DÖNEMİ
-      return { tag: "FİNAL DÖNEMİ", title: "Final Haftası Yaklaşıyor!", desc: "Yaz tatiline çıkmadan önceki son viraj! Çıkmış sorularla son tekrarlarını yap.", btn: "Çıkmış Sorular", filterGroup: "📚 Akademik & Okul", filterItem: "Çıkmış Sorular", icon: "🎯" };
-    } else { // TEMMUZ-AĞUSTOS: YAZ TATİLİ
-      return { tag: "YAZ TATİLİ", title: "Kampüste Yaz Geldi!", desc: "Kullanmadığın ders kitaplarını ve eşyalarını satarak tatil harçlığını çıkarmanın tam zamanı.", btn: "Hemen İlan Ver", link: "/create-listing", icon: "🏖️" };
+      return {
+        tag: "BAHAR DÖNEMİ",
+        title: "Bahar Dönemi Başladı!",
+        desc: "Eksik kitaplarını ve laboratuvar malzemelerini kampüsten uygun fiyata temin et.",
+        btn: "Kitapları Keşfet",
+        filterGroup: "📚 Akademik & Okul",
+        filterItem: "Ders & Sınav Kitapları",
+        icon: "📚",
+      };
+    } else if (year === 2026 && month === 4) {
+      // NİSAN: VİZE DÖNEMİ
+      return {
+        tag: "VİZE HAFTASI",
+        title: "Bahar Vizeleri Başlıyor!",
+        desc: "Vizelere az kaldı! Piri Reis'in en güncel ders notları ve özetleriyle sınavlara bomba gibi hazırlan.",
+        btn: "Notları İncele",
+        filterGroup: "📚 Akademik & Okul",
+        filterItem: "Ders Notları & Özetler",
+        icon: "✍️",
+      };
+    } else if (year === 2026 && (month === 5 || month === 6)) {
+      // MAYIS-HAZİRAN: FİNAL DÖNEMİ
+      return {
+        tag: "FİNAL DÖNEMİ",
+        title: "Final Haftası Yaklaşıyor!",
+        desc: "Yaz tatiline çıkmadan önceki son viraj! Çıkmış sorularla son tekrarlarını yap.",
+        btn: "Çıkmış Sorular",
+        filterGroup: "📚 Akademik & Okul",
+        filterItem: "Çıkmış Sorular",
+        icon: "🎯",
+      };
+    } else {
+      // TEMMUZ-AĞUSTOS: YAZ TATİLİ
+      return {
+        tag: "YAZ TATİLİ",
+        title: "Kampüste Yaz Geldi!",
+        desc: "Kullanmadığın ders kitaplarını ve eşyalarını satarak tatil harçlığını çıkarmanın tam zamanı.",
+        btn: "Hemen İlan Ver",
+        link: "/create-listing",
+        icon: "🏖️",
+      };
     }
   };
 
   const bannerData = getBannerContent();
 
-const handleBannerClick = () => {
+  const handleBannerClick = () => {
     if (bannerData.link) {
       router.push(bannerData.link);
     } else {
@@ -383,7 +478,6 @@ const handleBannerClick = () => {
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20 gap-2 sm:gap-6">
-            
             {/* ✨ DÜZELTİLMİŞ LOGO KISMI (TIKLANINCA SIFIRLAR) ✨ */}
             <div className="flex-shrink-0">
               <Link
@@ -525,7 +619,6 @@ const handleBannerClick = () => {
 
               {user ? (
                 <div className="flex items-center gap-2 sm:gap-4 relative">
-                  
                   {/* 🔔 YENİ VE DÜZELTİLMİŞ ZİL BUTONU VE KARE PANEL 🔔 */}
                   <div className="relative">
                     <button
@@ -533,10 +626,20 @@ const handleBannerClick = () => {
                       className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors"
                       title="Bildirimler"
                     >
-                      <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                      <svg
+                        className="w-5 h-5 text-slate-600"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                        ></path>
                       </svg>
-                      
+
                       {/* Kırmızı Bildirim Sayacı */}
                       {notificationsCount > 0 && (
                         <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
@@ -566,16 +669,43 @@ const handleBannerClick = () => {
                             </div>
                           ) : (
                             notificationsList.slice(0, 5).map((notif) => {
-                              let icon = "✨"; let bg = "bg-blue-100"; let text = "text-blue-600";
+                              let icon = "✨";
+                              let bg = "bg-blue-50";
+                              let text = "text-blue-500";
                               const msgLower = notif.message.toLowerCase();
-                              if (msgLower.includes("takip")) { icon = "🌸"; bg = "bg-pink-100"; text = "text-pink-600"; }
-                              else if (msgLower.includes("ilan") || msgLower.includes("ekledi")) { icon = "📦"; bg = "bg-orange-100"; text = "text-orange-600"; }
-                              else if (msgLower.includes("beğen") || msgLower.includes("favori")) { icon = "❤️"; bg = "bg-red-100"; text = "text-red-600"; }
-                              else if (msgLower.includes("yorum")) { icon = "💬"; bg = "bg-green-100"; text = "text-green-600"; }
+
+                              if (
+                                msgLower.includes("beğen") ||
+                                msgLower.includes("favori")
+                              ) {
+                                icon = "💖";
+                                bg = "bg-pink-50";
+                                text = "text-pink-500";
+                              } else if (
+                                msgLower.includes("yorum") ||
+                                msgLower.includes("mesaj")
+                              ) {
+                                icon = "💬";
+                                bg = "bg-emerald-50";
+                                text = "text-emerald-500";
+                              } else if (
+                                msgLower.includes("ilan") ||
+                                msgLower.includes("ekledi") ||
+                                msgLower.includes("takip")
+                              ) {
+                                icon = "🔔";
+                                bg = "bg-amber-50";
+                                text = "text-amber-500";
+                              }
 
                               return (
-                                <div key={notif.id} className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center">
-                                  <div className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} text-lg shrink-0`}>
+                                <div
+                                  key={notif.id}
+                                  className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center"
+                                >
+                                  <div
+                                    className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} text-lg shrink-0`}
+                                  >
                                     {icon}
                                   </div>
                                   <div className="flex-1">
@@ -583,7 +713,11 @@ const handleBannerClick = () => {
                                       {notif.message}
                                     </p>
                                     <p className="text-[10px] text-slate-400 mt-0.5">
-                                      {notif.createdAt ? new Date(notif.createdAt).toLocaleDateString('tr-TR') : "Yeni"}
+                                      {notif.createdAt
+                                        ? new Date(
+                                            notif.createdAt,
+                                          ).toLocaleDateString("tr-TR")
+                                        : "Yeni"}
                                     </p>
                                   </div>
                                 </div>
@@ -763,7 +897,10 @@ const handleBannerClick = () => {
                   {bannerData.desc}
                 </p>
 
-                <button onClick={handleBannerClick} className="bg-white text-blue-700 font-black px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-lg hover:scale-105 transition-transform text-sm sm:text-base">
+                <button
+                  onClick={handleBannerClick}
+                  className="bg-white text-blue-700 font-black px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-lg hover:scale-105 transition-transform text-sm sm:text-base"
+                >
                   {bannerData.btn}
                 </button>
               </div>
@@ -940,14 +1077,24 @@ const handleBannerClick = () => {
         <div className="fixed inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
             <div className="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h2 className="text-lg sm:text-xl font-black text-slate-800">{infoModal.title}</h2>
-              <button onClick={() => setInfoModal({ ...infoModal, isOpen: false })} className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors">✕</button>
+              <h2 className="text-lg sm:text-xl font-black text-slate-800">
+                {infoModal.title}
+              </h2>
+              <button
+                onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors"
+              >
+                ✕
+              </button>
             </div>
             <div className="p-6 sm:p-8 text-sm sm:text-base text-slate-600 font-medium whitespace-pre-wrap leading-relaxed max-h-[60vh] overflow-y-auto custom-scrollbar">
               {infoModal.content}
             </div>
             <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
-              <button onClick={() => setInfoModal({ ...infoModal, isOpen: false })} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base">
+              <button
+                onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base"
+              >
                 Anladım
               </button>
             </div>
@@ -976,17 +1123,41 @@ const handleBannerClick = () => {
 
             <ul className="space-y-2 text-xs sm:text-sm font-medium text-slate-500">
               <li>
-                <button onClick={() => openInfoModal("Nasıl Çalışır?", "UniCycle'da alışveriş yapmak çok kolay!\n\n1. Kendi üniversitenin e-postasıyla kayıt ol.\n2. İhtiyacın olmayan eşyalarını ilan olarak ekle.\n3. Kampüsündeki diğer öğrencilerle mesajlaşarak güvenle alışveriş yap!")} className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Nasıl Çalışır?",
+                      "UniCycle'da alışveriş yapmak çok kolay!\n\n1. Kendi üniversitenin e-postasıyla kayıt ol.\n2. İhtiyacın olmayan eşyalarını ilan olarak ekle.\n3. Kampüsündeki diğer öğrencilerle mesajlaşarak güvenle alışveriş yap!",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Nasıl Çalışır?
                 </button>
               </li>
               <li>
-                <button onClick={() => openInfoModal("Güvenlik İpuçları", "Alışverişlerinde güvenliğin için şu kurallara dikkat et:\n\n• Sadece kampüs içindeki güvenli ve kalabalık alanlarda (kütüphane, kafeterya vb.) buluşun.\n• Kimseye önceden para veya kapora göndermeyin.\n• Şüpheli durumlarda ilanları bize şikayet edin.")} className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Güvenlik İpuçları",
+                      "Alışverişlerinde güvenliğin için şu kurallara dikkat et:\n\n• Sadece kampüs içindeki güvenli ve kalabalık alanlarda (kütüphane, kafeterya vb.) buluşun.\n• Kimseye önceden para veya kapora göndermeyin.\n• Şüpheli durumlarda ilanları bize şikayet edin.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Güvenlik İpuçları
                 </button>
               </li>
               <li>
-                <button onClick={() => openInfoModal("Kampüs Kuralları", "Bu platform tamamen öğrencilere aittir.\n\n• Saygılı bir iletişim dili kullanmak zorunludur.\n• Sadece yasal ve kampüs kurallarına uygun ürünler satılabilir (Ders notu, kitap, eşya vb.).\n• Kopya veya telif hakkı ihlali içeren materyallerin satışı yasaktır.")} className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Kampüs Kuralları",
+                      "Bu platform tamamen öğrencilere aittir.\n\n• Saygılı bir iletişim dili kullanmak zorunludur.\n• Sadece yasal ve kampüs kurallarına uygun ürünler satılabilir (Ders notu, kitap, eşya vb.).\n• Kopya veya telif hakkı ihlali içeren materyallerin satışı yasaktır.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Kampüs Kuralları
                 </button>
               </li>
@@ -998,17 +1169,41 @@ const handleBannerClick = () => {
 
             <ul className="space-y-2 text-xs sm:text-sm font-medium text-slate-500">
               <li>
-                <button onClick={() => openInfoModal("Destek Merkezi", "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin. Bütün taleplere 24 saat içinde geri dönüş sağlıyoruz.")} className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Destek Merkezi",
+                      "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin. Bütün taleplere 24 saat içinde geri dönüş sağlıyoruz.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Destek Merkezi
                 </button>
               </li>
               <li>
-                <button onClick={() => openInfoModal("Bize Ulaşın", "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67")} className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Bize Ulaşın",
+                      "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Bize Ulaşın
                 </button>
               </li>
               <li>
-                <button onClick={() => openInfoModal("Sıkça Sorulan Sorular", "S: Üye olmak ücretli mi?\nC: Hayır, UniCycle üniversite öğrencileri için tamamen ücretsizdir.\n\nS: Kargo ile ürün gönderebilir miyim?\nC: Platformumuz kampüs içi elden teslim odaklıdır ancak satıcı ile anlaşırsanız kargo da yapabilirsiniz.")} className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Sıkça Sorulan Sorular",
+                      "S: Üye olmak ücretli mi?\nC: Hayır, UniCycle üniversite öğrencileri için tamamen ücretsizdir.\n\nS: Kargo ile ürün gönderebilir miyim?\nC: Platformumuz kampüs içi elden teslim odaklıdır ancak satıcı ile anlaşırsanız kargo da yapabilirsiniz.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   S.S.S.
                 </button>
               </li>
