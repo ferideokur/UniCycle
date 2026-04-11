@@ -93,28 +93,28 @@ export default function AuthPage() {
     setMessage("⏳ İşlem yapılıyor, lütfen bekleyin...");
 
     if (!isLogin) {
-      // 🛑 1. KURAL: SOYADI ZORUNLULUĞU
+      // 🛑 1. KURAL: SOYADI ZORUNLULUĞU (En az 2 kelime)
       const nameParts = fullName.trim().split(/\s+/);
       if (nameParts.length < 2) {
         setMessage(
-          "❌ Lütfen adınızı ve soyadınızı tam yazın (Örn: Feride Okur).",
+          "❌ Lütfen adınızı ve soyadınızı aralarında boşluk bırakarak tam yazın (Örn: Feride Okur).",
         );
         setIsLoading(false);
         return;
       }
 
-      // 🛑 2. KURAL: OKUL SEÇİMİ
+      // 🛑 2. KURAL: OKUL SEÇİMİ ZORUNLULUĞU
       let finalUniversity = university;
       if (university === "Diğer...") {
         if (customUniversity.trim() === "") {
-          setMessage("❌ Lütfen üniversitenizin adını yazın.");
+          setMessage("❌ Lütfen üniversitenizin adını tam olarak yazın.");
           setIsLoading(false);
           return;
         }
         finalUniversity = customUniversity.trim();
       }
 
-      // --- KAYIT OLMA (CANLI ADRES) ---
+      // --- KAYIT OLMA (REGISTER) İŞLEMİ ---
       try {
         const response = await fetch(
           "https://unicycle-api.onrender.com/api/users/register",
@@ -122,14 +122,16 @@ export default function AuthPage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              fullName,
-              email,
-              password,
+              fullName: fullName,
+              email: email,
+              password: password,
               university: finalUniversity,
             }),
           },
         );
+
         const text = await response.text();
+
         if (response.ok) {
           setMessage("✅ " + text);
           setFullName("");
@@ -144,12 +146,12 @@ export default function AuthPage() {
           setMessage("❌ " + text);
         }
       } catch (error) {
-        setMessage("❌ Sunucuya bağlanılamadı.");
+        setMessage("❌ Sunucuya bağlanılamadı. Arka planda Java çalışıyor mu?");
       } finally {
         setIsLoading(false);
       }
     } else {
-      // --- GİRİŞ YAPMA (CANLI ADRES) ---
+      // --- GİRİŞ YAPMA (LOGIN) İŞLEMİ ---
       try {
         const response = await fetch(
           "https://unicycle-api.onrender.com/api/users/login",
@@ -159,19 +161,28 @@ export default function AuthPage() {
             body: JSON.stringify({ email, password }),
           },
         );
+
         if (response.ok) {
           const userData = await response.json();
           localStorage.setItem("user", JSON.stringify(userData));
-          if (userData.university)
+
+          if (userData.university) {
             localStorage.setItem("userUni", userData.university);
-          setMessage("✅ Giriş başarılı! Yönlendiriliyorsun...");
-          setTimeout(() => router.push("/profile"), 1500);
+          }
+
+          setMessage("✅ " + userData.message + " Yönlendiriliyorsun...");
+          setEmail("");
+          setPassword("");
+
+          setTimeout(() => {
+            router.push("/profile");
+          }, 1500);
         } else {
           const errorText = await response.text();
           setMessage("❌ " + errorText);
         }
       } catch (error) {
-        setMessage("❌ Sunucuya bağlanılamadı.");
+        setMessage("❌ Sunucuya bağlanılamadı. Arka planda Java çalışıyor mu?");
       } finally {
         setIsLoading(false);
       }
@@ -180,7 +191,7 @@ export default function AuthPage() {
 
   return (
     <main className="relative min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 overflow-x-hidden bg-slate-900 w-full">
-      {/* 🎬 ARKA PLAN VİDEOSU VE KARARTMA */}
+      {/* 🎬 ARKA PLAN VİDEOSU */}
       <video
         autoPlay
         muted
@@ -190,9 +201,11 @@ export default function AuthPage() {
       >
         <source src="/trade.mp4" type="video/mp4" />
       </video>
+
+      {/* KARARTMA EFEKTİ */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/80 z-0"></div>
 
-      {/* 🚀 GERİ DÖN BUTONU */}
+      {/* 🚀 BUZLU CAM EFEKTLİ GERİ DÖN BUTONU */}
       <div className="absolute top-6 left-4 sm:top-8 sm:left-8 z-50">
         <Link
           href="/"
@@ -204,6 +217,7 @@ export default function AuthPage() {
 
       {/* 💼 GİRİŞ / KAYIT KARTI */}
       <div className="relative z-10 bg-white w-full max-w-[420px] rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] overflow-hidden border border-white/20 my-10 animate-in fade-in zoom-in-95 duration-500">
+        {/* HEADER KISMI */}
         <div className="bg-gradient-to-b from-blue-50/80 to-white p-6 sm:p-8 text-center border-b border-slate-100">
           <Link
             href="/"
@@ -231,10 +245,17 @@ export default function AuthPage() {
           </p>
         </div>
 
+        {/* FORM KISMI */}
         <div className="p-6 sm:p-8">
           {message && (
             <div
-              className={`mb-5 p-3.5 rounded-xl text-xs sm:text-sm font-bold text-center animate-in fade-in slide-in-from-top-2 ${message.includes("✅") ? "bg-green-50 text-green-600 border border-green-100" : message.includes("⏳") ? "bg-blue-50 text-blue-600 border border-blue-100" : "bg-red-50 text-red-600 border border-red-100"}`}
+              className={`mb-5 p-3.5 rounded-xl text-xs sm:text-sm font-bold text-center animate-in fade-in slide-in-from-top-2 ${
+                message.includes("✅")
+                  ? "bg-green-50 text-green-600 border border-green-100"
+                  : message.includes("⏳")
+                    ? "bg-blue-50 text-blue-600 border border-blue-100"
+                    : "bg-red-50 text-red-600 border border-red-100"
+              }`}
             >
               {message}
             </div>
@@ -242,7 +263,8 @@ export default function AuthPage() {
 
           <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
             {!isLogin && (
-              <div className="space-y-4 sm:space-y-5 animate-in fade-in slide-in-from-bottom-2">
+              <div className="space-y-4 sm:space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {/* İSİM SOYİSİM */}
                 <div>
                   <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     İsim ve Soyisim
@@ -252,10 +274,15 @@ export default function AuthPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Örn: Feride Okur"
-                    className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 text-sm font-semibold"
+                    className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-slate-200 text-sm font-semibold"
                     required={!isLogin}
                   />
+                  <p className="text-[10px] sm:text-xs text-slate-400 mt-1.5 font-medium px-1">
+                    Güvenlik için soyadınızı girmek zorunludur.
+                  </p>
                 </div>
+
+                {/* ÜNİVERSİTE SEÇİMİ */}
                 <div>
                   <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     Üniversiteniz
@@ -263,7 +290,7 @@ export default function AuthPage() {
                   <select
                     value={university}
                     onChange={(e) => setUniversity(e.target.value)}
-                    className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 font-semibold text-sm appearance-none cursor-pointer"
+                    className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-slate-200 font-semibold text-sm appearance-none cursor-pointer"
                   >
                     {UNIVERSITIES.map((uni, idx) => (
                       <option key={idx} value={uni}>
@@ -272,6 +299,8 @@ export default function AuthPage() {
                     ))}
                   </select>
                 </div>
+
+                {/* EĞER "DİĞER" SEÇİLİRSE GÖZÜKEN KUTU */}
                 {university === "Diğer..." && (
                   <div className="animate-in fade-in slide-in-from-top-2">
                     <label className="block text-[11px] sm:text-xs font-bold text-[#20B2AA] mb-1.5 uppercase tracking-wider px-1">
@@ -282,7 +311,7 @@ export default function AuthPage() {
                       value={customUniversity}
                       onChange={(e) => setCustomUniversity(e.target.value)}
                       placeholder="Örn: X Teknik Üniversitesi"
-                      className="w-full bg-teal-50 text-teal-900 rounded-xl sm:rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-teal-200 font-bold text-sm"
+                      className="w-full bg-teal-50 text-teal-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-teal-200 font-bold placeholder-teal-300 text-sm"
                       required={!isLogin && university === "Diğer..."}
                     />
                   </div>
@@ -290,6 +319,7 @@ export default function AuthPage() {
               </div>
             )}
 
+            {/* E-POSTA */}
             <div>
               <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                 Üniversite E-Postası
@@ -299,11 +329,12 @@ export default function AuthPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="isim@ogrenci.edu.tr"
-                className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 text-sm font-semibold"
+                className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-slate-200 text-sm font-semibold"
                 required
               />
             </div>
 
+            {/* ŞİFRE */}
             <div>
               <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                 Şifre
@@ -313,7 +344,7 @@ export default function AuthPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 text-sm font-bold tracking-widest"
+                className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-slate-200 text-sm font-bold tracking-widest"
                 required
               />
             </div>
