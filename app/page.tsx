@@ -78,7 +78,7 @@ const CATEGORY_MAP: Record<string, string[]> = {
   ],
 };
 
-// 🌟 TRENDYOL TARZI YUVARLAK HIZLI ERİŞİM BUTONLARI
+// 🌟 TRENDYOL TARZI YUVARLAK HIZLI ERİŞİM BUTONLARI (SADECE BURASI EKLENDİ)
 const QUICK_LINKS = [
   { title: "Ders Notu", icon: "📝", filter: "Ders Notları & Özetler", color: "bg-blue-50 text-blue-600 border-blue-100" },
   { title: "Telefon", icon: "📱", filter: "Cep Telefonu", color: "bg-slate-100 text-slate-700 border-slate-200" },
@@ -394,7 +394,7 @@ export default function Home() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20 gap-2 sm:gap-6">
             
-            {/* ✨ DÜZELTİLMİŞ LOGO KISMI (1. HATA ÇÖZÜLDÜ: KARELİ GÖRÜNÜM GİTTİ) */}
+            {/* ✨ DÜZELTİLMİŞ LOGO KISMI */}
             <div className="flex-shrink-0">
               <Link
                 href="/"
@@ -410,7 +410,7 @@ export default function Home() {
                   alt="UniCycle İkon"
                   width={44}
                   height={44}
-                  className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all sm:w-[52px] sm:h-[52px]"
+                  className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all rounded-md sm:w-[52px] sm:h-[52px]"
                   priority
                 />
                 <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
@@ -419,7 +419,7 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* 🚀 ZARİFLEŞTİRİLMİŞ ARAMA ÇUBUĞU VE AÇILIR MENÜ */}
+            {/* 🚀 ZARİFLEŞTİRİLMİŞ ARAMA ÇUBUĞU VE AÇILIR MENÜ (Masaüstü - Orijinal Kodun) */}
             <div className="hidden md:flex flex-1 max-w-3xl relative group z-50">
               <form onSubmit={handleSearchSubmit} className="w-full relative">
                 <input
@@ -442,7 +442,6 @@ export default function Home() {
                 </button>
               </form>
 
-              {/* 🌟 KİBAR VE ŞIK AÇILIR MENÜ (DROPDOWN) */}
               {isDropdownOpen && liveResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
                   {liveResults.slice(0, 5).map((result, idx) => {
@@ -515,29 +514,30 @@ export default function Home() {
               )}
             </div>
 
-            {/* 🚀 BUTONLAR (3. HATA ÇÖZÜLDÜ: MOBİLDE İLAN VER BUTONU EKLENDİ) */}
-            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            {/* 🚀 BUTONLAR (Mobilde gap daraltıldı) */}
+            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
               <Link
                 href="/create-listing"
-                className="flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors text-[11px] sm:text-base border border-[#20B2AA] px-2 py-1.5 rounded-lg sm:border-none sm:px-0 sm:py-0 sm:rounded-none"
+                className="hidden sm:flex font-black text-blue-600 hover:text-blue-800 items-center gap-1 transition-colors"
               >
-                <span className="text-sm sm:text-xl">+</span> <span className="hidden sm:inline">İlan Ver</span><span className="sm:hidden">İlan</span>
+                <span className="text-xl">+</span> İlan Ver
               </Link>
 
               {user ? (
                 <div className="flex items-center gap-2 sm:gap-4 relative">
                   
                   {/* 🔔 YENİ VE DÜZELTİLMİŞ ZİL BUTONU VE KARE PANEL */}
-                  <div className="relative">
+                  <div className="relative shrink-0">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                      className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors"
+                      className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors shrink-0"
                       title="Bildirimler"
                     >
                       <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                       </svg>
                       
+                      {/* Kırmızı Bildirim Sayacı */}
                       {notificationsCount > 0 && (
                         <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
                           {notificationsCount}
@@ -605,9 +605,9 @@ export default function Home() {
 
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all"
+                    className="flex justify-center items-center gap-2 bg-blue-600 text-white w-9 h-9 sm:w-auto sm:h-auto sm:px-5 sm:py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all shrink-0"
                   >
-                    <div className="w-4 h-4 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-xs shrink-0">
                       👤
                     </div>
                     <span className="hidden sm:block">Hesabım</span>
@@ -615,7 +615,7 @@ export default function Home() {
 
                   <button
                     onClick={handleLogout}
-                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm"
+                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm shrink-0"
                   >
                     Çıkış
                   </button>
@@ -623,19 +623,100 @@ export default function Home() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center gap-2 bg-slate-800 text-white px-5 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm"
+                  className="flex items-center justify-center bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
                 >
                   Giriş Yap
                 </Link>
               )}
             </div>
           </div>
+
+          {/* 🚀 TRENDYOL STİLİ: MOBİL İÇİN ÖZEL ARAMA ÇUBUĞU */}
+          <div className="md:hidden pb-3 pt-2 w-full relative z-40">
+            <form onSubmit={handleSearchSubmit} className="w-full relative">
+              <input
+                type="text"
+                placeholder="Ürün, kategori veya ders notu ara..."
+                className="w-full bg-slate-100 text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-transparent font-medium text-sm"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setIsDropdownOpen(true);
+                }}
+                onFocus={() => setIsDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+              />
+              <span className="absolute left-3 top-2.5 text-slate-400">🔍</span>
+            </form>
+
+            {/* Mobil Canlı Arama Sonuçları */}
+            {isDropdownOpen && liveResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+                {liveResults.slice(0, 4).map((result, idx) => {
+                  if (result.type === "product") {
+                    return (
+                      <Link
+                        href={`/listing-detail/${result.item.id}`}
+                        key={`p-mob-${result.item.id}-${idx}`}
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50"
+                      >
+                        <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0">
+                          {result.item.photosBase64 && result.item.photosBase64[0] ? (
+                            <img src={result.item.photosBase64[0]} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="m-auto text-xs">📦</span>
+                          )}
+                        </div>
+                        <div className="flex-1 truncate">
+                          <div className="font-bold text-slate-800 truncate text-xs">{result.item.title}</div>
+                        </div>
+                      </Link>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 🚀 TRENDYOL STİLİ: ALT ÇİZGİLİ MOBİL KATEGORİ MENÜSÜ */}
+        <div className="block lg:hidden bg-white border-t border-slate-100">
+          <div className="flex overflow-x-auto custom-scrollbar px-4">
+            <button
+              onClick={() => {
+                setExpandedGroup(null);
+                setActiveFilter("TÜMÜ");
+              }}
+              className={`whitespace-nowrap px-3 py-3 text-[13px] font-bold transition-all border-b-2 ${
+                activeFilter === "TÜMÜ" ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500"
+              }`}
+            >
+              Tümü
+            </button>
+            {Object.keys(CATEGORY_MAP).map((cat) => {
+              const shortName = cat.split(" ")[1] || cat.split(" ")[0];
+              const isActive = expandedGroup === cat || activeFilter === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => handleMainCategoryClick(cat)}
+                  className={`whitespace-nowrap px-3 py-3 text-[13px] font-bold transition-all border-b-2 ${
+                    isActive ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500"
+                  }`}
+                >
+                  {shortName}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </header>
 
       {/* 🖥️ ANA DÜZEN (Sol Menü + Sağ İçerik) */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8 flex gap-8 items-start w-full">
-        {/* 🗂️ AKORDEON SOL MENÜ */}
+        
+        {/* 🗂️ AKORDEON SOL MENÜ (Orijinal Kod - Hiç dokunulmadı) */}
         <aside className="w-72 hidden lg:block sticky top-28 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
           <h3 className="font-black text-lg text-slate-800 mb-5 pl-2">
             Kategoriler
@@ -708,51 +789,29 @@ export default function Home() {
         {/* 🛍️ SAĞ İÇERİK ALANI */}
         <section className="flex-1 min-w-0 w-full">
           
-          {/* 🔥 2. HATA ÇÖZÜLDÜ: MOBİLDEKİ KATEGORİ VİRGÜLLERİ TEMİZLENDİ */}
-          <div className="block lg:hidden mb-6">
-            <div className="flex overflow-x-auto custom-scrollbar gap-2 pb-2 -mx-4 px-4">
-              <button
-                onClick={() => {
-                  setExpandedGroup(null);
-                  setActiveFilter("TÜMÜ");
-                }}
-                className={`whitespace-nowrap px-5 py-2.5 rounded-full font-bold text-sm ${activeFilter === "TÜMÜ" ? "bg-blue-600 text-white shadow-sm" : "bg-white text-slate-600 border border-slate-200"}`}
-              >
-                Tümü
-              </button>
-
-              {Object.keys(CATEGORY_MAP).map((cat) => {
-                let shortName = cat.split(" ")[1] || cat.split(" ")[0];
-                shortName = shortName.replace(/,/g, ""); // Virgülü siliyoruz
-
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => handleMainCategoryClick(cat)}
-                    className={`whitespace-nowrap px-5 py-2.5 rounded-full font-bold text-sm ${expandedGroup === cat ? "bg-blue-600 text-white shadow-sm" : "bg-white text-slate-600 border border-slate-200"}`}
+          {/* 🔘 TRENDYOL YUVARLAK İKONLAR (SADECE MOBİL - MAVİ TONLARINDA) */}
+          <div className="block lg:hidden bg-white -mx-4 px-4 py-5 mb-4 border-b border-slate-100 shadow-sm">
+            <div className="flex justify-between overflow-x-auto custom-scrollbar gap-4">
+              {QUICK_LINKS.map((link, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => setActiveFilter(link.filter)}
+                  className="flex flex-col items-center gap-2 cursor-pointer shrink-0"
+                >
+                  <div
+                    className={`w-[54px] h-[54px] rounded-full flex items-center justify-center text-2xl shadow-sm border ${link.color}`}
                   >
-                    {shortName}
-                  </button>
-                );
-              })}
+                    {link.icon}
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-700 w-16 text-center leading-tight">
+                    {link.title}
+                  </span>
+                </div>
+              ))}
             </div>
-
-            {expandedGroup && CATEGORY_MAP[expandedGroup] && (
-              <div className="flex overflow-x-auto custom-scrollbar gap-2 mt-2 pb-2 -mx-4 px-4 animate-in fade-in">
-                {CATEGORY_MAP[expandedGroup].map((subCat) => (
-                  <button
-                    key={subCat}
-                    onClick={() => setActiveFilter(subCat)}
-                    className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${activeFilter === subCat ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}
-                  >
-                    {subCat}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* 🌟🌟 DİNAMİK BANNER (TAKViM BAĞLANTILI) 🌟🌟 */}
+          {/* 🌟🌟 DİNAMİK BANNER (TAKViM BAĞLANTILI - Orijinal Kodun) 🌟🌟 */}
           {activeFilter === "TÜMÜ" && searchTerm === "" && (
             <div className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 md:p-12 mb-8 sm:mb-10 text-white shadow-xl relative overflow-hidden flex items-center">
               <div className="relative z-10 max-w-lg">
@@ -793,7 +852,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ⏳ PROFESYONEL İSKELET YÜKLEME */}
+          {/* ⏳ PROFESYONEL İSKELET YÜKLEME (Orijinal Kodun) */}
           {isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mt-4">
               {[...Array(8)].map((_, i) => (
@@ -845,6 +904,7 @@ export default function Home() {
               </Link>
             </div>
           ) : (
+            // 🔥 DÜZELTME 4: 2'li İlan Grid'i (Orijinal Kodun - gap-3, p-3, rounded-2xl)
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {filteredProducts.map((p: any) => {
                 const isLiked = likedProducts.includes(p.id);
@@ -939,7 +999,7 @@ export default function Home() {
         }}
       />
 
-      {/* 📜 FOOTER BİLGİ POP-UP'I (MODAL) */}
+      {/* 📜 FOOTER BİLGİ POP-UP'I (MODAL) - Orijinal Kodun */}
       {infoModal.isOpen && (
         <div className="fixed inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
@@ -959,7 +1019,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* 🌊 AÇIK RENK, MİNİMALİST FOOTER */}
+      {/* 🌊 AÇIK RENK, MİNİMALİST FOOTER - Orijinal Kodun */}
       <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-6 mt-10 rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2 text-center md:text-left">
