@@ -9,8 +9,6 @@ export default function NotificationsPage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
-
-  // 🚀 İŞTE EKSİK OLAN SAYAÇ: Sadece "Okunmamış" olanları tutacak!
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -25,7 +23,6 @@ export default function NotificationsPage() {
       const parsedUser = JSON.parse(storedUser);
       setCurrentUser(parsedUser);
 
-      // Bildirimleri çek
       fetch(
         `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
       )
@@ -39,26 +36,21 @@ export default function NotificationsPage() {
               localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
             );
 
-            // Silinmemiş BÜTÜN bildirimler (Ekranda listelemek için)
             const activeNotifs = data.filter(
               (n: any) => !deletedNotifs.includes(n.id),
             );
             setNotifications(activeNotifs.reverse());
 
-            // 🚀 SADECE YENİ (Görülmemiş) OLANLARI SAY
             const unread = activeNotifs.filter(
               (n: any) => !seenNotifs.includes(n.id),
             );
             setUnreadCount(unread.length);
 
-            // 🧠 ZEKİ DOKUNUŞ: Sayfaya girildiği an hepsini "Görüldü" olarak hafızaya al!
             const allActiveIds = activeNotifs.map((n: any) => n.id);
             localStorage.setItem(
               `seenNotifs_${parsedUser.id}`,
               JSON.stringify(allActiveIds),
             );
-
-            // Navbar'daki zilin sayısını da anında sıfırlaması için sinyal gönder
             window.dispatchEvent(new Event("notificationsSeen"));
           }
         })
@@ -99,13 +91,14 @@ export default function NotificationsPage() {
       JSON.stringify([...deletedNotifs, ...allIds]),
     );
     setNotifications([]);
-    setUnreadCount(0); // Ekranı temizleyince sayacı da sıfırla
+    setUnreadCount(0);
   };
 
+  // 🔥 ÜST MENÜ (NAVBAR) İLE BİREBİR AYNI EMOJİ VE RENK MOTORU
   const getNotificationStyle = (message: string) => {
     const msg = message.toLowerCase();
 
-    // 💖 BEĞENİ / FAVORİ
+    // 1. ÖNCELİK: Beğeni ve Yorum (Çünkü cümlenin içinde 'ilan' kelimesi geçebilir, önce bunları yakalamalıyız)
     if (msg.includes("beğen") || msg.includes("favori")) {
       return {
         icon: "💖",
@@ -114,8 +107,6 @@ export default function NotificationsPage() {
         text: "text-pink-500",
       };
     }
-
-    // 💬 YORUM / MESAJ
     if (msg.includes("yorum") || msg.includes("mesaj")) {
       return {
         icon: "💬",
@@ -125,7 +116,7 @@ export default function NotificationsPage() {
       };
     }
 
-    // 🔔 YENİ İLAN / TAKİP (Buraya "takip" kelimesini ekledik!)
+    // 2. ÖNCELİK: İlan işlemleri ve Takip
     if (
       msg.includes("ilan") ||
       msg.includes("ekledi") ||
@@ -139,7 +130,7 @@ export default function NotificationsPage() {
       };
     }
 
-    // ✨ DİĞER DURUMLAR
+    // DİĞER DURUMLAR
     return {
       icon: "✨",
       bg: "bg-blue-50",
@@ -189,7 +180,6 @@ export default function NotificationsPage() {
         <div className="flex justify-between items-end mb-6 border-b border-slate-200 pb-4">
           <h1 className="text-3xl font-black text-slate-800 flex items-center gap-3">
             Bildirimler
-            {/* 🚀 BURASI DÜZELDİ: Artık Bütün Listeyi Değil, Sadece OKUNMAMIŞ olanları gösteriyor! */}
             {unreadCount > 0 && (
               <span className="bg-red-100 text-red-600 text-sm font-bold py-1 px-3 rounded-full">
                 {unreadCount} Yeni
@@ -270,6 +260,7 @@ export default function NotificationsPage() {
                   </div>
                 );
               })}
+              ;
             </div>
           )}
         </div>

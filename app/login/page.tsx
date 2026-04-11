@@ -93,7 +93,6 @@ export default function AuthPage() {
     setMessage("⏳ İşlem yapılıyor, lütfen bekleyin...");
 
     if (!isLogin) {
-      // 🛑 1. KURAL: SOYADI ZORUNLULUĞU (En az 2 kelime)
       const nameParts = fullName.trim().split(/\s+/);
       if (nameParts.length < 2) {
         setMessage(
@@ -103,7 +102,6 @@ export default function AuthPage() {
         return;
       }
 
-      // 🛑 2. KURAL: OKUL SEÇİMİ ZORUNLULUĞU
       let finalUniversity = university;
       if (university === "Diğer...") {
         if (customUniversity.trim() === "") {
@@ -114,7 +112,6 @@ export default function AuthPage() {
         finalUniversity = customUniversity.trim();
       }
 
-      // --- KAYIT OLMA (REGISTER) İŞLEMİ ---
       try {
         const response = await fetch(
           "https://unicycle-api.onrender.com/api/users/register",
@@ -122,16 +119,15 @@ export default function AuthPage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              fullName: fullName,
-              email: email,
-              password: password,
+              fullName,
+              email,
+              password,
               university: finalUniversity,
             }),
           },
         );
 
         const text = await response.text();
-
         if (response.ok) {
           setMessage("✅ " + text);
           setFullName("");
@@ -151,7 +147,6 @@ export default function AuthPage() {
         setIsLoading(false);
       }
     } else {
-      // --- GİRİŞ YAPMA (LOGIN) İŞLEMİ ---
       try {
         const response = await fetch(
           "https://unicycle-api.onrender.com/api/users/login",
@@ -165,18 +160,13 @@ export default function AuthPage() {
         if (response.ok) {
           const userData = await response.json();
           localStorage.setItem("user", JSON.stringify(userData));
-
-          if (userData.university) {
+          if (userData.university)
             localStorage.setItem("userUni", userData.university);
-          }
 
           setMessage("✅ " + userData.message + " Yönlendiriliyorsun...");
           setEmail("");
           setPassword("");
-
-          setTimeout(() => {
-            router.push("/profile");
-          }, 1500);
+          setTimeout(() => router.push("/profile"), 1500);
         } else {
           const errorText = await response.text();
           setMessage("❌ " + errorText);
@@ -190,35 +180,76 @@ export default function AuthPage() {
   };
 
   return (
-    <main className="relative min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 overflow-x-hidden bg-slate-900 w-full">
-      {/* 🎬 ARKA PLAN VİDEOSU */}
-      <video
-        autoPlay
-        muted
-        playsInline
-        loop
-        className="absolute inset-0 w-full h-full object-cover opacity-50 z-0"
-      >
-        <source src="/trade.mp4" type="video/mp4" />
-      </video>
+    <main className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-slate-900">
+      {/* 🚀 PREMIUM CİDDİ ARKA PLAN (CSS Mimari) */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @keyframes spinSlow {
+          from { transform: translate(-50%, -50%) rotate(0deg); }
+          to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes spinSlowReverse {
+          from { transform: translate(-50%, -50%) rotate(360deg); }
+          to { transform: translate(-50%, -50%) rotate(0deg); }
+        }
+        /* Geometrik Doku (Çok Daha Belirgin) */
+        .bg-grid-texture {
+          background-size: 50px 50px;
+          background-image: 
+            linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+          mask-image: radial-gradient(circle at center, black 60%, transparent 100%);
+        }
+        /* 3D UniCycle Heykeli (Kalın, Parlak ve Daha Büyük) */
+        .sculpture-ring-1 {
+          position: absolute; top: 50%; left: 50%;
+          width: 550px; height: 550px;
+          border: 3px solid rgba(32, 178, 170, 0.9); /* Kalın Turkuaz */
+          box-shadow: 0 0 20px rgba(32, 178, 170, 0.5); /* Neon Parlaması */
+          border-radius: 50%;
+          animation: spinSlow 20s linear infinite;
+          clip-path: polygon(0% 0%, 100% 0%, 100% 80%, 0% 100%);
+        }
+        .sculpture-ring-2 {
+          position: absolute; top: 50%; left: 50%;
+          width: 450px; height: 450px;
+          border: 3px solid rgba(59, 130, 246, 0.8); /* Kalın Mavi */
+          box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); /* Neon Parlaması */
+          border-radius: 50%;
+          animation: spinSlowReverse 15s linear infinite;
+          clip-path: polygon(0% 20%, 100% 0%, 100% 100%, 0% 80%);
+        }
+      `,
+        }}
+      />
 
-      {/* KARARTMA EFEKTİ */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/80 z-0"></div>
+      {/* 1. Derinlik: Okyanus/Turkuaz Renk Katmanı */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-[#0f2e36] to-slate-900 z-0"></div>
 
-      {/* 🚀 BUZLU CAM EFEKTLİ GERİ DÖN BUTONU */}
-      <div className="absolute top-6 left-4 sm:top-8 sm:left-8 z-50">
+      {/* 2. Doku: Geometrik Grid Overlay */}
+      <div className="absolute inset-0 bg-grid-texture z-0 opacity-100 mix-blend-overlay"></div>
+
+      {/* 3. Merkezi Öğe: 3D Soyut UniCycle Heykeli */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none z-0">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#20B2AA] rounded-full blur-[100px] opacity-40"></div>
+        <div className="sculpture-ring-1"></div>
+        <div className="sculpture-ring-2"></div>
+      </div>
+
+      {/* Geri Dön Butonu */}
+      <div className="absolute top-8 left-8 z-50">
         <Link
           href="/"
-          className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-bold flex items-center gap-2 hover:bg-white/20 hover:scale-105 transition-all text-xs sm:text-sm shadow-xl"
+          className="text-slate-300 hover:text-white font-bold flex items-center gap-2 transition-colors drop-shadow-md text-sm sm:text-base"
         >
           <span>&larr;</span> Ana Sayfaya Dön
         </Link>
       </div>
 
-      {/* 💼 GİRİŞ / KAYIT KARTI */}
-      <div className="relative z-10 bg-white w-full max-w-[420px] rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] overflow-hidden border border-white/20 my-10 animate-in fade-in zoom-in-95 duration-500">
-        {/* HEADER KISMI */}
-        <div className="bg-gradient-to-b from-blue-50/80 to-white p-6 sm:p-8 text-center border-b border-slate-100">
+      {/* BUZLU CAM FORM KUTUSU */}
+      <div className="relative z-10 bg-white/95 backdrop-blur-xl w-full max-w-md rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden border border-white/40 my-12">
+        <div className="bg-gradient-to-br from-blue-50/60 to-indigo-50/60 p-6 sm:p-8 text-center border-b border-white/40">
           <Link
             href="/"
             className="flex justify-center items-center gap-2.5 hover:scale-105 transition-transform mb-4 inline-flex"
@@ -226,9 +257,9 @@ export default function AuthPage() {
             <Image
               src="/logo.jpeg"
               alt="UniCycle İkon"
-              width={52}
-              height={52}
-              className="object-contain drop-shadow-sm rounded-[12px]"
+              width={56}
+              height={56}
+              className="object-contain drop-shadow-sm rounded-xl"
               priority
             />
             <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-800">
@@ -238,24 +269,17 @@ export default function AuthPage() {
           <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">
             {isLogin ? "Tekrar Hoş Geldin! 👋" : "UniCycle'a Katıl! 🚀"}
           </h1>
-          <p className="text-slate-500 text-xs sm:text-sm mt-2 font-medium px-2 leading-relaxed">
+          <p className="text-slate-500 text-xs sm:text-sm mt-2 font-medium">
             {isLogin
-              ? "Kampüs pazar yerine hızlıca giriş yap."
+              ? "Kampüs pazaryerine güvenle giriş yap."
               : "Öğrenci e-postan ve okulunla saniyeler içinde kayıt ol."}
           </p>
         </div>
 
-        {/* FORM KISMI */}
         <div className="p-6 sm:p-8">
           {message && (
             <div
-              className={`mb-5 p-3.5 rounded-xl text-xs sm:text-sm font-bold text-center animate-in fade-in slide-in-from-top-2 ${
-                message.includes("✅")
-                  ? "bg-green-50 text-green-600 border border-green-100"
-                  : message.includes("⏳")
-                    ? "bg-blue-50 text-blue-600 border border-blue-100"
-                    : "bg-red-50 text-red-600 border border-red-100"
-              }`}
+              className={`mb-4 p-3 rounded-xl text-sm font-bold text-center ${message.includes("✅") ? "bg-green-50 text-green-600 border border-green-100" : "bg-red-50 text-red-600 border border-red-100"}`}
             >
               {message}
             </div>
@@ -263,8 +287,7 @@ export default function AuthPage() {
 
           <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
             {!isLogin && (
-              <div className="space-y-4 sm:space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                {/* İSİM SOYİSİM */}
+              <div className="space-y-4 sm:space-y-5 animate-in fade-in slide-in-from-bottom-2">
                 <div>
                   <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     İsim ve Soyisim
@@ -274,15 +297,14 @@ export default function AuthPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Örn: Feride Okur"
-                    className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-slate-200 text-sm font-semibold"
+                    className="w-full bg-slate-50 text-slate-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 text-sm font-semibold"
                     required={!isLogin}
                   />
-                  <p className="text-[10px] sm:text-xs text-slate-400 mt-1.5 font-medium px-1">
+                  <p className="text-[10px] text-slate-400 mt-1.5 px-1 font-medium">
                     Güvenlik için soyadınızı girmek zorunludur.
                   </p>
                 </div>
 
-                {/* ÜNİVERSİTE SEÇİMİ */}
                 <div>
                   <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     Üniversiteniz
@@ -290,7 +312,7 @@ export default function AuthPage() {
                   <select
                     value={university}
                     onChange={(e) => setUniversity(e.target.value)}
-                    className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-slate-200 font-semibold text-sm appearance-none cursor-pointer"
+                    className="w-full bg-slate-50 text-slate-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 font-semibold text-sm appearance-none cursor-pointer"
                   >
                     {UNIVERSITIES.map((uni, idx) => (
                       <option key={idx} value={uni}>
@@ -300,7 +322,6 @@ export default function AuthPage() {
                   </select>
                 </div>
 
-                {/* EĞER "DİĞER" SEÇİLİRSE GÖZÜKEN KUTU */}
                 {university === "Diğer..." && (
                   <div className="animate-in fade-in slide-in-from-top-2">
                     <label className="block text-[11px] sm:text-xs font-bold text-[#20B2AA] mb-1.5 uppercase tracking-wider px-1">
@@ -311,7 +332,7 @@ export default function AuthPage() {
                       value={customUniversity}
                       onChange={(e) => setCustomUniversity(e.target.value)}
                       placeholder="Örn: X Teknik Üniversitesi"
-                      className="w-full bg-teal-50 text-teal-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-teal-200 font-bold placeholder-teal-300 text-sm"
+                      className="w-full bg-teal-50 text-teal-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-teal-200 font-bold text-sm"
                       required={!isLogin && university === "Diğer..."}
                     />
                   </div>
@@ -319,7 +340,6 @@ export default function AuthPage() {
               </div>
             )}
 
-            {/* E-POSTA */}
             <div>
               <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                 Üniversite E-Postası
@@ -329,12 +349,11 @@ export default function AuthPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="isim@ogrenci.edu.tr"
-                className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-slate-200 text-sm font-semibold"
+                className="w-full bg-slate-50 text-slate-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 text-sm font-semibold"
                 required
               />
             </div>
 
-            {/* ŞİFRE */}
             <div>
               <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                 Şifre
@@ -344,7 +363,7 @@ export default function AuthPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-50 text-slate-900 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-slate-200 text-sm font-bold tracking-widest"
+                className="w-full bg-slate-50 text-slate-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 text-sm font-bold tracking-widest"
                 required
               />
             </div>
@@ -352,7 +371,7 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-[#20B2AA] hover:from-blue-700 hover:to-teal-600 disabled:opacity-70 text-white font-black text-base sm:text-lg py-3.5 sm:py-4 rounded-xl sm:rounded-2xl transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 mt-4"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-lg py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg mt-4"
             >
               {isLoading
                 ? "⏳ Bekleyiniz..."
@@ -362,7 +381,7 @@ export default function AuthPage() {
             </button>
           </form>
 
-          <div className="mt-6 sm:mt-8 text-center text-xs sm:text-sm font-medium text-slate-500 bg-slate-50 py-3.5 rounded-xl border border-slate-100">
+          <div className="mt-6 text-center text-xs sm:text-sm font-medium text-slate-500 bg-slate-50 py-3.5 rounded-xl border border-slate-100">
             {isLogin ? "Hesabın yok mu?" : "Zaten hesabın var mı?"}
             <button
               type="button"

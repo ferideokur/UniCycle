@@ -264,6 +264,28 @@ export default function ListingDetailPage() {
     }
   };
 
+  // 🔗 PAYLAŞMA MOTORU
+  const handleShare = async () => {
+    if (!product) return;
+
+    const shareData = {
+      title: product.title,
+      text: `UniCycle'da bu ilana göz at: ${product.title}`,
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log("Paylaşım iptal edildi veya hata:", err);
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      showToast("🔗 İlan linki panoya kopyalandı!");
+    }
+  };
+
   // ❤️ BEĞENME VE BİLDİRİM MOTORU
   const handleLikeToggle = async () => {
     if (!currentUser) {
@@ -584,7 +606,7 @@ export default function ListingDetailPage() {
                   ))}
                   <div
                     className="px-5 py-2.5 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
-                    onClick={handleSearchSubmit as any}
+                    onClick={handleSearchSubmit}
                   >
                     <span className="text-xs font-bold text-blue-600">
                       Tüm sonuçları gör &rarr;
@@ -842,18 +864,13 @@ export default function ListingDetailPage() {
                   className="w-full h-full object-contain"
                 />
               </div>
-
               {photos.length > 1 && (
                 <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4 overflow-x-auto pb-2 custom-scrollbar">
                   {photos.map((photo: string, index: number) => (
                     <button
                       key={index}
                       onClick={() => setActiveImageIndex(index)}
-                      className={`relative w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 shrink-0 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all ${
-                        activeImageIndex === index
-                          ? "border-blue-600 shadow-md scale-105"
-                          : "border-transparent hover:border-blue-300 opacity-70 hover:opacity-100"
-                      }`}
+                      className={`relative w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 shrink-0 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all ${activeImageIndex === index ? "border-blue-600 shadow-md scale-105" : "border-transparent hover:border-blue-300 opacity-70 hover:opacity-100"}`}
                     >
                       <img
                         src={photo}
@@ -1027,22 +1044,52 @@ export default function ListingDetailPage() {
                 </div>
               </div>
 
-              <div className="flex flex-row gap-2 sm:gap-3">
-                <button
+              {/* 🔥 YENİ NESİL PREMIUM BÖLÜNMÜŞ (SPLIT) FAVORİ BUTONU */}
+              <div className="flex flex-row gap-2 sm:gap-3 mt-4">
+                {/* Beğeni Grubu (Tamamı Tıklanabilir) */}
+                <div
                   onClick={handleLikeToggle}
-                  className={`flex-1 font-bold py-2.5 sm:py-3 rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 transition-colors text-xs sm:text-sm ${
+                  className={`flex-[3] flex rounded-xl overflow-hidden border transition-all duration-300 shadow-sm cursor-pointer hover:shadow-md group ${
                     isLiked
-                      ? "bg-red-50 text-red-500 border border-red-100"
-                      : "bg-red-50 hover:bg-red-100 text-red-500 border border-transparent"
+                      ? "border-red-200"
+                      : "border-slate-200 hover:border-red-300"
                   }`}
                 >
-                  <Heart
-                    className={`w-4 h-4 sm:w-5 sm:h-5 ${isLiked ? "fill-current" : ""}`}
-                  />
-                  {isLiked ? "Çıkar" : "Favoriye Al"}
-                </button>
-                <button className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2.5 sm:py-3 rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 transition-colors text-xs sm:text-sm">
-                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5" /> Paylaş
+                  {/* Sol Taraf: İkon ve Yazı */}
+                  <div
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 sm:py-3.5 text-xs sm:text-sm font-bold transition-colors ${
+                      isLiked
+                        ? "bg-red-50 text-red-600 border-r border-red-200"
+                        : "bg-white text-slate-600 border-r border-slate-100 group-hover:bg-red-50"
+                    }`}
+                  >
+                    <Heart
+                      className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:scale-110 ${isLiked ? "fill-current text-red-500" : "text-slate-400 group-hover:text-red-400"}`}
+                    />
+                    <span className="tracking-wide whitespace-nowrap">
+                      {isLiked ? "Favorilerde" : "Favoriye Al"}
+                    </span>
+                  </div>
+
+                  {/* Sağ Taraf: Sayaç (Rozet Görünümü) */}
+                  <div
+                    className={`flex items-center justify-center px-3 sm:px-5 font-black text-xs sm:text-sm tabular-nums transition-colors ${
+                      isLiked
+                        ? "bg-red-500 text-white"
+                        : "bg-slate-50 text-slate-500"
+                    }`}
+                  >
+                    {likeCount}
+                  </div>
+                </div>
+
+                {/* 🔥 YENİ PAYLAŞ BUTONU (Fonksiyon Bağlandı) */}
+                <button
+                  onClick={handleShare}
+                  className="flex-[2] bg-white hover:bg-slate-50 text-slate-600 font-bold py-3 sm:py-3.5 rounded-xl flex items-center justify-center gap-2 text-xs sm:text-sm border border-slate-200 transition-all shadow-sm hover:shadow-md"
+                >
+                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />{" "}
+                  <span className="whitespace-nowrap">Paylaş</span>
                 </button>
               </div>
             </div>
@@ -1092,11 +1139,7 @@ export default function ListingDetailPage() {
         </div>
       </div>
 
-      {/* ---------------------------------------------------------------------- */}
       {/* 💬 GERÇEK VERİTABANI İLE MESAJLAŞMA (INBOX) SİSTEMİ */}
-      {/* ---------------------------------------------------------------------- */}
-
-      {/* Mesaj FAB Butonu */}
       {!isMessagesListOpen && !activeChatUser && (
         <button
           onClick={() => setIsMessagesListOpen(true)}
@@ -1123,7 +1166,6 @@ export default function ListingDetailPage() {
         </button>
       )}
 
-      {/* Gelen Kutusu Listesi */}
       {isMessagesListOpen && (
         <div className="fixed bottom-0 right-0 sm:right-4 md:right-8 w-full sm:w-80 md:w-[350px] h-[55vh] sm:h-[450px] bg-white rounded-t-3xl sm:rounded-2xl shadow-[0_-15px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
           <div className="bg-blue-600 text-white px-4 sm:px-5 py-4 sm:py-4 flex justify-between items-center shadow-md relative pt-6 sm:pt-4">
@@ -1138,7 +1180,6 @@ export default function ListingDetailPage() {
               ✕
             </button>
           </div>
-
           <div className="flex-1 overflow-y-auto flex flex-col divide-y divide-slate-100 bg-white custom-scrollbar">
             {inboxChats.length === 0 ? (
               <div className="text-center text-slate-500 text-sm mt-16 font-medium px-4">
@@ -1188,7 +1229,6 @@ export default function ListingDetailPage() {
         </div>
       )}
 
-      {/* Aktif Sohbet Penceresi */}
       {activeChatUser && (
         <div className="fixed bottom-0 right-0 sm:right-4 md:right-8 w-full sm:w-80 md:w-[350px] h-[55vh] sm:h-[450px] bg-white rounded-t-3xl sm:rounded-2xl shadow-[0_-15px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
           <div className="bg-blue-600 text-white px-4 sm:px-5 py-4 sm:py-4 flex justify-between items-center shadow-md relative pt-6 sm:pt-4">
@@ -1225,7 +1265,6 @@ export default function ListingDetailPage() {
               ✕
             </button>
           </div>
-
           <div
             ref={chatScrollRef}
             className="flex-1 bg-slate-50 p-3 sm:p-4 overflow-y-auto flex flex-col gap-2 sm:gap-3 custom-scrollbar"
@@ -1238,18 +1277,13 @@ export default function ListingDetailPage() {
               messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 sm:px-4 py-2.5 text-xs sm:text-[13px] shadow-sm ${
-                    msg.isMine
-                      ? "bg-blue-600 text-white self-end rounded-br-sm"
-                      : "bg-white text-slate-800 border border-slate-100 self-start rounded-bl-sm"
-                  }`}
+                  className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 sm:px-4 py-2.5 text-xs sm:text-[13px] shadow-sm ${msg.isMine ? "bg-blue-600 text-white self-end rounded-br-sm" : "bg-white text-slate-800 border border-slate-100 self-start rounded-bl-sm"}`}
                 >
                   {msg.text}
                 </div>
               ))
             )}
           </div>
-
           <form
             onSubmit={handleSendMessage}
             className="p-3 sm:p-4 bg-white border-t border-slate-100 flex items-center gap-2 mb-1 sm:mb-0"
@@ -1257,17 +1291,17 @@ export default function ListingDetailPage() {
             <input
               type="text"
               placeholder="Bir mesaj yaz..."
-              className="flex-1 bg-slate-100 text-slate-800 text-sm px-4 py-3 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="flex-1 bg-slate-100 text-slate-800 text-sm sm:text-sm px-4 sm:px-4 py-3 sm:py-3 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-600"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
             />
             <button
               type="submit"
               disabled={!chatInput.trim()}
-              className="w-12 h-12 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-full flex items-center justify-center transition-colors shrink-0 shadow-sm"
+              className="w-12 h-12 sm:w-12 sm:h-12 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-full flex items-center justify-center transition-colors shrink-0 shadow-sm"
             >
               <svg
-                className="w-5 h-5 ml-1"
+                className="w-5 h-5 sm:w-5 sm:h-5 ml-1"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
@@ -1350,12 +1384,7 @@ export default function ListingDetailPage() {
 
       <style
         dangerouslySetInnerHTML={{
-          __html: `
-        .custom-scrollbar::-webkit-scrollbar { height: 6px; }
-        @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; } }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-      `,
+          __html: `.custom-scrollbar::-webkit-scrollbar { height: 6px; } @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; } } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }`,
         }}
       />
     </div>
