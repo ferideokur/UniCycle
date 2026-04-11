@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -225,11 +225,12 @@ export default function CreateListingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans">
+    // 🔥 TAŞMA KORUMASI: w-full ve overflow-x-hidden eklendi
+    <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans w-full overflow-x-hidden flex flex-col">
       {/* 🚀 ÜST MENÜ */}
       <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 shadow-sm">
-        <div className="max-w-5xl mx-auto px-6 h-20 flex justify-between items-center">
-          <div className="flex-1">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex justify-between items-center">
+          <div className="flex-1 shrink-0">
             <Link
               href="/"
               className="inline-flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group"
@@ -237,25 +238,25 @@ export default function CreateListingPage() {
               <Image
                 src="/logo.jpeg"
                 alt="UniCycle İkon"
-                width={48}
-                height={48}
-                className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all rounded-md"
+                width={36}
+                height={36}
+                className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all rounded-md sm:w-[48px] sm:h-[48px]"
                 priority
               />
-              <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800 hidden sm:block md:block">
+              <span className="text-xl sm:text-[32px] font-extrabold tracking-tight text-slate-800 hidden sm:block md:block">
                 Uni<span className="text-[#20B2AA]">Cycle</span>
               </span>
             </Link>
           </div>
-          <div className="flex-1 text-center hidden sm:block">
-            <h1 className="text-xl font-black text-slate-800">
+          <div className="flex-1 text-center hidden sm:block shrink-0">
+            <h1 className="text-lg sm:text-xl font-black text-slate-800">
               Yeni İlan Oluştur 📦
             </h1>
           </div>
-          <div className="flex-1 flex justify-end">
+          <div className="flex-1 flex justify-end shrink-0">
             <Link
               href="/profile"
-              className="font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-full"
+              className="font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1 sm:gap-2 bg-slate-50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-sm sm:text-base"
             >
               İptal Et ✕
             </Link>
@@ -264,55 +265,55 @@ export default function CreateListingPage() {
       </header>
 
       {/* 💼 İLAN VERME FORMU */}
-      <div className="max-w-2xl mx-auto mt-10 px-4">
+      <div className="max-w-2xl mx-auto mt-6 sm:mt-10 px-4 w-full">
         {showSuccess ? (
-          <div className="bg-white rounded-[2rem] shadow-xl p-12 text-center animate-in zoom-in duration-300 border border-green-100 mt-10">
-            <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-5xl mx-auto mb-6 shadow-inner">
+          <div className="bg-white rounded-2xl sm:rounded-[2rem] shadow-xl p-8 sm:p-12 text-center animate-in zoom-in duration-300 border border-green-100 mt-6 sm:mt-10">
+            <div className="w-16 h-16 sm:w-24 sm:h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-3xl sm:text-5xl mx-auto mb-4 sm:mb-6 shadow-inner">
               ✅
             </div>
-            <h2 className="text-3xl font-black text-slate-800 mb-3">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-800 mb-2 sm:mb-3">
               İlanın Yayında!
             </h2>
-            <p className="text-slate-500 font-medium text-lg">
+            <p className="text-slate-500 font-medium text-sm sm:text-lg">
               Ürünün kampüs vitrinine eklendi. Bol kazançlar!
             </p>
           </div>
         ) : (
           <form
             onSubmit={handleSubmit}
-            className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden p-8 sm:p-10"
+            className="bg-white rounded-2xl sm:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden p-5 sm:p-10"
           >
-            <div className="space-y-10">
+            <div className="space-y-6 sm:space-y-10">
               {/* 📸 1. ÇOKLU FOTOĞRAF GALERİSİ */}
               <div>
-                <div className="flex justify-between items-end mb-3">
-                  <label className="block text-sm font-black uppercase tracking-widest text-slate-400">
+                <div className="flex justify-between items-end mb-2 sm:mb-3">
+                  <label className="block text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400">
                     Ürün Görselleri *
                   </label>
-                  <span className="text-xs font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-md">
+                  <span className="text-[10px] sm:text-xs font-bold text-blue-500 bg-blue-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md">
                     {photos.length}/5
                   </span>
                 </div>
-                <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+                <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-3 sm:pb-4 custom-scrollbar">
                   {photos.map((photoUrl, index) => (
                     <div
                       key={index}
-                      className="relative w-32 h-32 rounded-2xl shrink-0 border border-slate-200 shadow-sm group"
+                      className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-xl sm:rounded-2xl shrink-0 border border-slate-200 shadow-sm group"
                     >
                       <img
                         src={photoUrl}
                         alt={`Ürün ${index + 1}`}
-                        className="w-full h-full object-cover rounded-2xl"
+                        className="w-full h-full object-cover rounded-xl sm:rounded-2xl"
                       />
                       {index === 0 && (
-                        <div className="absolute bottom-2 left-2 right-2 bg-black/70 text-white text-[10px] font-black text-center py-1 rounded-lg backdrop-blur-sm">
+                        <div className="absolute bottom-1 left-1 right-1 sm:bottom-2 sm:left-2 sm:right-2 bg-black/70 text-white text-[8px] sm:text-[10px] font-black text-center py-0.5 sm:py-1 rounded-md sm:rounded-lg backdrop-blur-sm">
                           KAPAK
                         </div>
                       )}
                       <button
                         type="button"
                         onClick={() => removePhoto(index)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white w-8 h-8 rounded-full font-bold shadow-md hover:bg-red-600 hover:scale-110 transition-all z-10 flex items-center justify-center opacity-0 group-hover:opacity-100"
+                        className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 bg-red-500 text-white w-6 h-6 sm:w-8 sm:h-8 rounded-full font-bold shadow-md hover:bg-red-600 hover:scale-110 transition-all z-10 flex items-center justify-center opacity-100 lg:opacity-0 group-hover:opacity-100 text-xs sm:text-base"
                       >
                         ✕
                       </button>
@@ -322,10 +323,10 @@ export default function CreateListingPage() {
                   {photos.length < 5 && (
                     <div
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-32 h-32 rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50/50 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 shrink-0 transition-colors"
+                      className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl sm:rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50/50 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 shrink-0 transition-colors"
                     >
-                      <span className="text-3xl mb-1 text-blue-400">📷</span>
-                      <span className="text-xs font-bold text-blue-600">
+                      <span className="text-2xl sm:text-3xl mb-0.5 sm:mb-1 text-blue-400">📷</span>
+                      <span className="text-[10px] sm:text-xs font-bold text-blue-600 text-center leading-tight px-1">
                         Fotoğraf Ekle
                       </span>
                     </div>
@@ -343,9 +344,9 @@ export default function CreateListingPage() {
               <hr className="border-slate-100" />
 
               {/* 📝 2. BAŞLIK VE KATEGORİ */}
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <label className="block text-sm font-black uppercase tracking-widest text-slate-400 mb-2">
+                  <label className="block text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400 mb-1.5 sm:mb-2">
                     İlan Başlığı *
                   </label>
                   <input
@@ -354,19 +355,19 @@ export default function CreateListingPage() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Örn: Finansal Yönetim Çıkmış Sorular (2025)"
-                    className="w-full bg-slate-50 rounded-2xl py-4 px-5 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-800 transition-all border border-slate-200"
+                    className="w-full bg-slate-50 rounded-xl sm:rounded-2xl py-3 sm:py-4 px-4 sm:px-5 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-800 transition-all border border-slate-200 text-sm sm:text-base"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <label className="block text-sm font-black uppercase tracking-widest text-slate-400 mb-2">
+                    <label className="block text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400 mb-1.5 sm:mb-2">
                       Kategori *
                     </label>
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      className="w-full bg-slate-50 rounded-2xl py-4 px-4 outline-none font-bold text-slate-800 border border-slate-200 cursor-pointer appearance-none"
+                      className="w-full bg-slate-50 rounded-xl sm:rounded-2xl py-3 sm:py-4 px-3 sm:px-4 outline-none font-bold text-slate-800 border border-slate-200 cursor-pointer appearance-none text-xs sm:text-sm"
                     >
                       {CATEGORY_GROUPS.map((group, idx) => (
                         <optgroup
@@ -388,13 +389,13 @@ export default function CreateListingPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-black uppercase tracking-widest text-slate-400 mb-2">
+                    <label className="block text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400 mb-1.5 sm:mb-2">
                       Kullanım Durumu *
                     </label>
                     <select
                       value={condition}
                       onChange={(e) => setCondition(e.target.value)}
-                      className="w-full bg-slate-50 rounded-2xl py-4 px-4 outline-none font-bold text-slate-800 border border-slate-200 cursor-pointer appearance-none"
+                      className="w-full bg-slate-50 rounded-xl sm:rounded-2xl py-3 sm:py-4 px-3 sm:px-4 outline-none font-bold text-slate-800 border border-slate-200 cursor-pointer appearance-none text-xs sm:text-sm"
                     >
                       <option>Sıfır / Etiketi Üzerinde</option>
                       <option>İkinci El - Yeni Gibi</option>
@@ -411,37 +412,39 @@ export default function CreateListingPage() {
 
               {/* 💰 3. FİYATLANDIRMA VE DEĞERLENDİRME */}
               <div>
-                <label className="block text-sm font-black uppercase tracking-widest text-slate-400 mb-4">
+                <label className="block text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400 mb-3 sm:mb-4">
                   Nasıl Değerlendireceksin?
                 </label>
 
-                <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-6">
+                {/* Butonların kapsayıcısı (Taşmayı önlemek için flex-wrap ve gap eklendi) */}
+                <div className="flex flex-wrap bg-slate-100 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl mb-4 sm:mb-6 gap-1 sm:gap-0">
                   <button
                     type="button"
                     onClick={() => setPriceType("fiyat")}
-                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${priceType === "fiyat" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                    className={`flex-1 min-w-[100px] py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-bold text-[11px] sm:text-sm transition-all whitespace-nowrap ${priceType === "fiyat" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
                   >
                     Satmak İstiyorum
                   </button>
                   <button
                     type="button"
                     onClick={() => setPriceType("takas")}
-                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${priceType === "takas" ? "bg-white text-purple-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                    className={`flex-1 min-w-[100px] py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-bold text-[11px] sm:text-sm transition-all whitespace-nowrap ${priceType === "takas" ? "bg-white text-purple-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
                   >
                     Takas Düşünüyorum
                   </button>
                   <button
                     type="button"
                     onClick={() => setPriceType("ucretsiz")}
-                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${priceType === "ucretsiz" ? "bg-white text-green-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                    className={`flex-1 min-w-[100px] py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-bold text-[11px] sm:text-sm transition-all whitespace-nowrap ${priceType === "ucretsiz" ? "bg-white text-green-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
                   >
                     Ücretsiz Ver
                   </button>
                 </div>
 
+                {/* Alt Kısımlar (Render Bozukluğu Düzeltildi) */}
                 {priceType === "fiyat" && (
-                  <div className="relative animate-in fade-in slide-in-from-top-2 max-w-sm">
-                    <span className="absolute left-6 top-4 font-black text-slate-400 text-lg">
+                  <div className="relative animate-in fade-in slide-in-from-top-2 w-full sm:max-w-sm">
+                    <span className="absolute left-4 sm:left-6 top-3 sm:top-4 font-black text-slate-400 text-base sm:text-lg">
                       ₺
                     </span>
                     <input
@@ -451,25 +454,25 @@ export default function CreateListingPage() {
                       onChange={(e) => setPrice(e.target.value)}
                       placeholder="0"
                       min="1"
-                      className="w-full bg-white rounded-2xl py-4 pl-12 pr-5 focus:ring-2 focus:ring-blue-500 outline-none font-black text-2xl text-slate-800 border-2 border-blue-100 shadow-sm"
+                      className="w-full bg-white rounded-xl sm:rounded-2xl py-3 sm:py-4 pl-10 sm:pl-12 pr-4 sm:pr-5 focus:ring-2 focus:ring-blue-500 outline-none font-black text-xl sm:text-2xl text-slate-800 border-2 border-blue-100 shadow-sm"
                     />
                   </div>
                 )}
+                
                 {priceType === "takas" && (
-                  <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 flex items-center gap-3 animate-in fade-in">
-                    <span className="text-2xl">🤝</span>
-                    <p className="text-sm font-bold text-purple-700">
-                      Ürünün kampüste takas tekliflerine açık olarak
-                      listelenecek.
+                  <div className="bg-purple-50 p-3 sm:p-4 rounded-xl border border-purple-100 flex items-center gap-2 sm:gap-3 animate-in fade-in">
+                    <span className="text-xl sm:text-2xl shrink-0">🤝</span>
+                    <p className="text-xs sm:text-sm font-bold text-purple-700 leading-snug">
+                      Ürünün kampüste takas tekliflerine açık olarak listelenecek.
                     </p>
                   </div>
                 )}
+                
                 {priceType === "ucretsiz" && (
-                  <div className="bg-green-50 p-4 rounded-xl border border-green-100 flex items-center gap-3 animate-in fade-in">
-                    <span className="text-2xl">🎁</span>
-                    <p className="text-sm font-bold text-green-700">
-                      Harika bir hareket! Ürünün ihtiyacı olan bir öğrenciye
-                      hediye edilecek.
+                  <div className="bg-green-50 p-3 sm:p-4 rounded-xl border border-green-100 flex items-center gap-2 sm:gap-3 animate-in fade-in">
+                    <span className="text-xl sm:text-2xl shrink-0">🎁</span>
+                    <p className="text-xs sm:text-sm font-bold text-green-700 leading-snug">
+                      Harika bir hareket! Ürünün ihtiyacı olan bir öğrenciye hediye edilecek.
                     </p>
                   </div>
                 )}
@@ -479,7 +482,7 @@ export default function CreateListingPage() {
 
               {/* 📝 4. AÇIKLAMA */}
               <div>
-                <label className="block text-sm font-black uppercase tracking-widest text-slate-400 mb-2">
+                <label className="block text-xs sm:text-sm font-black uppercase tracking-widest text-slate-400 mb-1.5 sm:mb-2">
                   Detaylı Açıklama
                 </label>
                 <textarea
@@ -487,21 +490,21 @@ export default function CreateListingPage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Ürünün detaylarından, varsa ufak kusurlarından ve kampüste nerede teslim edebileceğinden bahset..."
-                  className="w-full bg-slate-50 rounded-2xl py-4 px-5 focus:ring-2 focus:ring-blue-500 outline-none font-medium text-slate-800 transition-all border border-slate-200 resize-none"
+                  className="w-full bg-slate-50 rounded-xl sm:rounded-2xl py-3 sm:py-4 px-4 sm:px-5 focus:ring-2 focus:ring-blue-500 outline-none font-medium text-slate-800 transition-all border border-slate-200 resize-none text-sm sm:text-base"
                 />
               </div>
 
               {/* 🚀 5. GÖNDER BUTONU */}
-              <div className="pt-4">
+              <div className="pt-2 sm:pt-4">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`w-full py-5 rounded-[1.5rem] font-black text-lg text-white shadow-xl transition-all transform flex items-center justify-center gap-3 
+                  className={`w-full py-4 sm:py-5 rounded-xl sm:rounded-[1.5rem] font-black text-base sm:text-lg text-white shadow-xl transition-all transform flex items-center justify-center gap-2 sm:gap-3 
                     ${isSubmitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 hover:scale-[1.02] active:scale-95 shadow-blue-200"}`}
                 >
                   {isSubmitting ? (
                     <>
-                      <span className="animate-spin text-2xl">⏳</span> İlan
+                      <span className="animate-spin text-xl sm:text-2xl">⏳</span> İlan
                       Kaydediliyor...
                     </>
                   ) : (
