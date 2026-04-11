@@ -78,7 +78,7 @@ const CATEGORY_MAP: Record<string, string[]> = {
   ],
 };
 
-// 🌟 TRENDYOL TARZI YUVARLAK HIZLI ERİŞİM BUTONLARI
+// 🌟 TRENDYOL TARZI YUVARLAK HIZLI ERİŞİM BUTONLARI (KAYBOLAN KISIM GERİ GELDİ!)
 const QUICK_LINKS = [
   { title: "Ders Notu", icon: "📝", filter: "Ders Notları & Özetler", color: "bg-blue-50 text-blue-600 border-blue-100" },
   { title: "Telefon", icon: "📱", filter: "Cep Telefonu", color: "bg-slate-100 text-slate-700 border-slate-200" },
@@ -163,7 +163,7 @@ export default function Home() {
         );
         setLikedProducts(likes);
 
-        // 🔔 GERÇEK BİLDİRİMLERİ ÇEK (Panelin içi için)
+        // 🔔 GERÇEK BİLDİRİMLERİ ÇEK
         fetch(
           `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
         )
@@ -180,7 +180,7 @@ export default function Home() {
 
               const activeNotifs = data.filter(
                 (n: any) => !deletedNotifs.includes(n.id),
-              ).reverse(); // En yeniler en üste
+              ).reverse();
 
               const unreadNotifs = activeNotifs.filter(
                 (n: any) => !seenNotifs.includes(n.id),
@@ -192,7 +192,6 @@ export default function Home() {
           })
           .catch((err) => console.error("Bildirimler çekilemedi:", err));
 
-        // Bildirim Sayfasından dönünce sayacı sıfırlama dinleyicisi
         window.addEventListener("notificationsSeen", () =>
           setNotificationsCount(0),
         );
@@ -295,7 +294,7 @@ export default function Home() {
     } else {
       newLikes.push(productObject.id);
 
-      // 🚀 BİLDİRİM GÖNDERME: İlan sahibi kendisi değilse bildirim at
+      // 🚀 BİLDİRİM GÖNDERME
       if (productObject.user && productObject.user.id !== user.id) {
         try {
           await fetch("https://unicycle-api.onrender.com/api/interaction/notifications", {
@@ -335,10 +334,10 @@ export default function Home() {
     }
   };
 
-  // 🗓️ PİRİ REİS AKADEMİK TAKVİMİNE GÖRE AKILLI BANNER ALGORİTMASI 🗓️
+  // 🗓️ PİRİ REİS AKADEMİK TAKVİMİNE GÖRE AKILLI BANNER
   const getBannerContent = () => {
     const today = new Date();
-    const month = today.getMonth() + 1; // Aylar 1-12 arası
+    const month = today.getMonth() + 1;
     const year = today.getFullYear();
 
     if (year === 2025 && (month === 9 || month === 10)) {
@@ -349,11 +348,11 @@ export default function Home() {
       return { tag: "FİNAL DÖNEMİ", title: "Finaller Kapıda!", desc: "Dönemi kurtaran o son çıkmış sorular burada! Hemen incele, finalleri rahat geç.", btn: "Çıkmış Sorulara Bak", filterGroup: "📚 Akademik & Okul", filterItem: "Çıkmış Sorular", icon: "🎓" };
     } else if (year === 2026 && (month === 2 || month === 3)) {
       return { tag: "BAHAR DÖNEMİ", title: "Bahar Dönemi Başladı!", desc: "Eksik kitaplarını ve laboratuvar malzemelerini kampüsten uygun fiyata temin et.", btn: "Kitapları Keşfet", filterGroup: "📚 Akademik & Okul", filterItem: "Ders & Sınav Kitapları", icon: "📚" };
-    } else if (year === 2026 && month === 4) { // NİSAN: VİZE DÖNEMİ
+    } else if (year === 2026 && month === 4) {
       return { tag: "VİZE HAFTASI", title: "Bahar Vizeleri Başlıyor!", desc: "Vizelere az kaldı! Piri Reis'in en güncel ders notları ve özetleriyle sınavlara bomba gibi hazırlan.", btn: "Notları İncele", filterGroup: "📚 Akademik & Okul", filterItem: "Ders Notları & Özetler", icon: "✍️" };
-    } else if (year === 2026 && (month === 5 || month === 6)) { // MAYIS-HAZİRAN: FİNAL DÖNEMİ
+    } else if (year === 2026 && (month === 5 || month === 6)) {
       return { tag: "FİNAL DÖNEMİ", title: "Final Haftası Yaklaşıyor!", desc: "Yaz tatiline çıkmadan önceki son viraj! Çıkmış sorularla son tekrarlarını yap.", btn: "Çıkmış Sorular", filterGroup: "📚 Akademik & Okul", filterItem: "Çıkmış Sorular", icon: "🎯" };
-    } else { // TEMMUZ-AĞUSTOS: YAZ TATİLİ
+    } else {
       return { tag: "YAZ TATİLİ", title: "Kampüste Yaz Geldi!", desc: "Kullanmadığın ders kitaplarını ve eşyalarını satarak tatil harçlığını çıkarmanın tam zamanı.", btn: "Hemen İlan Ver", link: "/create-listing", icon: "🏖️" };
     }
   };
@@ -370,10 +369,7 @@ export default function Home() {
   };
 
   const filteredProducts = products.filter((p: any) => {
-    const matchesSearch = p.title
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase());
-
+    const matchesSearch = p.title?.toLowerCase().includes(searchTerm.toLowerCase());
     let matchesCategory = false;
 
     if (activeFilter === "TÜMÜ") {
@@ -394,7 +390,7 @@ export default function Home() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20 gap-2 sm:gap-6">
             
-            {/* ✨ DÜZELTİLMİŞ LOGO KISMI (KARE YAPISI KALDIRILDI) ✨ */}
+            {/* ✨ DÜZELTİLMİŞ LOGO KISMI (KARE YAPISI KALDIRILDI) */}
             <div className="flex-shrink-0">
               <Link
                 href="/"
@@ -414,14 +410,13 @@ export default function Home() {
                     priority
                   />
                 </div>
-
                 <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
                   Uni<span className="text-[#20B2AA]">Cycle</span>
                 </span>
               </Link>
             </div>
 
-            {/* 🚀 ZARİFLEŞTİRİLMİŞ ARAMA ÇUBUĞU VE AÇILIR MENÜ */}
+            {/* 🚀 MASAÜSTÜ ARAMA ÇUBUĞU */}
             <div className="hidden md:flex flex-1 max-w-3xl relative group z-50">
               <form onSubmit={handleSearchSubmit} className="w-full relative">
                 <input
@@ -436,11 +431,9 @@ export default function Home() {
                   onFocus={() => setIsDropdownOpen(true)}
                   onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
                 />
-
                 <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">
                   🔍
                 </span>
-
                 <button type="submit" className="hidden">
                   Ara
                 </button>
@@ -462,15 +455,12 @@ export default function Home() {
                               ? result.item.fullName.charAt(0).toUpperCase()
                               : "U"}
                           </div>
-
                           <div>
                             <div className="font-bold text-slate-800 text-sm">
                               {result.item.fullName}
                             </div>
-
                             <div className="text-[11px] text-slate-500 font-medium">
-                              Kullanıcı • @
-                              {result.item.fullName.split(" ")[0].toLowerCase()}
+                              Kullanıcı • @{result.item.fullName.split(" ")[0].toLowerCase()}
                             </div>
                           </div>
                         </Link>
@@ -485,20 +475,15 @@ export default function Home() {
                           <div className="w-10 h-10 bg-slate-100 rounded-md overflow-hidden flex shrink-0 border border-slate-200">
                             {result.item.photosBase64 &&
                             result.item.photosBase64[0] ? (
-                              <img
-                                src={result.item.photosBase64[0]}
-                                className="w-full h-full object-cover"
-                              />
+                              <img src={result.item.photosBase64[0]} className="w-full h-full object-cover" />
                             ) : (
                               <span className="m-auto text-lg">📦</span>
                             )}
                           </div>
-
                           <div className="flex-1 truncate">
                             <div className="font-bold text-slate-800 truncate text-sm">
                               {result.item.title}
                             </div>
-
                             <div className="text-[11px] font-bold text-blue-600 mt-0.5">
                               {result.item.priceType === "fiyat"
                                 ? `₺${result.item.price}`
@@ -511,7 +496,6 @@ export default function Home() {
                       );
                     }
                   })}
-
                   <div
                     className="px-5 py-2.5 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
                     onClick={handleSearchSubmit}
@@ -535,7 +519,7 @@ export default function Home() {
               {user ? (
                 <div className="flex items-center gap-2 sm:gap-4 relative">
                   
-                  {/* 🔔 YENİ VE DÜZELTİLMİŞ ZİL BUTONU VE KARE PANEL 🔔 */}
+                  {/* 🔔 ZİL BUTONU VE KARE PANEL */}
                   <div className="relative">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
@@ -546,7 +530,6 @@ export default function Home() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                       </svg>
                       
-                      {/* Kırmızı Bildirim Sayacı */}
                       {notificationsCount > 0 && (
                         <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
                           {notificationsCount}
@@ -554,7 +537,7 @@ export default function Home() {
                       )}
                     </button>
 
-                    {/* 📦 KARE BİLDİRİM PANELİ (AÇILIR MENÜ) */}
+                    {/* 📦 KARE BİLDİRİM PANELİ */}
                     {isNotificationOpen && (
                       <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -639,6 +622,47 @@ export default function Home() {
               )}
             </div>
           </div>
+
+          {/* 📱 SADECE MOBİL İÇİN ARAMA ÇUBUĞU (KAYBOLAN KISIM GELDİ) */}
+          <div className="md:hidden pb-3 pt-2 w-full relative z-40">
+            <form onSubmit={handleSearchSubmit} className="w-full relative">
+              <input
+                type="text"
+                placeholder="Ürün, @üye veya ders notu ara..."
+                className="w-full bg-slate-100 text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-transparent font-medium text-sm"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setIsDropdownOpen(true);
+                }}
+                onFocus={() => setIsDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+              />
+              <span className="absolute left-3 top-2.5 text-slate-400 text-lg">
+                🔍
+              </span>
+            </form>
+
+            {/* Mobil Canlı Arama Sonuçları */}
+            {isDropdownOpen && liveResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+                {liveResults.slice(0, 4).map((result, idx) => (
+                  <Link
+                    href={result.type === "user" ? `/user/${result.item.id}` : `/listing-detail/${result.item.id}`}
+                    key={`mob-${idx}`}
+                    className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50"
+                  >
+                    <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
+                      {result.type === "user" ? <span className="font-bold text-blue-600">{result.item.fullName.charAt(0).toUpperCase()}</span> : <span className="text-xs">📦</span>}
+                    </div>
+                    <div className="flex-1 truncate">
+                      <div className="font-bold text-slate-800 truncate text-xs">{result.item.fullName || result.item.title}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -716,7 +740,30 @@ export default function Home() {
 
         {/* 🛍️ SAĞ İÇERİK ALANI */}
         <section className="flex-1 min-w-0 w-full">
-          {/* 🔥 VİRGÜLLERİ SİLİNMİŞ KATEGORİ MENÜSÜ */}
+          
+          {/* 🔥 1. KAYBOLAN YUVARLAK İKONLAR GERİ GELDİ (MOBİL) */}
+          <div className="block lg:hidden bg-white -mx-4 px-4 py-5 mb-4 border-b border-slate-100 shadow-sm">
+            <div className="flex justify-between overflow-x-auto custom-scrollbar gap-4">
+              {QUICK_LINKS.map((link, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => { setActiveFilter(link.filter); setExpandedGroup(null); }}
+                  className="flex flex-col items-center gap-2 cursor-pointer shrink-0"
+                >
+                  <div
+                    className={`w-[54px] h-[54px] rounded-full flex items-center justify-center text-2xl shadow-sm border ${link.color}`}
+                  >
+                    {link.icon}
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-700 w-16 text-center leading-tight">
+                    {link.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 🔥 2. VİRGÜLSÜZ MOBİL KATEGORİ MENÜSÜ */}
           <div className="block lg:hidden mb-6">
             <div className="flex overflow-x-auto custom-scrollbar gap-2 pb-2 -mx-4 px-4">
               <button
@@ -731,7 +778,7 @@ export default function Home() {
 
               {Object.keys(CATEGORY_MAP).map((cat) => {
                 let shortName = cat.split(" ")[1] || cat.split(" ")[0];
-                shortName = shortName.replace(/,/g, ""); // VİRGÜL YOK EDİCİ
+                shortName = shortName.replace(/,/g, ""); // VİRGÜL SİLİCİ
 
                 return (
                   <button
@@ -801,7 +848,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ⏳ PROFESYONEL İSKELET YÜKLEME (Gap ve Grid düzeltildi) */}
+          {/* ⏳ PROFESYONEL İSKELET YÜKLEME */}
           {isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mt-4">
               {[...Array(8)].map((_, i) => (
@@ -853,7 +900,6 @@ export default function Home() {
               </Link>
             </div>
           ) : (
-            // 🔥 DÜZELTME 4: 2'li İlan Grid'i mobil için mükemmelleştirildi
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {filteredProducts.map((p: any) => {
                 const isLiked = likedProducts.includes(p.id);
