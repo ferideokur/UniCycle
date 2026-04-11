@@ -78,6 +78,16 @@ const CATEGORY_MAP: Record<string, string[]> = {
   ],
 };
 
+// 🌟 TRENDYOL TARZI YUVARLAK HIZLI ERİŞİM BUTONLARI
+const QUICK_LINKS = [
+  { title: "Ders Notu", icon: "📝", filter: "Ders Notları & Özetler", color: "bg-blue-50 text-blue-600 border-blue-100" },
+  { title: "Telefon", icon: "📱", filter: "Cep Telefonu", color: "bg-slate-100 text-slate-700 border-slate-200" },
+  { title: "Laptop", icon: "💻", filter: "Bilgisayar & Laptop", color: "bg-indigo-50 text-indigo-600 border-indigo-100" },
+  { title: "Kitaplar", icon: "📚", filter: "Ders & Sınav Kitapları", color: "bg-cyan-50 text-cyan-600 border-cyan-100" },
+  { title: "Ev Eşyası", icon: "🏠", filter: "Öğrenci Evi Mobilyası", color: "bg-sky-50 text-sky-600 border-sky-100" },
+  { title: "Kozmetik", icon: "💄", filter: "Makyaj Ürünleri", color: "bg-slate-100 text-slate-600 border-slate-200" },
+];
+
 export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -350,7 +360,7 @@ export default function Home() {
 
   const bannerData = getBannerContent();
 
-const handleBannerClick = () => {
+  const handleBannerClick = () => {
     if (bannerData.link) {
       router.push(bannerData.link);
     } else {
@@ -358,6 +368,7 @@ const handleBannerClick = () => {
       setActiveFilter(bannerData.filterItem || "TÜMÜ");
     }
   };
+
   const filteredProducts = products.filter((p: any) => {
     const matchesSearch = p.title
       ?.toLowerCase()
@@ -377,14 +388,13 @@ const handleBannerClick = () => {
   });
 
   return (
-    // 🔥 DÜZELTME 1: Taşıyıcıya w-full ve overflow-x-hidden eklendi.
     <main className="min-h-screen bg-[#F8FAFC] pb-20 font-sans w-full overflow-x-hidden flex flex-col">
       {/* 🚀 ÜST MENÜ */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20 gap-2 sm:gap-6">
             
-            {/* ✨ DÜZELTİLMİŞ LOGO KISMI (TIKLANINCA SIFIRLAR) ✨ */}
+            {/* ✨ DÜZELTİLMİŞ LOGO KISMI (KARE YAPISI KALDIRILDI) ✨ */}
             <div className="flex-shrink-0">
               <Link
                 href="/"
@@ -395,16 +405,16 @@ const handleBannerClick = () => {
                 }}
                 className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
               >
-                <Image
-                  src="/logo.jpeg"
-                  alt="UniCycle İkon"
-                  width={44}
-                  height={44}
-                  className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all rounded-md sm:w-[52px] sm:h-[52px]"
-                  priority
-                />
+                <div className="relative w-[44px] h-[44px] sm:w-[52px] sm:h-[52px] flex shrink-0">
+                  <Image
+                    src="/logo.jpeg"
+                    alt="UniCycle İkon"
+                    fill
+                    className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all bg-transparent"
+                    priority
+                  />
+                </div>
 
-                {/* 🔥 DÜZELTME 2: Logo yazısı mobilde küçültüldü */}
                 <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
                   Uni<span className="text-[#20B2AA]">Cycle</span>
                 </span>
@@ -514,13 +524,12 @@ const handleBannerClick = () => {
               )}
             </div>
 
-            {/* 🚀 BUTONLAR (Mobilde gap daraltıldı) */}
-            <div className="flex items-center gap-3 sm:gap-4">
-              <Link
-                href="/create-listing"
-                className="hidden sm:flex font-black text-blue-600 hover:text-blue-800 items-center gap-1 transition-colors"
-              >
-                <span className="text-xl">+</span> İlan Ver
+            {/* 🚀 BUTONLAR (MOBİLDE İLAN VER BUTONU EKLENDİ) */}
+            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+              
+              {/* MOBİLDEKİ "+ İlan" BUTONU */}
+              <Link href="/create-listing" className="flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors text-[11px] sm:text-base border border-[#20B2AA] px-2 py-1.5 rounded-lg sm:border-none sm:px-0 sm:py-0 sm:rounded-none">
+                <span className="text-sm sm:text-xl">+</span> <span className="hidden sm:inline">İlan Ver</span><span className="sm:hidden">İlan</span>
               </Link>
 
               {user ? (
@@ -610,7 +619,6 @@ const handleBannerClick = () => {
                     <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">
                       👤
                     </div>
-
                     <span className="hidden sm:block">Hesabım</span>
                   </Link>
 
@@ -708,7 +716,7 @@ const handleBannerClick = () => {
 
         {/* 🛍️ SAĞ İÇERİK ALANI */}
         <section className="flex-1 min-w-0 w-full">
-          {/* 🔥 DÜZELTME 3: Mobil kategoriler ekran kenarlarına taşırıldı (Native hissi) */}
+          {/* 🔥 VİRGÜLLERİ SİLİNMİŞ KATEGORİ MENÜSÜ */}
           <div className="block lg:hidden mb-6">
             <div className="flex overflow-x-auto custom-scrollbar gap-2 pb-2 -mx-4 px-4">
               <button
@@ -721,15 +729,20 @@ const handleBannerClick = () => {
                 Tümü
               </button>
 
-              {Object.keys(CATEGORY_MAP).map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => handleMainCategoryClick(cat)}
-                  className={`whitespace-nowrap px-5 py-2.5 rounded-full font-bold text-sm ${expandedGroup === cat ? "bg-blue-600 text-white shadow-sm" : "bg-white text-slate-600 border border-slate-200"}`}
-                >
-                  {cat}
-                </button>
-              ))}
+              {Object.keys(CATEGORY_MAP).map((cat) => {
+                let shortName = cat.split(" ")[1] || cat.split(" ")[0];
+                shortName = shortName.replace(/,/g, ""); // VİRGÜL YOK EDİCİ
+
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => handleMainCategoryClick(cat)}
+                    className={`whitespace-nowrap px-5 py-2.5 rounded-full font-bold text-sm ${expandedGroup === cat ? "bg-blue-600 text-white shadow-sm" : "bg-white text-slate-600 border border-slate-200"}`}
+                  >
+                    {shortName}
+                  </button>
+                );
+              })}
             </div>
 
             {expandedGroup && CATEGORY_MAP[expandedGroup] && (
@@ -840,7 +853,7 @@ const handleBannerClick = () => {
               </Link>
             </div>
           ) : (
-            // 🔥 DÜZELTME 4: 2'li İlan Grid'i mobil için mükemmelleştirildi (gap-3, p-3, rounded-2xl)
+            // 🔥 DÜZELTME 4: 2'li İlan Grid'i mobil için mükemmelleştirildi
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {filteredProducts.map((p: any) => {
                 const isLiked = likedProducts.includes(p.id);
