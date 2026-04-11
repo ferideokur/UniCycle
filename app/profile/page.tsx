@@ -364,6 +364,7 @@ export default function ProfilePage() {
   const displayUniversity = university === "Diğer..." ? customUniversity : university;
 
   return (
+    // 🔥 TAŞMA KORUMASI
     <div className="min-h-screen bg-[#F8FAFC] pb-20 relative font-sans w-full overflow-x-hidden flex flex-col">
       
       {showToast && (
@@ -372,7 +373,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 🚀 ÜST MENÜ NAVBAR (ANASAYFA İLE %100 AYNI HİZALAMA) */}
+      {/* 🚀 ANASAYFA İLE MİLİMETRİK EŞİT ÜST MENÜ NAVBAR */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           
@@ -387,7 +388,7 @@ export default function ProfilePage() {
               </Link>
             </div>
 
-            {/* Masaüstü Arama Çubuğu (Ortada) */}
+            {/* Masaüstü Arama Çubuğu */}
             <div className="hidden md:flex flex-1 max-w-3xl relative group z-50 px-8">
               <form onSubmit={handleSearchSubmit} className="w-full relative">
                 <input type="text" placeholder="Ürün, @üye veya ders notu ara..." className="w-full bg-slate-100 text-slate-800 rounded-full py-2.5 px-6 pl-12 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-transparent font-medium text-sm" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => setIsDropdownOpen(true)} onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)} />
@@ -414,7 +415,7 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Sağ Butonlar (Zil, Profil, İlan Ver - Shrink-0 Korumasıyla) */}
+            {/* Sağ Butonlar (Şekli Bozulmasın Diye Shrink-0 Korumasıyla) */}
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
               <Link href="/create-listing" className="hidden md:flex font-black text-[#20B2AA] hover:text-blue-800 items-center gap-1 transition-colors">
                 <span className="text-xl">+</span> İlan Ver
@@ -434,9 +435,9 @@ export default function ProfilePage() {
                        )}
                      </button>
 
-                     {/* Kare Bildirim Paneli */}
+                     {/* Kare Bildirim Paneli - Taşıması Düzeltildi */}
                      {isNotificationOpen && (
-                       <div className="absolute top-full right-[-10px] sm:right-0 mt-3 w-[280px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                       <div className="absolute top-full right-[-20px] sm:right-0 mt-3 w-[300px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                          <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                            <span className="font-bold text-slate-800">Bildirimler</span>
                            {notificationsCount > 0 && (
@@ -475,14 +476,16 @@ export default function ProfilePage() {
                      )}
                    </div>
 
-                   {/* Profil Butonu */}
-                   <Link href="/profile" className="flex flex-col items-center justify-center text-slate-600 hover:text-blue-600 w-9 h-9 sm:w-auto sm:h-auto transition-all shrink-0">
-                     <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>
-                     <span className="hidden sm:block text-[10px] font-medium mt-0.5">Hesabım</span>
+                   {/* Profil Butonu (Tam Daire) */}
+                   <Link href="/profile" className="flex items-center justify-center gap-2 bg-blue-600 text-white w-9 h-9 sm:w-auto sm:h-auto sm:px-5 sm:py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm transition-all shrink-0">
+                     <div className="w-4 h-4 sm:w-5 sm:h-5 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs shrink-0">👤</div>
+                     <span className="hidden sm:block ml-2 text-sm">Hesabım</span>
                    </Link>
+
+                   <button onClick={handleLogout} className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm ml-2 shrink-0">Çıkış</button>
                  </div>
               ) : (
-                 <Link href="/login" className="flex items-center justify-center bg-orange-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-orange-600 transition-colors text-xs shrink-0">Giriş Yap</Link>
+                 <Link href="/login" className="flex items-center justify-center bg-slate-800 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold hover:bg-black transition-colors text-xs sm:text-sm shrink-0">Giriş Yap</Link>
               )}
             </div>
           </div>
@@ -583,7 +586,6 @@ export default function ProfilePage() {
               <Link href="/create-listing" className="bg-blue-600 hover:bg-blue-700 text-white font-black py-2.5 sm:py-3.5 px-6 sm:px-8 rounded-full transition shadow-md inline-block text-xs sm:text-base">İlk İlanını Ver</Link>
             </div>
           ) : (
-            // 🔥 MOBİLDE YAN YANA 2'Lİ İLAN
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {myListings.map((listing) => (
                 <div key={listing.id} className="group cursor-pointer">
@@ -610,7 +612,7 @@ export default function ProfilePage() {
       </div>
 
       {/* ---------------------------------------------------------------------- */}
-      {/* 💬 GERÇEK VERİTABANI İLE MESAJLAŞMA (INBOX) SİSTEMİ - BOYUTU KÜÇÜLTÜLDÜ VE ŞIKLAŞTIRILDI */}
+      {/* 💬 GERÇEK VERİTABANI İLE MESAJLAŞMA (INBOX) SİSTEMİ - %100 DÜZELTİLDİ */}
       {/* ---------------------------------------------------------------------- */}
       
       {!isMessagesListOpen && !activeChatUser && (
@@ -628,15 +630,15 @@ export default function ProfilePage() {
         </button>
       )}
 
-      {/* 2. GERÇEK GELEN KUTUSU LİSTESİ - H-[50vh] ve YUVARLAK KÖŞELERLE MOBİL UYGULAMA HİSSİYATI */}
+      {/* 2. GERÇEK GELEN KUTUSU LİSTESİ - h-[55vh] Yapıldı ve Köşeler Yuvarlatıldı */}
       {isMessagesListOpen && (
-        <div className="fixed bottom-0 sm:bottom-4 right-0 sm:right-4 md:right-8 w-full sm:w-80 md:w-[350px] h-[50vh] sm:h-[450px] bg-white rounded-t-[2rem] sm:rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
-          {/* Mobil tutma çubuğu (Swipe indicator) */}
-          <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-2 mt-3 sm:hidden"></div>
+        <div className="fixed bottom-0 right-0 sm:right-4 md:right-8 w-full sm:w-80 md:w-[350px] h-[55vh] sm:h-[450px] bg-white rounded-t-[2rem] sm:rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
+          {/* Mobil İçin Gri Tutma Çubuğu */}
+          <div className="w-10 h-1.5 bg-slate-300 rounded-full mx-auto mt-3 mb-1 sm:hidden"></div>
           
           <div className="bg-white text-slate-800 px-5 py-3 flex justify-between items-center border-b border-slate-100">
-            <h3 className="font-extrabold text-base flex items-center gap-2">💬 Mesajlar</h3>
-            <button onClick={() => setIsMessagesListOpen(false)} className="text-slate-400 hover:text-slate-800 font-bold text-xl sm:text-lg">✕</button>
+            <h3 className="font-extrabold text-lg flex items-center gap-2">💬 Mesajlar</h3>
+            <button onClick={() => setIsMessagesListOpen(false)} className="text-slate-400 hover:text-slate-800 font-bold text-2xl leading-none">✕</button>
           </div>
           
           <div className="flex-1 overflow-y-auto flex flex-col divide-y divide-slate-100 bg-white custom-scrollbar">
@@ -669,12 +671,13 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 3. GERÇEK AKTİF SOHBET PENCERESİ - H-[50vh] ve YUVARLAK KÖŞELER */}
+      {/* 3. GERÇEK AKTİF SOHBET PENCERESİ - h-[55vh] Yapıldı ve Köşeler Yuvarlatıldı */}
       {activeChatUser && (
-        <div className="fixed bottom-0 sm:bottom-4 right-0 sm:right-4 md:right-8 w-full sm:w-80 md:w-[350px] h-[50vh] sm:h-[450px] bg-white rounded-t-[2rem] sm:rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
-          <div className="w-12 h-1.5 bg-white/40 rounded-full mx-auto mb-1 mt-2 absolute left-0 right-0 z-50 sm:hidden"></div>
-          
-          <div className="bg-[#20B2AA] text-white px-3 sm:px-4 py-4 sm:py-3 flex justify-between items-center shadow-md relative pt-6 sm:pt-3">
+        <div className="fixed bottom-0 right-0 sm:right-4 md:right-8 w-full sm:w-80 md:w-[350px] h-[55vh] sm:h-[450px] bg-white rounded-t-[2rem] sm:rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
+          <div className="bg-[#20B2AA] text-white px-3 sm:px-4 py-3 flex justify-between items-center shadow-md relative pt-6 sm:pt-3">
+            {/* Mobil İçin Tutma Çubuğu */}
+            <div className="w-10 h-1.5 bg-white/40 rounded-full absolute top-2 left-1/2 -translate-x-1/2 sm:hidden"></div>
+            
             <div className="flex items-center gap-2 sm:gap-3">
               <button onClick={() => { setActiveChatUser(null); setIsMessagesListOpen(true); }} className="text-white/80 hover:text-white mr-0.5 sm:mr-1 font-black text-xl sm:text-lg">&larr;</button>
               <div className="relative">
@@ -703,7 +706,7 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <form onSubmit={handleSendMessage} className="p-2 sm:p-3 bg-white border-t border-slate-100 flex items-center gap-2 mb-2 sm:mb-0">
+          <form onSubmit={handleSendMessage} className="p-2 sm:p-3 bg-white border-t border-slate-100 flex items-center gap-2 mb-1 sm:mb-0">
             <input 
               type="text" placeholder="Mesaj yaz..." 
               className="flex-1 bg-slate-100 text-slate-800 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-[#20B2AA]"
@@ -716,7 +719,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 📸 MODALLAR AYNEN KORUNDU SADECE RESPONSIVE YAPILDI */}
+      {/* 📸 MODALLAR AYNEN KORUNDU */}
       {/* MODAL 1: KAPAK */}
       {activeModal === "cover" && (
         <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
