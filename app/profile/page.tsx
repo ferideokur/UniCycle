@@ -5,78 +5,26 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation"; 
 
-// 📦 SİHİRLİ KATEGORİ HARİTASI
-const CATEGORY_MAP: Record<string, string[]> = {
-  "📚 Akademik & Okul": [
-    "Ders Notları & Özetler",
-    "Çıkmış Sorular",
-    "Ders & Sınav Kitapları",
-    "Yabancı Dil (YDS/TOEFL vb.)",
-    "Kırtasiye & Çizim Malzemeleri",
-    "Laboratuvar & Mimarlık Malzemeleri",
-  ],
-  "👗 Kadın": [
-    "Kadın Üst Giyim",
-    "Kadın Alt Giyim",
-    "Kadın Dış Giyim",
-    "Kadın Ayakkabı",
-    "Kadın Çanta",
-    "Kadın Aksesuar & Takı",
-    "Abiye & Mezuniyet Elbisesi",
-  ],
-  "👔 Erkek": [
-    "Erkek Üst Giyim",
-    "Erkek Alt Giyim",
-    "Erkek Dış Giyim",
-    "Erkek Ayakkabı",
-    "Erkek Çanta & Cüzdan",
-    "Erkek Aksesuar & Saat",
-    "Takım Elbise",
-  ],
-  "💄 Kozmetik & Bakım": [
-    "Makyaj Ürünleri",
-    "Parfüm & Deodorant",
-    "Cilt & Yüz Bakımı",
-    "Saç Bakımı & Şekillendirici",
-    "Unisex Bakım",
-  ],
-  "📱 Elektronik & Teknoloji": [
-    "Cep Telefonu",
-    "Telefon Aksesuar & Kılıf",
-    "Bilgisayar & Laptop",
-    "Tablet",
-    "Kulaklık & Ses Sistemleri",
-    "Akıllı Saat & Bileklik",
-    "Oyun Bilgisayarı & Ekipman",
-    "Kamera & Fotoğraf Makinesi",
-  ],
-  "🏠 Yaşam, Ev & Yurt": [
-    "Öğrenci Evi Mobilyası",
-    "Yurt Eşyaları",
-    "Küçük Ev Aletleri",
-    "Mutfak Gereçleri",
-    "Kupa & Termos",
-    "Nevresim & Yatak Örtüsü",
-    "Ev Dekorasyon",
-  ],
-  "🎸 Hobi, Oyun & Spor": [
-    "Roman & Okuma Kitabı",
-    "Kutu Oyunları",
-    "PlayStation / Konsol Oyunları",
-    "Spor & Kamp Malzemeleri",
-    "Müzik Aletleri",
-    "Bisiklet & Scooter",
-    "Etkinlik & Konser Bileti",
-  ],
-  "🎒 Kampüs İçi Hizmet": [
-    "Özel Ders Verenler",
-    "Çeviri & Ödev Yardımı",
-    "Ev Arkadaşı Arayanlar",
-    "Eşya Kiralama",
-    "Kayıp Eşya",
-    "Diğer Her Şey",
-  ],
-};
+const UNIVERSITIES = [
+  "Acıbadem Üniversitesi", "Akdeniz Üniversitesi", "Anadolu Üniversitesi", "Ankara Üniversitesi", 
+  "Atatürk Üniversitesi", "Bahçeşehir Üniversitesi", "Başkent Üniversitesi", "Bilkent Üniversitesi", 
+  "Boğaziçi Üniversitesi", "Bursa Uludağ Üniversitesi", "Celal Bayar Üniversitesi", "Çanakkale Onsekiz Mart Üniversitesi", 
+  "Çukurova Üniversitesi", "Dicle Üniversitesi", "Dokuz Eylül Üniversitesi", "Ege Üniversitesi", 
+  "Erciyes Üniversitesi", "Eskişehir Osmangazi Üniversitesi", "Fırat Üniversitesi", "Galatasaray Üniversitesi", 
+  "Gazi Üniversitesi", "Gaziantep Üniversitesi", "Gebze Teknik Üniversitesi", "Hacettepe Üniversitesi", 
+  "Hasan Kalyoncu Üniversitesi", "Isparta Süleyman Demirel Üniversitesi", "İbn Haldun Üniversitesi", 
+  "İstanbul Aydın Üniversitesi", "İstanbul Bilgi Üniversitesi", "İstanbul Kültür Üniversitesi", 
+  "İstanbul Medipol Üniversitesi", "İstanbul Okan Üniversitesi", "İstanbul Sabahattin Zaim Üniversitesi", 
+  "İstanbul Teknik Üniversitesi (İTÜ)", "İstanbul Ticaret Üniversitesi", "İstanbul Üniversitesi", 
+  "İzmir Ekonomi Üniversitesi", "İzmir Katip Çelebi Üniversitesi", "İzmir Yüksek Teknoloji Enstitüsü (İYTE)", 
+  "Kadir Has Üniversitesi", "Karadeniz Teknik Üniversitesi (KTÜ)", "Kırıkkale Üniversitesi", 
+  "Kocaeli Üniversitesi", "Koç Üniversitesi", "Marmara Üniversitesi", "Mef Üniversitesi", 
+  "Mimar Sinan Güzel Sanatlar Üniversitesi", "Muğla Sıtkı Koçman Üniversitesi", "Ondokuz Mayıs Üniversitesi", 
+  "Orta Doğu Teknik Üniversitesi (ODTÜ)", "Özyeğin Üniversitesi", "Pamukkale Üniversitesi", "Piri Reis Üniversitesi", 
+  "Sabancı Üniversitesi", "Sakarya Üniversitesi", "Selçuk Üniversitesi", "TOBB Ekonomi ve Teknoloji Üniversitesi", 
+  "Trakya Üniversitesi", "Türk-Alman Üniversitesi", "Yeditepe Üniversitesi", "Yıldız Teknik Üniversitesi (YTÜ)", 
+  "Diğer..."
+];
 
 export default function ProfilePage() {
   const [user, setUser] = useState<{ id: number, fullName: string, email: string } | null>(null);
@@ -415,22 +363,7 @@ export default function ProfilePage() {
   const defaultAvatar = `https://ui-avatars.com/api/?name=${user ? user.fullName : "Kullanıcı"}&background=0D8ABC&color=fff&size=256`;
   const displayUniversity = university === "Diğer..." ? customUniversity : university;
 
-  // Filtreleme (Senin Orijinal Kodun)
-  const filteredProducts = products.filter((p: any) => {
-    const matchesSearch = p.title?.toLowerCase().includes(searchTerm.toLowerCase());
-    let matchesCategory = false;
-    if (activeFilter === "TÜMÜ") {
-      matchesCategory = true;
-    } else if (CATEGORY_MAP[activeFilter]) {
-      matchesCategory = CATEGORY_MAP[activeFilter].includes(p.category);
-    } else {
-      matchesCategory = p.category === activeFilter;
-    }
-    return matchesSearch && matchesCategory;
-  });
-
   return (
-    // 🔥 YATAY KAYMA (TAŞMA) ENGELİ
     <div className="min-h-screen bg-[#F8FAFC] pb-20 relative font-sans w-full overflow-x-hidden flex flex-col">
       
       {showToast && (
@@ -439,31 +372,31 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 🚀 ANASAYFA İLE %100 AYNI OLAN ÜST MENÜ NAVBAR (ÖLÇÜLER VE HİZALAR EŞİTLENDİ) */}
-      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
+      {/* 🚀 ÜST MENÜ NAVBAR (ANASAYFA İLE %100 AYNI HİZALAMA) */}
+      <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           
-          <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
-            {/* Logo */}
+          {/* 1. SATIR: Logo ve Sağ Butonlar */}
+          <div className="flex justify-between items-center h-16 pt-2 gap-2 sm:gap-6">
             <div className="flex-shrink-0">
               <Link href="/" className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer">
-                <Image src="/logo.jpeg" alt="UniCycle İkon" width={36} height={36} className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all rounded-md sm:w-[52px] sm:h-[52px]" priority />
-                <span className="text-xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
+                <Image src="/logo.jpeg" alt="UniCycle İkon" width={36} height={36} className="object-contain drop-shadow-sm rounded-md sm:w-[44px] sm:h-[44px]" priority />
+                <span className="text-xl sm:text-[28px] font-extrabold tracking-tight text-slate-800">
                   Uni<span className="text-[#20B2AA]">Cycle</span>
                 </span>
               </Link>
             </div>
 
-            {/* Masaüstü Arama Çubuğu */}
-            <div className="hidden md:flex flex-1 max-w-3xl relative group z-50">
+            {/* Masaüstü Arama Çubuğu (Ortada) */}
+            <div className="hidden md:flex flex-1 max-w-3xl relative group z-50 px-8">
               <form onSubmit={handleSearchSubmit} className="w-full relative">
-                <input type="text" placeholder="Ürün, @üye veya ders notu ara..." className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-transparent font-medium" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => setIsDropdownOpen(true)} onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)} />
-                <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">🔍</span>
+                <input type="text" placeholder="Ürün, @üye veya ders notu ara..." className="w-full bg-slate-100 text-slate-800 rounded-full py-2.5 px-6 pl-12 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-transparent font-medium text-sm" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => setIsDropdownOpen(true)} onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)} />
+                <span className="absolute left-4 top-2.5 text-slate-400">🔍</span>
                 <button type="submit" className="hidden">Ara</button>
               </form>
 
               {isDropdownOpen && liveResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+                <div className="absolute top-full left-8 right-8 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
                   {liveResults.slice(0, 5).map((result, idx) => (
                      <Link href={result.type === "user" ? `/user/${result.item.id}` : `/listing-detail/${result.item.id}`} key={idx} className="flex items-center gap-3 px-5 py-2 hover:bg-slate-50 transition-colors">
                        <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0 text-sm">
@@ -483,21 +416,19 @@ export default function ProfilePage() {
 
             {/* Sağ Butonlar (Zil, Profil, İlan Ver - Shrink-0 Korumasıyla) */}
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              <Link href="/create-listing" className="hidden md:flex font-black text-blue-600 hover:text-blue-800 items-center gap-1 transition-colors">
+              <Link href="/create-listing" className="hidden md:flex font-black text-[#20B2AA] hover:text-blue-800 items-center gap-1 transition-colors">
                 <span className="text-xl">+</span> İlan Ver
               </Link>
               
               {user ? (
-                 <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                 <div className="flex items-center gap-1 sm:gap-4 shrink-0">
                    
                    {/* Bildirim Zili */}
                    <div className="relative shrink-0">
-                     <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors shrink-0" title="Bildirimler">
-                       <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                       </svg>
+                     <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-slate-600 hover:text-blue-600 transition-colors shrink-0" title="Bildirimler">
+                       <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                        {notificationsCount > 0 && (
-                         <span className="absolute top-0 right-0 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 text-white text-[9px] sm:text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
+                         <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-orange-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full border-2 border-white">
                            {notificationsCount}
                          </span>
                        )}
@@ -544,28 +475,26 @@ export default function ProfilePage() {
                      )}
                    </div>
 
-                   {/* Profil Butonu (Mobilde Tam Daire) */}
-                   <Link href="/profile" className="flex items-center justify-center gap-2 bg-blue-600 text-white w-9 h-9 sm:w-auto sm:h-auto sm:px-5 sm:py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm transition-all shrink-0">
-                     <div className="w-4 h-4 sm:w-5 sm:h-5 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs shrink-0">👤</div>
-                     <span className="hidden sm:block ml-2 text-sm">Hesabım</span>
+                   {/* Profil Butonu */}
+                   <Link href="/profile" className="flex flex-col items-center justify-center text-slate-600 hover:text-blue-600 w-9 h-9 sm:w-auto sm:h-auto transition-all shrink-0">
+                     <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>
+                     <span className="hidden sm:block text-[10px] font-medium mt-0.5">Hesabım</span>
                    </Link>
-
-                   <button onClick={handleLogout} className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm ml-2 shrink-0">Çıkış</button>
                  </div>
               ) : (
-                 <Link href="/login" className="flex items-center justify-center bg-slate-800 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold hover:bg-black transition-colors text-xs sm:text-sm shrink-0">Giriş Yap</Link>
+                 <Link href="/login" className="flex items-center justify-center bg-orange-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-orange-600 transition-colors text-xs shrink-0">Giriş Yap</Link>
               )}
             </div>
           </div>
 
-          {/* Sadece Mobil İçin Arama Çubuğu */}
-          <div className="md:hidden pb-3 pt-2 w-full relative z-40">
+          {/* 2. SATIR: Sadece Mobil İçin Arama Çubuğu */}
+          <div className="md:hidden pb-3 pt-1 w-full relative z-40">
             <form onSubmit={handleSearchSubmit} className="w-full relative">
-              <input type="text" placeholder="Ürün, @üye veya ders notu ara..." className="w-full bg-slate-100 text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-transparent font-medium text-sm" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => setIsDropdownOpen(true)} onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)} />
-              <span className="absolute left-3 top-2.5 text-slate-400">🔍</span>
+              <input type="text" placeholder="Ürün, kategori veya ders notu ara..." className="w-full bg-[#F3F4F6] text-slate-800 rounded-md py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-orange-500 transition-all border border-transparent font-medium text-sm" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => setIsDropdownOpen(true)} onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)} />
+              <span className="absolute left-3 top-2.5 text-slate-400 text-lg">🔍</span>
             </form>
             {isDropdownOpen && liveResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
                 {liveResults.slice(0, 4).map((result, idx) => (
                   <Link href={result.type === "user" ? `/user/${result.item.id}` : `/listing-detail/${result.item.id}`} key={`mob-${idx}`} className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50">
                     <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
@@ -654,7 +583,7 @@ export default function ProfilePage() {
               <Link href="/create-listing" className="bg-blue-600 hover:bg-blue-700 text-white font-black py-2.5 sm:py-3.5 px-6 sm:px-8 rounded-full transition shadow-md inline-block text-xs sm:text-base">İlk İlanını Ver</Link>
             </div>
           ) : (
-            // 🔥 MOBİLDE YAN YANA 2'Lİ İLAN (KUSURSUZ GÖRÜNÜM)
+            // 🔥 MOBİLDE YAN YANA 2'Lİ İLAN
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {myListings.map((listing) => (
                 <div key={listing.id} className="group cursor-pointer">
@@ -681,7 +610,7 @@ export default function ProfilePage() {
       </div>
 
       {/* ---------------------------------------------------------------------- */}
-      {/* 💬 GERÇEK VERİTABANI İLE MESAJLAŞMA (INBOX) SİSTEMİ - BOYUTU KÜÇÜLTÜLDÜ */}
+      {/* 💬 GERÇEK VERİTABANI İLE MESAJLAŞMA (INBOX) SİSTEMİ - BOYUTU KÜÇÜLTÜLDÜ VE ŞIKLAŞTIRILDI */}
       {/* ---------------------------------------------------------------------- */}
       
       {!isMessagesListOpen && !activeChatUser && (
@@ -699,17 +628,20 @@ export default function ProfilePage() {
         </button>
       )}
 
-      {/* 2. GERÇEK GELEN KUTUSU LİSTESİ - h-[60vh] olarak ufalatıldı */}
+      {/* 2. GERÇEK GELEN KUTUSU LİSTESİ - H-[50vh] ve YUVARLAK KÖŞELERLE MOBİL UYGULAMA HİSSİYATI */}
       {isMessagesListOpen && (
-        <div className="fixed bottom-0 sm:bottom-4 right-0 sm:right-4 md:right-8 w-full sm:w-80 md:w-[350px] h-[60vh] sm:h-[450px] bg-white rounded-t-2xl sm:rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
-          <div className="bg-slate-800 text-white px-5 py-4 flex justify-between items-center shadow-md">
+        <div className="fixed bottom-0 sm:bottom-4 right-0 sm:right-4 md:right-8 w-full sm:w-80 md:w-[350px] h-[50vh] sm:h-[450px] bg-white rounded-t-[2rem] sm:rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
+          {/* Mobil tutma çubuğu (Swipe indicator) */}
+          <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-2 mt-3 sm:hidden"></div>
+          
+          <div className="bg-white text-slate-800 px-5 py-3 flex justify-between items-center border-b border-slate-100">
             <h3 className="font-extrabold text-base flex items-center gap-2">💬 Mesajlar</h3>
-            <button onClick={() => setIsMessagesListOpen(false)} className="text-white/60 hover:text-white font-bold text-xl sm:text-lg">✕</button>
+            <button onClick={() => setIsMessagesListOpen(false)} className="text-slate-400 hover:text-slate-800 font-bold text-xl sm:text-lg">✕</button>
           </div>
           
           <div className="flex-1 overflow-y-auto flex flex-col divide-y divide-slate-100 bg-white custom-scrollbar">
             {inboxChats.length === 0 ? (
-              <div className="text-center text-slate-500 text-sm mt-20 font-medium px-4">
+              <div className="text-center text-slate-500 text-sm mt-16 font-medium px-4">
                 Henüz mesajın yok. İlk adımı sen at!
               </div>
             ) : (
@@ -737,10 +669,12 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 3. GERÇEK AKTİF SOHBET PENCERESİ - h-[60vh] olarak ufaltıldı */}
+      {/* 3. GERÇEK AKTİF SOHBET PENCERESİ - H-[50vh] ve YUVARLAK KÖŞELER */}
       {activeChatUser && (
-        <div className="fixed bottom-0 sm:bottom-4 right-0 sm:right-4 md:right-8 w-full sm:w-80 md:w-[350px] h-[60vh] sm:h-[450px] bg-white rounded-t-2xl sm:rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
-          <div className="bg-[#20B2AA] text-white px-3 sm:px-4 py-3 rounded-t-2xl flex justify-between items-center shadow-md">
+        <div className="fixed bottom-0 sm:bottom-4 right-0 sm:right-4 md:right-8 w-full sm:w-80 md:w-[350px] h-[50vh] sm:h-[450px] bg-white rounded-t-[2rem] sm:rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
+          <div className="w-12 h-1.5 bg-white/40 rounded-full mx-auto mb-1 mt-2 absolute left-0 right-0 z-50 sm:hidden"></div>
+          
+          <div className="bg-[#20B2AA] text-white px-3 sm:px-4 py-4 sm:py-3 flex justify-between items-center shadow-md relative pt-6 sm:pt-3">
             <div className="flex items-center gap-2 sm:gap-3">
               <button onClick={() => { setActiveChatUser(null); setIsMessagesListOpen(true); }} className="text-white/80 hover:text-white mr-0.5 sm:mr-1 font-black text-xl sm:text-lg">&larr;</button>
               <div className="relative">
@@ -769,7 +703,7 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <form onSubmit={handleSendMessage} className="p-2 sm:p-3 bg-white border-t border-slate-100 flex items-center gap-2">
+          <form onSubmit={handleSendMessage} className="p-2 sm:p-3 bg-white border-t border-slate-100 flex items-center gap-2 mb-2 sm:mb-0">
             <input 
               type="text" placeholder="Mesaj yaz..." 
               className="flex-1 bg-slate-100 text-slate-800 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-[#20B2AA]"
