@@ -117,7 +117,6 @@ export default function AuthPage() {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            // 🚀 YENİ: Final okulu da Java'ya paketleyip gönderiyoruz!
             body: JSON.stringify({
               fullName: fullName,
               email: email,
@@ -126,19 +125,6 @@ export default function AuthPage() {
             }),
           },
         );
-
-        {/*BACKGROUND ANIMATION*/}
-  
-  <video
-  className="absolute inset-0 w-full h-full object-cover opacity-40"
-  autoPlay
-  muted
-  playsInline
-  loop
->
-  <source src="/trade.mp4" type="video/mp4" />
-</video>
-
 
         const text = await response.text();
 
@@ -158,17 +144,19 @@ export default function AuthPage() {
     } else {
       // --- GİRİŞ YAPMA (LOGIN) İŞLEMİ ---
       try {
-        const response = await fetch("https://unicycle-api.onrender.com/api/users/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
+        const response = await fetch(
+          "https://unicycle-api.onrender.com/api/users/login",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          },
+        );
 
         if (response.ok) {
           const userData = await response.json();
           localStorage.setItem("user", JSON.stringify(userData));
 
-          // Java'dan okul bilgisi geliyorsa onu da hafızaya kazı!
           if (userData.university) {
             localStorage.setItem("userUni", userData.university);
           }
@@ -191,28 +179,79 @@ export default function AuthPage() {
   };
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
-      <video
-  autoPlay
-  muted
- 
-  playsInline
-  className="absolute inset-0 w-full h-full object-cover opacity-40"
-  src="/trade.mp4"
-/>
+    <main className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-slate-900">
+      {/* 🚀 PREMIUM CİDDİ ARKA PLAN (CSS Mimari) */}
+      {/* 🚀 PREMIUM CİDDİ ARKA PLAN (Güçlendirilmiş Parlaklık ve Kalınlık) */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @keyframes spinSlow {
+          from { transform: translate(-50%, -50%) rotate(0deg); }
+          to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes spinSlowReverse {
+          from { transform: translate(-50%, -50%) rotate(360deg); }
+          to { transform: translate(-50%, -50%) rotate(0deg); }
+        }
+        /* Geometrik Doku (Çok Daha Belirgin) */
+        .bg-grid-texture {
+          background-size: 50px 50px;
+          background-image: 
+            linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+          mask-image: radial-gradient(circle at center, black 60%, transparent 100%);
+        }
+        /* 3D UniCycle Heykeli (Kalın, Parlak ve Daha Büyük) */
+        .sculpture-ring-1 {
+          position: absolute; top: 50%; left: 50%;
+          width: 550px; height: 550px;
+          border: 3px solid rgba(32, 178, 170, 0.9); /* Kalın Turkuaz */
+          box-shadow: 0 0 20px rgba(32, 178, 170, 0.5); /* Neon Parlaması */
+          border-radius: 50%;
+          animation: spinSlow 20s linear infinite;
+          clip-path: polygon(0% 0%, 100% 0%, 100% 80%, 0% 100%);
+        }
+        .sculpture-ring-2 {
+          position: absolute; top: 50%; left: 50%;
+          width: 450px; height: 450px;
+          border: 3px solid rgba(59, 130, 246, 0.8); /* Kalın Mavi */
+          box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); /* Neon Parlaması */
+          border-radius: 50%;
+          animation: spinSlowReverse 15s linear infinite;
+          clip-path: polygon(0% 20%, 100% 0%, 100% 100%, 0% 80%);
+        }
+      `,
+        }}
+      />
 
-<div className="absolute inset-0 bg-black/30"></div>
-      <div className="absolute top-8 left-8">
+      {/* 1. Derinlik: Okyanus/Turkuaz Renk Katmanı */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-[#0f2e36] to-slate-900 z-0"></div>
+
+      {/* 2. Doku: Geometrik Grid Overlay */}
+      <div className="absolute inset-0 bg-grid-texture z-0 opacity-100 mix-blend-overlay"></div>
+
+      {/* 3. Merkezi Öğe: 3D Soyut UniCycle Heykeli */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none z-0">
+        {/* Ortadaki parlama çok daha güçlü ve geniş */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#20B2AA] rounded-full blur-[100px] opacity-40"></div>
+        {/* Dönen parlak geometrik halkalar */}
+        <div className="sculpture-ring-1"></div>
+        <div className="sculpture-ring-2"></div>
+      </div>
+
+      {/* Sol Üst Menü (Yazı rengi koyu zemin için açıldı) */}
+      <div className="absolute top-8 left-8 z-10">
         <Link
           href="/"
-          className="text-gray-400 hover:text-blue-600 font-bold flex items-center gap-2 transition-colors"
+          className="text-slate-400 hover:text-white font-bold flex items-center gap-2 transition-colors drop-shadow-md"
         >
           <span>←</span> Ana Sayfaya Dön
         </Link>
       </div>
 
-      <div className="relative z-10 bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden border border-gray-100 mt-12 mb-12">
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 text-center border-b border-gray-100">
+      {/* BUZLU CAM (Glassmorphism) EFEKTLİ FORM KUTUSU - Ultra Premium */}
+      <div className="relative z-10 bg-white/95 backdrop-blur-xl w-full max-w-md rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden border border-white/40 mt-12 mb-12">
+        <div className="bg-gradient-to-br from-blue-50/60 to-indigo-50/60 p-8 text-center border-b border-white/40">
           <Link
             href="/"
             className="flex justify-center items-center gap-3 hover:scale-105 transition-transform mb-4"
@@ -222,7 +261,7 @@ export default function AuthPage() {
               alt="UniCycle İkon"
               width={56}
               height={56}
-              className="object-contain drop-shadow-sm"
+              className="object-contain drop-shadow-sm rounded-xl"
               priority
             />
             <span className="text-4xl font-extrabold tracking-tight text-slate-800">
@@ -232,9 +271,9 @@ export default function AuthPage() {
           <h1 className="text-2xl font-black text-blue-900">
             {isLogin ? "Tekrar Hoş Geldin! 👋" : "UniCycle'a Katıl! 🚀"}
           </h1>
-          <p className="text-gray-500 text-sm mt-2 font-medium">
+          <p className="text-gray-600 text-sm mt-2 font-medium">
             {isLogin
-              ? "Kampüs pazaryerine giriş yap."
+              ? "Kampüs pazaryerine güvenle giriş yap."
               : "Öğrenci e-postan ve okulunla saniyeler içinde kayıt ol."}
           </p>
         </div>
@@ -242,7 +281,7 @@ export default function AuthPage() {
         <div className="p-8">
           {message && (
             <div
-              className={`mb-4 p-3 rounded-xl text-sm font-bold text-center ${message.includes("✅") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+              className={`mb-4 p-3 rounded-xl text-sm font-bold text-center ${message.includes("✅") ? "bg-green-100/90 text-green-700" : "bg-red-100/90 text-red-700"}`}
             >
               {message}
             </div>
@@ -261,10 +300,10 @@ export default function AuthPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Örn: Feride Okur"
-                    className="w-full bg-gray-50 text-gray-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-gray-200"
+                    className="w-full bg-white/70 text-gray-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-gray-200"
                     required={!isLogin}
                   />
-                  <p className="text-xs text-gray-400 mt-1 font-medium">
+                  <p className="text-xs text-gray-500 mt-1 font-medium">
                     Güvenlik için soyadınızı girmek zorunludur.
                   </p>
                 </div>
@@ -277,7 +316,7 @@ export default function AuthPage() {
                   <select
                     value={university}
                     onChange={(e) => setUniversity(e.target.value)}
-                    className="w-full bg-gray-50 text-gray-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-gray-200 font-semibold"
+                    className="w-full bg-white/70 text-gray-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-gray-200 font-semibold"
                   >
                     {UNIVERSITIES.map((uni, idx) => (
                       <option key={idx} value={uni}>
@@ -290,15 +329,16 @@ export default function AuthPage() {
                 {/* EĞER "DİĞER" SEÇİLİRSE GÖZÜKEN KUTU */}
                 {university === "Diğer..." && (
                   <div className="animate-fade-in">
-                    <label className="block text-sm font-bold text-blue-700 mb-1.5">
-                      Okulunuzun Adı
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center gap-2">
+                      <span className="text-[#20B2AA]">↳</span> Lütfen
+                      Okulunuzun Adını Yazın
                     </label>
                     <input
                       type="text"
                       value={customUniversity}
                       onChange={(e) => setCustomUniversity(e.target.value)}
                       placeholder="Örn: X Teknik Üniversitesi"
-                      className="w-full bg-blue-50 text-blue-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-blue-200 font-semibold placeholder-blue-300"
+                      className="w-full bg-white/70 text-gray-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-gray-200 font-semibold shadow-sm"
                       required={!isLogin && university === "Diğer..."}
                     />
                   </div>
@@ -315,7 +355,7 @@ export default function AuthPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="isim@ogrenci.edu.tr"
-                className="w-full bg-gray-50 text-gray-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-gray-200"
+                className="w-full bg-white/70 text-gray-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-gray-200"
                 required
               />
             </div>
@@ -329,14 +369,14 @@ export default function AuthPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-gray-50 text-gray-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-gray-200"
+                className="w-full bg-white/70 text-gray-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-gray-200"
                 required
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-lg py-3.5 rounded-xl transition-colors shadow-md mt-4"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-lg py-3.5 rounded-xl transition-colors shadow-lg mt-4"
             >
               {isLogin ? "Giriş Yap" : "Hesap Oluştur"}
             </button>
