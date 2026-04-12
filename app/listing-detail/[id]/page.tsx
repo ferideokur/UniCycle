@@ -257,10 +257,17 @@ export default function ListingDetailPage() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
+  // 🔥 TEMİZLENEN VE SADELEŞEN MESAJ BUTONU KODU
   const handleMessageClick = () => {
     if (!currentUser) return showToast("🔒 Mesaj atmak için giriş yapmalısın!");
     if (product && product.user) {
+      
+      // Kendi içindeki orijinal Mesajlar kutusunu aç
       openChatWith({ id: product.user.id, name: product.user.fullName });
+      
+      // Mesaj kutusuna otomatik olarak yazıyı doldur
+      setChatInput(`Merhaba, '${product.title}' ilanınla ilgileniyorum. Hala satılık mı?`);
+      
     }
   };
 
