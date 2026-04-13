@@ -457,180 +457,197 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 🚀 NAVBAR - STICKY VE HER ŞEY İÇİNDE */}
-      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
-        {/* Üst Satır: Logo ve İkonlar */}
-        <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex justify-between items-center gap-2 sm:gap-6">
-          <div className="flex-shrink-0">
-            <Link
-              href="/"
-              className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
-            >
-              <div className="relative w-9 h-9 sm:w-12 sm:h-12 flex shrink-0">
-                <Image
-                  src="/logo.jpeg"
-                  alt="UniCycle İkon"
-                  fill
-                  className="object-contain drop-shadow-sm transition-all rounded-md"
-                  priority
-                />
-              </div>
-              <span className="text-xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
-                Uni<span className="text-[#20B2AA]">Cycle</span>
-              </span>
-            </Link>
-          </div>
+      {/* 🚀 NAVBAR (ANASAYFA İLE %100 AYNI HİZALAMA VE ARAMA ÇUBUĞU EKLENDİ) */}
+      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          
+          {/* ÜST SATIR: LOGO, MASAÜSTÜ ARAMA VE BUTONLAR */}
+          <div className="flex justify-between items-center h-16 sm:h-20 pt-1 sm:pt-0 gap-2">
+            
+            {/* LOGO */}
+            <div className="flex-shrink-0">
+              <Link
+                href="/"
+                className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
+              >
+                <div className="relative w-9 h-9 sm:w-12 sm:h-12 flex shrink-0">
+                  <Image
+                    src="/logo.jpeg"
+                    alt="UniCycle İkon"
+                    fill
+                    className="object-contain drop-shadow-sm transition-all rounded-md"
+                    priority
+                  />
+                </div>
+                <span className="text-xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
+                  Uni<span className="text-[#20B2AA]">Cycle</span>
+                </span>
+              </Link>
+            </div>
 
-          {/* MASAÜSTÜ ARAMA ÇUBUĞU */}
-          <div className="hidden md:flex flex-1 max-w-3xl relative group z-50">
+            {/* MASAÜSTÜ ARAMA ÇUBUĞU (GİZLİ MOBİLDE) */}
+            <div className="hidden md:flex flex-1 max-w-3xl relative group z-50 px-8">
+              <form onSubmit={handleSearchSubmit} className="w-full relative">
+                <input
+                  type="text"
+                  placeholder="Ürün, @üye veya ders notu ara..."
+                  className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-transparent font-medium"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setIsDropdownOpen(true);
+                  }}
+                  onFocus={() => setIsDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+                />
+                <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors">
+                  🔍
+                </span>
+                <button type="submit" className="hidden">
+                  Ara
+                </button>
+              </form>
+
+              {/* MASAÜSTÜ AÇILIR MENÜ */}
+              {isDropdownOpen && liveResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+                  {liveResults.slice(0, 5).map((result, idx) => (
+                    <Link
+                      href={result.type === "user" ? `/user/${result.item.id}` : `/listing-detail/${result.item.id}`}
+                      key={idx}
+                      className="flex items-center gap-3 px-5 py-2 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0 text-sm">
+                        {result.type === "user" ? result.item.fullName.charAt(0).toUpperCase() : "📦"}
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-800 text-sm">
+                          {result.item.fullName || result.item.title}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                  <div
+                    className="px-5 py-2.5 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={handleSearchSubmit}
+                  >
+                    <span className="text-xs font-bold text-blue-600">
+                      Tüm sonuçları gör &rarr;
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* SAĞ BUTONLAR: İLAN, ZİL, PROFİL */}
+            <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
+              
+              {/* İlan Ver (Masaüstü) */}
+              <Link
+                href="/create-listing"
+                className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
+              >
+                <span className="text-xl">+</span> İlan Ver
+              </Link>
+
+              {/* İlan Ver (Mobil - Tam Olarak Anasayfadaki Gibi) */}
+              <Link
+                href="/create-listing"
+                className="flex md:hidden font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors text-[11px] sm:text-base border border-[#20B2AA] px-2 py-1.5 rounded-lg"
+              >
+                <span className="text-sm">+</span> İlan
+              </Link>
+
+              {user ? (
+                <div className="flex items-center gap-2 sm:gap-4 relative">
+                  
+                  {/* ZİL BUTONU VE PANEL */}
+                  <div className="relative shrink-0">
+                    <button
+                      onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                      className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-colors rounded-full flex items-center justify-center border border-slate-200"
+                    >
+                      <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                      </svg>
+                      {notificationsCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
+                          {notificationsCount}
+                        </span>
+                      )}
+                    </button>
+
+                    {isNotificationOpen && (
+                      <div className="absolute top-full right-[-20px] sm:right-0 mt-3 w-[300px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                        <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                          <span className="font-bold text-slate-800">Bildirimler</span>
+                          {notificationsCount > 0 && <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{notificationsCount} Yeni</span>}
+                        </div>
+                        <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                          {notificationsList.length === 0 ? (
+                            <div className="px-4 py-8 text-center text-slate-500 text-sm font-medium">Şu an hiç bildirimin yok.</div>
+                          ) : (
+                            notificationsList.slice(0, 5).map((notif: any) => {
+                              let icon = "✨"; let bg = "bg-blue-100"; let text = "text-blue-600";
+                              const msgLower = notif.message.toLowerCase();
+                              if (msgLower.includes("takip")) { icon = "🌸"; bg = "bg-pink-100"; text = "text-pink-600"; }
+                              else if (msgLower.includes("ilan") || msgLower.includes("ekledi")) { icon = "📦"; bg = "bg-orange-100"; text = "text-orange-600"; }
+                              else if (msgLower.includes("beğen") || msgLower.includes("favori")) { icon = "❤️"; bg = "bg-red-100"; text = "text-red-600"; }
+                              else if (msgLower.includes("yorum")) { icon = "💬"; bg = "bg-green-100"; text = "text-green-600"; }
+
+                              return (
+                                <div key={notif.id} className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center">
+                                  <div className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} text-lg shrink-0`}>{icon}</div>
+                                  <div className="flex-1">
+                                    <p className="text-sm text-slate-700">{notif.message}</p>
+                                    <p className="text-[10px] text-slate-400 mt-0.5">{notif.createdAt ? new Date(notif.createdAt).toLocaleDateString('tr-TR') : "Yeni"}</p>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                        <Link href="/notifications" onClick={() => setIsNotificationOpen(false)} className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors">Tüm Bildirimleri Gör &rarr;</Link>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* PROFİL BUTONU */}
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
+                  >
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+                      👤
+                    </div>
+                    <span className="hidden sm:block text-sm">Hesabım</span>
+                  </Link>
+
+                  <button
+                    onClick={handleLogout}
+                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold text-sm transition-colors"
+                  >
+                    Çıkış
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-black transition-colors"
+                >
+                  Giriş Yap
+                </Link>
+              )}
+            </div>
+          </div>
+          
+          {/* ALT SATIR: MOBİL ARAMA ÇUBUĞU (TAM OLARAK ANASAYFADAKİ GİBİ) */}
+          <div className="md:hidden pb-3 pt-1 w-full relative z-40">
             <form onSubmit={handleSearchSubmit} className="w-full relative">
               <input
                 type="text"
                 placeholder="Ürün, @üye veya ders notu ara..."
-                className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-transparent font-medium"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setIsDropdownOpen(true);
-                }}
-                onFocus={() => setIsDropdownOpen(true)}
-                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-              />
-              <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                🔍
-              </span>
-              <button type="submit" className="hidden">
-                Ara
-              </button>
-            </form>
-
-            {isDropdownOpen && liveResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
-                {liveResults.slice(0, 5).map((result, idx) => (
-                  <Link
-                    href={result.type === "user" ? `/user/${result.item.id}` : `/listing-detail/${result.item.id}`}
-                    key={idx}
-                    className="flex items-center gap-3 px-5 py-2 hover:bg-slate-50 transition-colors"
-                  >
-                    <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0 text-sm">
-                      {result.type === "user" ? result.item.fullName.charAt(0).toUpperCase() : "📦"}
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-800 text-sm">
-                        {result.item.fullName || result.item.title}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-                <div
-                  className="px-5 py-2.5 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
-                  onClick={handleSearchSubmit}
-                >
-                  <span className="text-xs font-bold text-blue-600">
-                    Tüm sonuçları gör &rarr;
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-            <Link
-              href="/create-listing"
-              className="hidden md:flex font-black text-[#20B2AA] items-center gap-1 transition-colors hover:text-teal-700"
-            >
-              <span className="text-xl">+</span> İlan Ver
-            </Link>
-            {user ? (
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="relative shrink-0">
-                  <button
-                    onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                    className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-colors rounded-full flex items-center justify-center"
-                  >
-                    <svg
-                      className="w-5 h-5 text-slate-600"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                    </svg>
-                    {notificationsCount > 0 && (
-                      <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full animate-pulse">
-                        {notificationsCount}
-                      </span>
-                    )}
-                  </button>
-                  {isNotificationOpen && (
-                    <div className="absolute top-full right-[-20px] sm:right-0 mt-3 w-[300px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
-                      <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <span className="font-bold text-slate-800">Bildirimler</span>
-                        {notificationsCount > 0 && <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{notificationsCount} Yeni</span>}
-                      </div>
-                      <div className="max-h-80 overflow-y-auto custom-scrollbar">
-                        {notificationsList.length === 0 ? (
-                          <div className="px-4 py-8 text-center text-slate-500 text-sm font-medium">Şu an hiç bildirimin yok.</div>
-                        ) : (
-                          notificationsList.slice(0, 5).map((notif: any) => {
-                            let icon = "✨"; let bg = "bg-blue-100"; let text = "text-blue-600";
-                            const msgLower = notif.message.toLowerCase();
-                            if (msgLower.includes("takip")) { icon = "🌸"; bg = "bg-pink-100"; text = "text-pink-600"; }
-                            else if (msgLower.includes("ilan") || msgLower.includes("ekledi")) { icon = "📦"; bg = "bg-orange-100"; text = "text-orange-600"; }
-                            else if (msgLower.includes("beğen") || msgLower.includes("favori")) { icon = "❤️"; bg = "bg-red-100"; text = "text-red-600"; }
-                            else if (msgLower.includes("yorum")) { icon = "💬"; bg = "bg-green-100"; text = "text-green-600"; }
-
-                            return (
-                              <div key={notif.id} className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center">
-                                <div className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} text-lg shrink-0`}>{icon}</div>
-                                <div className="flex-1">
-                                  <p className="text-sm text-slate-700">{notif.message}</p>
-                                  <p className="text-[10px] text-slate-400 mt-0.5">{notif.createdAt ? new Date(notif.createdAt).toLocaleDateString('tr-TR') : "Yeni"}</p>
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                      <Link href="/notifications" onClick={() => setIsNotificationOpen(false)} className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors">Tüm Bildirimleri Gör &rarr;</Link>
-                    </div>
-                  )}
-                </div>
-
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
-                >
-                  <span className="hidden sm:block text-sm">Hesabım</span>
-                  <span className="sm:hidden text-xs">Hesabım</span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="hidden sm:block text-slate-400 hover:text-red-500 font-bold text-sm transition-colors"
-                >
-                  Çıkış
-                </button>
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                className="bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-black transition-colors"
-              >
-                Giriş Yap
-              </Link>
-            )}
-          </div>
-        </div>
-
-        {/* 🚀 MOBİL İÇİN ARAMA ÇUBUĞU (KAYBOLMAYAN KESİN ÇÖZÜM) */}
-        <div className="md:hidden w-full px-4 pb-3 pt-1 border-t border-slate-50">
-          <form onSubmit={handleSearchSubmit} className="w-full relative flex gap-2">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="Ürün, @üye veya ders notu ara..."
-                className="w-full bg-[#F3F4F6] text-slate-800 rounded-lg py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-[#20B2AA] transition-all border border-transparent font-medium text-sm"
+                className="w-full bg-[#F3F4F6] text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-[#20B2AA] transition-all border border-transparent font-medium text-sm"
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -640,33 +657,29 @@ export default function ProfilePage() {
                 onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
               />
               <span className="absolute left-3 top-2.5 text-slate-400 text-lg">🔍</span>
-            </div>
-            <Link
-              href="/create-listing"
-              className="flex items-center justify-center bg-[#20B2AA] text-white px-3 py-2.5 rounded-lg font-bold shadow-sm"
-            >
-              <span className="text-sm">+ İlan</span>
-            </Link>
-          </form>
+            </form>
 
-          {isDropdownOpen && liveResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
-              {liveResults.slice(0, 4).map((result, idx) => (
-                <Link
-                  href={result.type === "user" ? `/user/${result.item.id}` : `/listing-detail/${result.item.id}`}
-                  key={`mob-${idx}`}
-                  className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50"
-                >
-                  <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
-                    {result.type === "user" ? <span className="font-bold text-blue-600">{result.item.fullName.charAt(0).toUpperCase()}</span> : <span className="text-xs">📦</span>}
-                  </div>
-                  <div className="flex-1 truncate">
-                    <div className="font-bold text-slate-800 truncate text-xs">{result.item.fullName || result.item.title}</div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+            {/* Mobil Açılır Menü */}
+            {isDropdownOpen && liveResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+                {liveResults.slice(0, 4).map((result, idx) => (
+                  <Link
+                    href={result.type === "user" ? `/user/${result.item.id}` : `/listing-detail/${result.item.id}`}
+                    key={`mob-${idx}`}
+                    className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50"
+                  >
+                    <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
+                      {result.type === "user" ? <span className="font-bold text-blue-600">{result.item.fullName.charAt(0).toUpperCase()}</span> : <span className="text-xs">📦</span>}
+                    </div>
+                    <div className="flex-1 truncate">
+                      <div className="font-bold text-slate-800 truncate text-xs">{result.item.fullName || result.item.title}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+          
         </div>
       </header>
 
@@ -829,11 +842,11 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* 💬 CHAT WIDGET (DÜZELTİLMİŞ PREMIUM LACİVERT) */}
+      {/* 💬 CHAT WIDGET (YEPYENİ LACİVERT PREMIUM TASARIM) */}
       {!isMessagesListOpen && !activeChatUser && (
         <button
           onClick={() => setIsMessagesListOpen(true)}
-          className="fixed bottom-6 right-4 sm:right-6 z-[9990] bg-[#20B2AA] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 transition-all group"
+          className="fixed bottom-6 right-4 sm:right-6 z-[9990] bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 hover:bg-blue-700 transition-all group"
         >
           <MessageSquare className="w-7 h-7 group-hover:animate-pulse" />
           {totalUnreadMessages > 0 && (
@@ -1219,6 +1232,72 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* 🌊 AÇIK RENK, MİNİMALİST FOOTER */}
+      <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-6 mt-10 rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="col-span-1 md:col-span-2 text-center md:text-left">
+            <div className="mb-3 sm:mb-4">
+              <span className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">
+                Uni<span className="text-[#20B2AA]">Cycle</span>
+              </span>
+            </div>
+
+            <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
+              Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
+              öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
+            </p>
+          </div>
+
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4">Platform</h4>
+
+            <ul className="space-y-2 text-xs sm:text-sm font-medium text-slate-500">
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Nasıl Çalışır?
+                </button>
+              </li>
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Güvenlik İpuçları
+                </button>
+              </li>
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Kampüs Kuralları
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4">İletişim</h4>
+
+            <ul className="space-y-2 text-xs sm:text-sm font-medium text-slate-500">
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Destek Merkezi
+                </button>
+              </li>
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Bize Ulaşın
+                </button>
+              </li>
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  S.S.S.
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="max-w-[1400px] mx-auto mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-100 text-center text-[10px] sm:text-xs font-medium text-slate-400">
+          © 2026 UniCycle. Tüm hakları saklıdır.
+        </div>
+      </footer>
     </div>
   );
 }
