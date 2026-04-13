@@ -65,7 +65,6 @@ export default function ProfilePage() {
   const [myListings, setMyListings] = useState<any[]>([]);
   const [isLoadingListings, setIsLoadingListings] = useState(true);
 
-  // 🚀 ARAMA HAFIZASI
   const [searchTerm, setSearchTerm] = useState("");
   const [liveResults, setLiveResults] = useState<
     { type: "user" | "product"; item: any }[]
@@ -108,7 +107,7 @@ export default function ProfilePage() {
         setInboxChats(data);
       }
     } catch (e) {
-      console.error("Gelen kutusu çekilemedi", e);
+      console.error(e);
     }
   };
 
@@ -128,7 +127,7 @@ export default function ProfilePage() {
         setMessages(formattedMsgs);
       }
     } catch (e) {
-      console.error("Mesaj geçmişi çekilemedi", e);
+      console.error(e);
     }
   };
 
@@ -458,9 +457,10 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 🚀 NAVBAR */}
-      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex justify-between items-center gap-2 sm:gap-6">
+      {/* 🚀 NAVBAR - STICKY VE HER ŞEY İÇİNDE */}
+      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
+        {/* Üst Satır: Logo ve İkonlar */}
+        <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex justify-between items-center gap-2 sm:gap-6">
           <div className="flex-shrink-0">
             <Link
               href="/"
@@ -481,8 +481,8 @@ export default function ProfilePage() {
             </Link>
           </div>
 
-          {/* 🚀 CSS SINIFLARIYLA ÇÖZÜLEN MASAÜSTÜ ARAMA ÇUBUĞU */}
-          <div className="desktop-search flex-1 max-w-3xl relative group z-50 px-8">
+          {/* MASAÜSTÜ ARAMA ÇUBUĞU */}
+          <div className="hidden md:flex flex-1 max-w-3xl relative group z-50">
             <form onSubmit={handleSearchSubmit} className="w-full relative">
               <input
                 type="text"
@@ -537,17 +537,16 @@ export default function ProfilePage() {
           <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
             <Link
               href="/create-listing"
-              className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
+              className="hidden md:flex font-black text-[#20B2AA] items-center gap-1 transition-colors hover:text-teal-700"
             >
               <span className="text-xl">+</span> İlan Ver
             </Link>
-
             {user ? (
               <div className="flex items-center gap-2 sm:gap-4">
                 <div className="relative shrink-0">
                   <button
                     onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                    className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-colors rounded-full flex items-center justify-center border border-slate-200"
+                    className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-colors rounded-full flex items-center justify-center"
                   >
                     <svg
                       className="w-5 h-5 text-slate-600"
@@ -559,12 +558,11 @@ export default function ProfilePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                     </svg>
                     {notificationsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
+                      <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full animate-pulse">
                         {notificationsCount}
                       </span>
                     )}
                   </button>
-
                   {isNotificationOpen && (
                     <div className="absolute top-full right-[-20px] sm:right-0 mt-3 w-[300px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                       <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -607,7 +605,6 @@ export default function ProfilePage() {
                   <span className="hidden sm:block text-sm">Hesabım</span>
                   <span className="sm:hidden text-xs">Hesabım</span>
                 </Link>
-
                 <button
                   onClick={handleLogout}
                   className="hidden sm:block text-slate-400 hover:text-red-500 font-bold text-sm transition-colors"
@@ -625,53 +622,53 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
+
+        {/* 🚀 MOBİL İÇİN ARAMA ÇUBUĞU (KAYBOLMAYAN KESİN ÇÖZÜM) */}
+        <div className="md:hidden w-full px-4 pb-3 pt-1 border-t border-slate-50">
+          <form onSubmit={handleSearchSubmit} className="w-full relative flex gap-2">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="Ürün, @üye veya ders notu ara..."
+                className="w-full bg-[#F3F4F6] text-slate-800 rounded-lg py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-[#20B2AA] transition-all border border-transparent font-medium text-sm"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setIsDropdownOpen(true);
+                }}
+                onFocus={() => setIsDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+              />
+              <span className="absolute left-3 top-2.5 text-slate-400 text-lg">🔍</span>
+            </div>
+            <Link
+              href="/create-listing"
+              className="flex items-center justify-center bg-[#20B2AA] text-white px-3 py-2.5 rounded-lg font-bold shadow-sm"
+            >
+              <span className="text-sm">+ İlan</span>
+            </Link>
+          </form>
+
+          {isDropdownOpen && liveResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+              {liveResults.slice(0, 4).map((result, idx) => (
+                <Link
+                  href={result.type === "user" ? `/user/${result.item.id}` : `/listing-detail/${result.item.id}`}
+                  key={`mob-${idx}`}
+                  className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50"
+                >
+                  <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
+                    {result.type === "user" ? <span className="font-bold text-blue-600">{result.item.fullName.charAt(0).toUpperCase()}</span> : <span className="text-xs">📦</span>}
+                  </div>
+                  <div className="flex-1 truncate">
+                    <div className="font-bold text-slate-800 truncate text-xs">{result.item.fullName || result.item.title}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </header>
-
-      {/* 🚀 CSS SINIFLARIYLA ÇÖZÜLEN MOBİL ARAMA ÇUBUĞU */}
-      <div className="mobile-search pb-3 pt-2 w-full relative z-40 px-4 bg-white border-b border-gray-100 shadow-sm">
-        <form onSubmit={handleSearchSubmit} className="w-full relative flex gap-2">
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              placeholder="Ürün, @üye veya ders notu ara..."
-              className="w-full bg-[#F3F4F6] text-slate-800 rounded-lg py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-[#20B2AA] transition-all border border-transparent font-medium text-sm"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setIsDropdownOpen(true);
-              }}
-              onFocus={() => setIsDropdownOpen(true)}
-              onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-            />
-            <span className="absolute left-3 top-2.5 text-slate-400 text-lg">🔍</span>
-          </div>
-          <Link
-            href="/create-listing"
-            className="flex items-center justify-center bg-[#20B2AA] text-white px-3 py-2.5 rounded-lg font-bold shadow-sm"
-          >
-            <span className="text-sm">+ İlan</span>
-          </Link>
-        </form>
-
-        {isDropdownOpen && liveResults.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
-            {liveResults.slice(0, 4).map((result, idx) => (
-              <Link
-                href={result.type === "user" ? `/user/${result.item.id}` : `/listing-detail/${result.item.id}`}
-                key={`mob-${idx}`}
-                className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50"
-              >
-                <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
-                  {result.type === "user" ? <span className="font-bold text-blue-600">{result.item.fullName.charAt(0).toUpperCase()}</span> : <span className="text-xs">📦</span>}
-                </div>
-                <div className="flex-1 truncate">
-                  <div className="font-bold text-slate-800 truncate text-xs">{result.item.fullName || result.item.title}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* 👤 PROFİL BİLGİ ALANI */}
       <div className="max-w-5xl mx-auto mt-0 sm:mt-6 bg-white sm:rounded-t-[2.5rem] sm:rounded-b-2xl shadow-sm sm:border border-gray-200 overflow-hidden w-full relative">
@@ -832,7 +829,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* 💬 CHAT WIDGET */}
+      {/* 💬 CHAT WIDGET (DÜZELTİLMİŞ PREMIUM LACİVERT) */}
       {!isMessagesListOpen && !activeChatUser && (
         <button
           onClick={() => setIsMessagesListOpen(true)}
@@ -847,9 +844,9 @@ export default function ProfilePage() {
         </button>
       )}
 
-      {/* 🚀 CSS İLE TAŞMASI DÜZELTİLMİŞ MESAJLAR (GELEN KUTUSU) LİSTESİ */}
+      {/* INBOX (GELEN KUTUSU LİSTESİ) */}
       {isMessagesListOpen && (
-        <div className="chat-panel animate-in slide-in-from-bottom-10 border border-slate-200">
+        <div className="fixed bottom-0 right-0 sm:right-8 w-full sm:w-[350px] h-[60vh] sm:h-[500px] bg-white rounded-t-3xl sm:rounded-2xl shadow-[0_-15px_40px_rgba(0,0,0,0.2)] border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
           <div className="bg-blue-600 text-white px-4 sm:px-5 py-4 flex justify-between items-center shadow-md relative pt-6 sm:pt-4">
             <div className="w-12 h-1.5 bg-white/40 rounded-full absolute top-2 left-1/2 -translate-x-1/2 sm:hidden z-50"></div>
             <h3 className="font-bold text-base sm:text-lg flex items-center gap-2">💬 Mesajlar</h3>
@@ -889,9 +886,9 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 🚀 CSS İLE TAŞMASI DÜZELTİLMİŞ AKTİF SOHBET PENCERESİ */}
+      {/* AKTİF SOHBET PENCERESİ */}
       {activeChatUser && (
-        <div className="chat-panel animate-in slide-in-from-bottom-10 border border-slate-200">
+        <div className="fixed bottom-0 right-0 sm:right-8 w-full sm:w-[350px] h-[60vh] sm:h-[500px] bg-white rounded-t-3xl sm:rounded-2xl shadow-[0_-15px_40px_rgba(0,0,0,0.2)] border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
           <div className="bg-blue-600 text-white px-4 sm:px-5 py-4 flex justify-between items-center shadow-md relative pt-6 sm:pt-4">
             <div className="w-12 h-1.5 bg-white/40 rounded-full absolute top-2 left-1/2 -translate-x-1/2 sm:hidden z-50"></div>
             <div className="flex items-center gap-2 sm:gap-3">
@@ -956,9 +953,9 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 🚀 MODALLAR (KAYDIRMA HATASI İÇİN ÖZEL CSS SINIFI EKLENDİ) */}
+      {/* 📸 MODALLAR */}
       {activeModal === "cover" && (
-        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in modal-scroll-fix">
+        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-2xl rounded-2xl sm:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
             <div className="p-4 sm:p-6 border-b flex justify-between items-center bg-gray-50/50">
               <h2 className="text-lg sm:text-xl font-black text-gray-800">Kapak Düzenle</h2>
@@ -1029,7 +1026,7 @@ export default function ProfilePage() {
       )}
 
       {activeModal === "profile" && (
-        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in modal-scroll-fix">
+        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-2xl rounded-2xl sm:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
             <div className="p-4 sm:p-6 border-b flex justify-between items-center bg-gray-50/50">
               <h2 className="text-lg sm:text-xl font-black text-gray-800">Profil Fotoğrafı</h2>
@@ -1127,7 +1124,7 @@ export default function ProfilePage() {
       )}
 
       {activeModal === "info" && (
-        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in modal-scroll-fix">
+        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-2xl rounded-2xl sm:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
             <div className="p-4 sm:p-6 border-b flex justify-between items-center bg-gray-50/50">
               <h2 className="text-lg sm:text-xl font-black text-gray-800">Bilgilerini Düzenle</h2>
@@ -1222,55 +1219,6 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-
-      {/* 🚀 VERCEL SSR VE IOS CSS HACK'LERİ EKLENDİ */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
-        @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-
-        /* VERCEL SSR TAIWIND FIX */
-        .desktop-search { display: none; }
-        .mobile-search { display: block; }
-        @media (min-width: 768px) {
-          .desktop-search { display: flex; }
-          .mobile-search { display: none; }
-        }
-
-        /* IOS SAFARI CHAT PANEL FIX */
-        .chat-panel {
-          position: fixed;
-          bottom: 0;
-          right: 0;
-          width: 100%;
-          height: 60vh;
-          max-height: 520px;
-          z-index: 9999;
-          display: flex;
-          flex-direction: column;
-          background-color: white;
-          border-top-left-radius: 1.5rem;
-          border-top-right-radius: 1.5rem;
-          box-shadow: 0 -15px 40px rgba(0,0,0,0.15);
-          overflow: hidden;
-        }
-        @media (min-width: 640px) {
-          .chat-panel {
-            right: 2rem;
-            width: 350px;
-            height: 500px;
-            border-radius: 1rem;
-          }
-        }
-
-        /* IOS MODAL SCROLL FIX */
-        .modal-scroll-fix {
-          -webkit-overflow-scrolling: touch;
-          overflow-y: auto;
-        }
-      `}} />
     </div>
   );
 }
