@@ -42,11 +42,9 @@ export default function ChatBox() {
     const [stompClient, setStompClient] = useState<any>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
 
+    // 🔥 MAVİ İKONUN ÜSTÜNDEKİ ROZETİ (BADGE) HESAPLAYAN KISIM
     const totalUnreadMessages = inboxChats.reduce((total, chat) => total + (chat.unread || 0), 0);
 
-    // ==========================================
-    // 🧠 GİZLİ KARA LİSTE (SİLİNENLERİ SAKLAR)
-    // ==========================================
     const getHiddenChats = () => JSON.parse(localStorage.getItem(`hidden_chats_${currentUser?.id}`) || "[]");
     const getHiddenMsgs = () => JSON.parse(localStorage.getItem(`hidden_msgs_${currentUser?.id}`) || "[]");
 
@@ -86,26 +84,17 @@ export default function ChatBox() {
         });
     };
 
-    // ==========================================
-    // 🕵️‍♀️ ÇEVRİMİÇİ / ÇEVRİMDIŞI DEDEKTİFİ
-    // ==========================================
     const checkIsOnline = (lastActiveRaw: any) => {
         if (!lastActiveRaw) return false;
-
         let lastActiveDate;
         if (Array.isArray(lastActiveRaw)) {
-            lastActiveDate = new Date(
-                lastActiveRaw[0], lastActiveRaw[1] - 1, lastActiveRaw[2],
-                lastActiveRaw[3], lastActiveRaw[4], lastActiveRaw[5] || 0,
-            );
+            lastActiveDate = new Date(lastActiveRaw[0], lastActiveRaw[1] - 1, lastActiveRaw[2], lastActiveRaw[3], lastActiveRaw[4], lastActiveRaw[5] || 0);
         } else {
             const cleanString = lastActiveRaw.toString().replace("Z", "");
             lastActiveDate = new Date(cleanString);
         }
-
         const now = new Date();
         const diffInMinutes = (now.getTime() - lastActiveDate.getTime()) / (1000 * 60);
-
         return diffInMinutes >= -2 && diffInMinutes <= 5; 
     };
 
@@ -115,6 +104,63 @@ export default function ChatBox() {
             if (res.ok) {
                 const userData = await res.json();
                 setIsUserOnline(checkIsOnline(userData.lastActive));
+            }
+        } catch (e) {}
+    };
+
+    // ==========================================
+    // 🕵️‍♀️ BİLDİRİMLERDEN "GELEN KUTUSU" YARATMA HACK'İ
+    // ==========================================
+    const reconstructInboxFromNotifications = async (userId: number) => {
+        try {
+            const res = await fetch(`https://unicycle-api.onrender.com/api/interaction/notifications/${userId}`);
+            if (!res.ok) return;
+            const notifs = await res.json();
+            
+            const processed = JSON.parse(localStorage.getItem(`processed_inbox_${userId}`) || "[]");
+            let hasNew = false;
+
+            for (const n of notifs) {
+                // Eğer bu mesajı daha önce Gelen Kutusuna eklemediysek
+                if (n.message.includes("mesaj gönderdi") && !processed.includes(n.id)) {
+                    let senderId = null;
+                    let senderName = n.message.replace("💬 ", "").split(" sana")[0].trim();
+                    
+                    // ID'yi gizli etiketten çek
+                    const idMatch = n.message.match(/\[ID:(\d+)\]/);
+                    if (idMatch) {
+                        senderId = parseInt(idMatch[1]);
+                    } else {
+                        // Eski mesajlar için isimden ara
+                        const searchRes = await fetch(`https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(senderName)}`);
+                        if (searchRes.ok) {
+                            const users = await searchRes.json();
+                            if (users && users.length > 0) {
+                                senderId = users[0].id;
+                                senderName = users[0].fullName;
+                            }
+                        }
+                    }
+
+                    if (senderId) {
+                        // Geçmişten son mesajı çekip ekranda göster
+                        let lastText = "Yeni bir mesaj 💬";
+                        try {
+                            const hist = await fetch(`https://unicycle-api.onrender.com/api/messages/history?user1Id=${userId}&user2Id=${senderId}`);
+                            const histData = await hist.json();
+                            if (histData.length > 0) lastText = histData[histData.length - 1].content;
+                        } catch(e) {}
+
+                        // 🚨 KARŞI TARAFIN GELEN KUTUSUNA ZORLA EKLE VE "OKUNMADI" ROZETİ YAK!
+                        updateInboxLocally(senderId, senderName, lastText, true);
+                    }
+                    processed.push(n.id);
+                    hasNew = true;
+                }
+            }
+
+            if (hasNew) {
+                localStorage.setItem(`processed_inbox_${userId}`, JSON.stringify(processed));
             }
         } catch (e) {}
     };
@@ -131,13 +177,17 @@ export default function ChatBox() {
                 setInboxChats(parsedLocal.filter((c: any) => !hiddenChats.includes(c.id)));
             }
 
+            // Java'dan çekmeyi dene
             const res = await fetch(`https://unicycle-api.onrender.com/api/messages/inbox/${userId}`);
             if (res.ok) {
                 const data = await res.json();
-                if (data && Array.isArray(data)) {
+                if (data && Array.isArray(data) && data.length > 0) {
                     saveInboxToLocal(data, userId);
                 }
             }
+
+            // 🔥 HER HALÜKARDA BİLDİRİMLERDEN KONTROL ET (Java boş atsa bile çalışır)
+            reconstructInboxFromNotifications(userId);
         } catch (e) {}
     };
 
@@ -146,9 +196,7 @@ export default function ChatBox() {
             const res = await fetch(`https://unicycle-api.onrender.com/api/messages/history?user1Id=${myUserId}&user2Id=${otherUserId}`);
             if (res.ok) {
                 const data = await res.json();
-                
                 const hiddenMsgs = JSON.parse(localStorage.getItem(`hidden_msgs_${myUserId}`) || "[]");
-                
                 const formattedMsgs = data
                     .filter((m: any) => !hiddenMsgs.includes(m.id)) 
                     .map((m: any) => ({
@@ -162,43 +210,27 @@ export default function ChatBox() {
         } catch (e) {}
     };
 
-    // 🗑️ TEK MESAJ SİLME
     const handleDeleteMessage = async (msgId: number) => {
         if (!window.confirm("Bu mesajı silmek istiyor musun?")) return;
-        
         setMessages(prev => prev.filter(m => m.id !== msgId));
-        
         const hiddenMsgs = getHiddenMsgs();
         hiddenMsgs.push(msgId);
         localStorage.setItem(`hidden_msgs_${currentUser.id}`, JSON.stringify(hiddenMsgs));
-
-        try {
-            await fetch(`https://unicycle-api.onrender.com/api/messages/${msgId}`, { method: "DELETE" });
-        } catch (err) {}
+        try { await fetch(`https://unicycle-api.onrender.com/api/messages/${msgId}`, { method: "DELETE" }); } catch (err) {}
     };
 
-    // 🗑️ TÜM SOHBETİ SİLME (Inbox Listesinden)
     const handleDeleteConversation = async (contactId: number, e: React.MouseEvent) => {
         e.stopPropagation(); 
         if (!window.confirm("Bu kişiyle olan tüm sohbeti silmek istiyor musun?")) return;
-
         setInboxChats(prev => prev.filter(c => c.id !== contactId));
-        
         const hiddenChats = getHiddenChats();
         if (!hiddenChats.includes(contactId)) hiddenChats.push(contactId);
         localStorage.setItem(`hidden_chats_${currentUser.id}`, JSON.stringify(hiddenChats));
-
         const localInbox = JSON.parse(localStorage.getItem(`unicycle_inbox_${currentUser.id}`) || "[]");
         const updatedLocalInbox = localInbox.filter((c: any) => c.id !== contactId);
         localStorage.setItem(`unicycle_inbox_${currentUser.id}`, JSON.stringify(updatedLocalInbox));
-
-        if (activeChat?.id === contactId) {
-            handleBackToInbox();
-        }
-
-        try {
-            await fetch(`https://unicycle-api.onrender.com/api/messages/conversation?user1Id=${currentUser.id}&user2Id=${contactId}`, { method: "DELETE" });
-        } catch(err) {}
+        if (activeChat?.id === contactId) handleBackToInbox();
+        try { await fetch(`https://unicycle-api.onrender.com/api/messages/conversation?user1Id=${currentUser.id}&user2Id=${contactId}`, { method: "DELETE" }); } catch(err) {}
     };
 
     // ==========================================
@@ -208,12 +240,8 @@ export default function ChatBox() {
         const storedUser = localStorage.getItem("user");
         let userObj = null;
         if (storedUser) {
-            try {
-                userObj = JSON.parse(storedUser);
-                setCurrentUser(userObj);
-            } catch (e) {}
+            try { userObj = JSON.parse(storedUser); setCurrentUser(userObj); } catch (e) {}
         }
-
         if (!userObj) return;
 
         loadInbox(userObj.id);
@@ -232,7 +260,7 @@ export default function ChatBox() {
                             receivedMessage.sender.id, 
                             receivedMessage.sender.fullName || "Kullanıcı", 
                             receivedMessage.content,
-                            true 
+                            true // Yeni mesaj gelince rozet ekle!
                         );
                     }
 
@@ -255,7 +283,6 @@ export default function ChatBox() {
         return () => { void client.deactivate(); };
     }, [activeChat]);
 
-    // 🎯 DİĞER SAYFALARDAN GELEN TETİKLEMELER
     useEffect(() => {
         const handleOpenChatSignal = (event: any) => {
             const { sellerId, sellerName, productTitle } = event.detail;
@@ -266,8 +293,7 @@ export default function ChatBox() {
             setView('chat');
             setIsOpen(true);
             
-            // "Sohbet başlatıldı" yazısı KALDIRILDI! Artık boş (veya önceden ne varsa o) duracak
-            updateInboxLocally(sellerId, finalName, "");
+            updateInboxLocally(sellerId, finalName, "", false);
 
             if (currentUser) {
                 loadChatHistory(sellerId, currentUser.id);
@@ -283,11 +309,8 @@ export default function ChatBox() {
         return () => window.removeEventListener("openChatWithContext", handleOpenChatSignal);
     }, [currentUser]);
 
-    // SCROLL VE POLLING
     useEffect(() => {
-        if (chatScrollRef.current) {
-            chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-        }
+        if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }, [messages, view, isOpen]);
 
     useEffect(() => {
@@ -298,6 +321,9 @@ export default function ChatBox() {
                     loadChatHistory(activeChat.id, currentUser.id);
                     fetchUserStatus(activeChat.id); 
                 } else if (isOpen && view === 'inbox') {
+                    loadInbox(currentUser.id);
+                } else if (!isOpen) {
+                    // Kutu kapalıyken bile arkadan gelen mesaj var mı diye kolaçan et
                     loadInbox(currentUser.id);
                 }
             }, 5000); 
@@ -315,30 +341,48 @@ export default function ChatBox() {
         const content = chatInput;
         const tempId = Date.now();
         
-        const newMsg = { id: tempId, text: content, isMine: true };
-        setMessages((prev) => [...prev, newMsg]);
+        setMessages((prev) => [...prev, { id: tempId, text: content, isMine: true }]);
         setChatInput("");
+        updateInboxLocally(activeChat.id, activeChat.name, content, false);
 
-        // EN SON MESAJ ANINDA LİSTEYE DÜŞECEK
-        updateInboxLocally(activeChat.id, activeChat.name, content);
+        const chatRequest = {
+            senderId: currentUser.id,
+            receiverId: activeChat.id,
+            content: content
+        };
+
+        if (stompClient) {
+            stompClient.publish({
+                destination: '/app/chat.sendMessage',
+                body: JSON.stringify(chatRequest)
+            });
+        }
 
         try {
             await fetch("https://unicycle-api.onrender.com/api/messages/send", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(chatRequest)
+            });
+
+            // 🔥 SİHİR: Karşı taraf offline bile olsa bildirim gitsin! (Kimliğimizi gizli etikete koyuyoruz)
+            await fetch("https://unicycle-api.onrender.com/api/interaction/notifications", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    senderId: currentUser.id,
-                    receiverId: activeChat.id,
-                    content: content
-                })
+                    userId: activeChat.id,
+                    message: `💬 ${currentUser.fullName} sana bir mesaj gönderdi. [ID:${currentUser.id}]`,
+                }),
             });
         } catch (err) {}
     };
 
+    // 📩 BİR SOHBETE TIKLANDIĞINDA
     const handleOpenChatFromInbox = (chat: InboxItem) => {
         setActiveChat({ id: chat.id, name: chat.name });
         setView('chat');
         
+        // 🚨 Rozeti Sıfırla (Okundu olarak işaretle)
         updateInboxLocally(chat.id, chat.name, chat.lastMsg, false);
         
         if (currentUser) {
@@ -363,7 +407,6 @@ export default function ChatBox() {
             {isOpen ? (
                 <div className="w-80 sm:w-[350px] h-[450px] bg-white rounded-t-2xl rounded-bl-2xl shadow-[0_-5px_40px_rgba(0,0,0,0.2)] border border-slate-200 flex flex-col animate-in slide-in-from-bottom-10 mb-2 overflow-hidden">
                     
-                    {/* ÜST BAŞLIK */}
                     <div className="bg-blue-600 text-white px-4 py-3 flex justify-between items-center shadow-md z-10">
                         {view === 'chat' && activeChat ? (
                             <div className="flex items-center gap-2">
@@ -372,7 +415,7 @@ export default function ChatBox() {
                                 </button>
                                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-sm font-bold border border-white/30 relative">
                                     {activeChat.name.charAt(0).toUpperCase()}
-                                    <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-blue-600 rounded-full ${isUserOnline ? 'bg-green-400' : 'bg-red-500'}`}></span>
+                                    <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-white rounded-full ${isUserOnline ? 'bg-green-400' : 'bg-red-500'}`}></span>
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-sm leading-none">{activeChat.name}</h3>
@@ -390,7 +433,6 @@ export default function ChatBox() {
                     <div className="flex-1 bg-slate-50 flex flex-col relative custom-scrollbar overflow-hidden">
                         
                         {view === 'chat' && activeChat ? (
-                            // --- SOHBET EKRANI ---
                             <div ref={chatScrollRef} className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 custom-scrollbar">
                                 <div className="text-center text-[10px] text-slate-400 font-bold bg-slate-100 rounded-full w-max mx-auto px-3 py-1 mb-2">Güvenli Sohbet</div>
                                 
@@ -403,7 +445,6 @@ export default function ChatBox() {
                                     messages.map((msg) => (
                                         <div key={msg.id} className={`group flex flex-col ${msg.isMine ? 'items-end' : 'items-start'}`}>
                                             <div className="flex items-center gap-2">
-                                                {/* 🗑️ TEK MESAJI SİL BUTONU (Üstüne gelince çıkar) */}
                                                 {msg.isMine && (
                                                     <button onClick={() => handleDeleteMessage(msg.id)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 text-xs transition-opacity" title="Mesajı Sil">
                                                         🗑️
@@ -422,7 +463,6 @@ export default function ChatBox() {
                                 )}
                             </div>
                         ) : (
-                            // --- GELEN KUTUSU (INBOX) EKRANI ---
                             <div className="flex-1 overflow-y-auto flex flex-col divide-y divide-slate-100 bg-white custom-scrollbar">
                                 {inboxChats.length === 0 ? (
                                     <div className="text-center flex flex-col items-center justify-center h-full opacity-60 px-4">
@@ -433,7 +473,7 @@ export default function ChatBox() {
                                 ) : (
                                     inboxChats.map((chat) => (
                                         <div key={chat.id} onClick={() => handleOpenChatFromInbox(chat)} className="group p-4 flex items-center gap-3 hover:bg-slate-50 cursor-pointer transition-colors relative">
-                                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-600 border border-blue-200 text-lg shrink-0">
+                                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-600 border border-blue-200 text-lg shrink-0 relative">
                                                 {chat.name.charAt(0).toUpperCase()}
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -443,10 +483,10 @@ export default function ChatBox() {
                                                     </span>
                                                 </div>
                                                 <div className="flex justify-between items-center">
-                                                    {/* "Sohbet Başlatıldı" YAZISI KALDIRILDI! ARTIK YENİ SOHBET YAZACAK */}
                                                     <p className={`text-xs truncate pr-2 ${chat.unread > 0 ? "font-bold text-slate-800" : "text-slate-500"}`}>
-                                                        {chat.lastMsg || "Yeni sohbet..."}
+                                                        {chat.lastMsg || "Yeni mesaj..."}
                                                     </p>
+                                                    {/* 🚨 GELEN KUTUSU LİSTESİNDEKİ MİNİ ROZET */}
                                                     {chat.unread > 0 && (
                                                         <span className="bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 shadow-sm">
                                                             {chat.unread}
@@ -455,7 +495,6 @@ export default function ChatBox() {
                                                 </div>
                                             </div>
                                             
-                                            {/* 🗑️ GELEN KUTUSUNDAN KOMPLE SİL BUTONU */}
                                             <button 
                                                 onClick={(e) => handleDeleteConversation(chat.id, e)} 
                                                 className="absolute right-4 opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-opacity bg-white hover:bg-red-50 rounded-full shadow-sm border border-slate-100" 
@@ -490,8 +529,9 @@ export default function ChatBox() {
                     <svg className="w-6 h-6 sm:w-7 sm:h-7 group-hover:animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
                     </svg>
+                    {/* 🚨 İŞTE İSTEDİĞİN O DIŞARIDAKİ MAVİ İKONUN ÜSTÜNDE ÇIKAN "1" ROZETİ */}
                     {totalUnreadMessages > 0 && (
-                        <span className="absolute top-0 right-0 bg-red-500 w-5 h-5 text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                        <span className="absolute top-0 right-0 bg-red-500 w-5 h-5 text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm animate-pulse">
                             {totalUnreadMessages}
                         </span>
                     )}
