@@ -499,7 +499,7 @@ export default function Home() {
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
         <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
-            {/* ✨ LOGO (KARE SİLİNDİ, DÜMDÜZ VE SADE YAPILDI) */}
+            {/* ✨ LOGO (KARE SİLİNDİ, ŞEFFAF VE SADE YAPILDI) */}
             <div className="flex-shrink-0">
               <Link
                 href="/"
@@ -515,7 +515,7 @@ export default function Home() {
                   alt="UniCycle İkon"
                   width={44}
                   height={44}
-                  className="object-contain rounded-xl drop-shadow-sm transition-all sm:w-[52px] sm:h-[52px]"
+                  className="object-contain bg-transparent mix-blend-multiply transition-all sm:w-[52px] sm:h-[52px]"
                   priority
                 />
                 <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
@@ -728,7 +728,7 @@ export default function Home() {
                     href="/profile"
                     className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm transition-all"
                   >
-                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs shrink-0">
+                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs shrink-0">
                       👤
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
@@ -1039,7 +1039,7 @@ export default function Home() {
                   <Link
                     href={`/listing-detail/${p.id}`}
                     key={p.id}
-                    className="group bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 border border-slate-100 flex flex-col cursor-pointer block w-full h-full relative z-10"
+                    className="group bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 border border-slate-100 flex flex-col cursor-pointer w-full h-full relative z-10"
                   >
                     <div className="aspect-[4/5] relative overflow-hidden bg-slate-100">
                       {p.photosBase64 && p.photosBase64.length > 0 ? (
@@ -1275,6 +1275,6 @@ export default function Home() {
       `,
         }}
       />
-    </div>
+    </main>
   );
 }
