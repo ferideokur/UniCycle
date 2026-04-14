@@ -84,18 +84,35 @@ export default function ChatBox() {
         });
     };
 
+    // ==========================================
+    // 🕵️‍♀️ KURŞUN GEÇİRMEZ ÇEVRİMİÇİ DEDEKTİFİ
+    // ==========================================
     const checkIsOnline = (lastActiveRaw: any) => {
         if (!lastActiveRaw) return false;
-        let lastActiveDate;
+
+        let dateLocal: Date;
+        let dateUTC: Date;
+
         if (Array.isArray(lastActiveRaw)) {
-            lastActiveDate = new Date(lastActiveRaw[0], lastActiveRaw[1] - 1, lastActiveRaw[2], lastActiveRaw[3], lastActiveRaw[4], lastActiveRaw[5] || 0);
+            dateLocal = new Date(lastActiveRaw[0], lastActiveRaw[1] - 1, lastActiveRaw[2], lastActiveRaw[3], lastActiveRaw[4], lastActiveRaw[5] || 0);
+            dateUTC = new Date(Date.UTC(lastActiveRaw[0], lastActiveRaw[1] - 1, lastActiveRaw[2], lastActiveRaw[3], lastActiveRaw[4], lastActiveRaw[5] || 0));
         } else {
-            const cleanString = lastActiveRaw.toString().replace("Z", "");
-            lastActiveDate = new Date(cleanString);
+            const str = lastActiveRaw.toString();
+            dateLocal = new Date(str.replace("Z", "")); 
+            dateUTC = new Date(str.endsWith("Z") ? str : str + "Z"); 
         }
+
         const now = new Date();
-        const diffInMinutes = (now.getTime() - lastActiveDate.getTime()) / (1000 * 60);
-        return diffInMinutes >= -2 && diffInMinutes <= 5; 
+        const diffLocal = (now.getTime() - dateLocal.getTime()) / (1000 * 60);
+        const diffUTC = (now.getTime() - dateUTC.getTime()) / (1000 * 60);
+
+        // Türkiye (+3) saati veya UTC farklarını hesaplayıp online durumunu tespit eder
+        return (
+            (diffLocal >= -5 && diffLocal <= 5) || 
+            (diffUTC >= -5 && diffUTC <= 5) ||
+            (diffLocal >= 175 && diffLocal <= 185) || 
+            (diffLocal >= -185 && diffLocal <= -175)
+        );
     };
 
     const fetchUserStatus = async (userId: number) => {
@@ -121,17 +138,14 @@ export default function ChatBox() {
             let hasNew = false;
 
             for (const n of notifs) {
-                // Eğer bu mesajı daha önce Gelen Kutusuna eklemediysek
                 if (n.message.includes("mesaj gönderdi") && !processed.includes(n.id)) {
                     let senderId = null;
                     let senderName = n.message.replace("💬 ", "").split(" sana")[0].trim();
                     
-                    // ID'yi gizli etiketten çek
                     const idMatch = n.message.match(/\[ID:(\d+)\]/);
                     if (idMatch) {
                         senderId = parseInt(idMatch[1]);
                     } else {
-                        // Eski mesajlar için isimden ara
                         const searchRes = await fetch(`https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(senderName)}`);
                         if (searchRes.ok) {
                             const users = await searchRes.json();
@@ -143,7 +157,6 @@ export default function ChatBox() {
                     }
 
                     if (senderId) {
-                        // Geçmişten son mesajı çekip ekranda göster
                         let lastText = "Yeni bir mesaj 💬";
                         try {
                             const hist = await fetch(`https://unicycle-api.onrender.com/api/messages/history?user1Id=${userId}&user2Id=${senderId}`);
@@ -151,7 +164,6 @@ export default function ChatBox() {
                             if (histData.length > 0) lastText = histData[histData.length - 1].content;
                         } catch(e) {}
 
-                        // 🚨 KARŞI TARAFIN GELEN KUTUSUNA ZORLA EKLE VE "OKUNMADI" ROZETİ YAK!
                         updateInboxLocally(senderId, senderName, lastText, true);
                     }
                     processed.push(n.id);
@@ -177,7 +189,6 @@ export default function ChatBox() {
                 setInboxChats(parsedLocal.filter((c: any) => !hiddenChats.includes(c.id)));
             }
 
-            // Java'dan çekmeyi dene
             const res = await fetch(`https://unicycle-api.onrender.com/api/messages/inbox/${userId}`);
             if (res.ok) {
                 const data = await res.json();
@@ -186,7 +197,6 @@ export default function ChatBox() {
                 }
             }
 
-            // 🔥 HER HALÜKARDA BİLDİRİMLERDEN KONTROL ET (Java boş atsa bile çalışır)
             reconstructInboxFromNotifications(userId);
         } catch (e) {}
     };
@@ -260,7 +270,7 @@ export default function ChatBox() {
                             receivedMessage.sender.id, 
                             receivedMessage.sender.fullName || "Kullanıcı", 
                             receivedMessage.content,
-                            true // Yeni mesaj gelince rozet ekle!
+                            true 
                         );
                     }
 
@@ -283,6 +293,7 @@ export default function ChatBox() {
         return () => { void client.deactivate(); };
     }, [activeChat]);
 
+    // 🎯 DİĞER SAYFALARDAN GELEN TETİKLEMELER
     useEffect(() => {
         const handleOpenChatSignal = (event: any) => {
             const { sellerId, sellerName, productTitle } = event.detail;
@@ -323,7 +334,6 @@ export default function ChatBox() {
                 } else if (isOpen && view === 'inbox') {
                     loadInbox(currentUser.id);
                 } else if (!isOpen) {
-                    // Kutu kapalıyken bile arkadan gelen mesaj var mı diye kolaçan et
                     loadInbox(currentUser.id);
                 }
             }, 5000); 
@@ -332,7 +342,7 @@ export default function ChatBox() {
     }, [currentUser, isOpen, view, activeChat]);
 
     // ==========================================
-    // 🚀 MESAJ GÖNDERME
+    // 🚀 MESAJ GÖNDERME (ÇİFT MOTOR SÖKÜLDÜ!)
     // ==========================================
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -351,13 +361,6 @@ export default function ChatBox() {
             content: content
         };
 
-        if (stompClient) {
-            stompClient.publish({
-                destination: '/app/chat.sendMessage',
-                body: JSON.stringify(chatRequest)
-            });
-        }
-
         try {
             await fetch("https://unicycle-api.onrender.com/api/messages/send", {
                 method: "POST",
@@ -365,7 +368,6 @@ export default function ChatBox() {
                 body: JSON.stringify(chatRequest)
             });
 
-            // 🔥 SİHİR: Karşı taraf offline bile olsa bildirim gitsin! (Kimliğimizi gizli etikete koyuyoruz)
             await fetch("https://unicycle-api.onrender.com/api/interaction/notifications", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -377,12 +379,10 @@ export default function ChatBox() {
         } catch (err) {}
     };
 
-    // 📩 BİR SOHBETE TIKLANDIĞINDA
     const handleOpenChatFromInbox = (chat: InboxItem) => {
         setActiveChat({ id: chat.id, name: chat.name });
         setView('chat');
         
-        // 🚨 Rozeti Sıfırla (Okundu olarak işaretle)
         updateInboxLocally(chat.id, chat.name, chat.lastMsg, false);
         
         if (currentUser) {
@@ -486,7 +486,6 @@ export default function ChatBox() {
                                                     <p className={`text-xs truncate pr-2 ${chat.unread > 0 ? "font-bold text-slate-800" : "text-slate-500"}`}>
                                                         {chat.lastMsg || "Yeni mesaj..."}
                                                     </p>
-                                                    {/* 🚨 GELEN KUTUSU LİSTESİNDEKİ MİNİ ROZET */}
                                                     {chat.unread > 0 && (
                                                         <span className="bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 shadow-sm">
                                                             {chat.unread}
@@ -529,7 +528,6 @@ export default function ChatBox() {
                     <svg className="w-6 h-6 sm:w-7 sm:h-7 group-hover:animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
                     </svg>
-                    {/* 🚨 İŞTE İSTEDİĞİN O DIŞARIDAKİ MAVİ İKONUN ÜSTÜNDE ÇIKAN "1" ROZETİ */}
                     {totalUnreadMessages > 0 && (
                         <span className="absolute top-0 right-0 bg-red-500 w-5 h-5 text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm animate-pulse">
                             {totalUnreadMessages}
