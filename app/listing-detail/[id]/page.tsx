@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -45,24 +45,6 @@ export default function ListingDetailPage() {
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
-  // 💬 CHAT (MESAJLAŞMA) GERÇEK SİSTEM HAFIZALARI
-  const [isMessagesListOpen, setIsMessagesListOpen] = useState(false);
-  const [activeChatUser, setActiveChatUser] = useState<{
-    id: number;
-    name: string;
-  } | null>(null);
-  const [chatInput, setChatInput] = useState("");
-  const [inboxChats, setInboxChats] = useState<any[]>([]);
-  const [messages, setMessages] = useState<
-    { id: number; text: string; isMine: boolean }[]
-  >([]);
-  const chatScrollRef = useRef<HTMLDivElement>(null);
-
-  const totalUnreadMessages = inboxChats.reduce(
-    (total, chat) => total + chat.unread,
-    0,
-  );
-
   // 🔔 Navbar sayacını güncelleyen fonksiyon
   const updateNotificationCount = (userId: number) => {
     fetch(
@@ -90,40 +72,6 @@ export default function ListingDetailPage() {
       .catch((err) => console.error("Bildirimler çekilemedi:", err));
   };
 
-  const fetchInbox = async (userId: number) => {
-    try {
-      const res = await fetch(
-        `https://unicycle-api.onrender.com/api/messages/inbox/${userId}`,
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setInboxChats(data);
-      }
-    } catch (e) {
-      console.error("Gelen kutusu çekilemedi", e);
-    }
-  };
-
-  const fetchChatHistory = async (otherUserId: number) => {
-    if (!currentUser) return;
-    try {
-      const res = await fetch(
-        `https://unicycle-api.onrender.com/api/messages/history?user1Id=${currentUser.id}&user2Id=${otherUserId}`,
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const formattedMsgs = data.map((m: any) => ({
-          id: m.id,
-          text: m.content,
-          isMine: m.sender.id === currentUser.id,
-        }));
-        setMessages(formattedMsgs);
-      }
-    } catch (e) {
-      console.error("Mesaj geçmişi çekilemedi", e);
-    }
-  };
-
   // 1. Sayfa Yüklendiğinde Verileri Çek
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -137,7 +85,6 @@ export default function ListingDetailPage() {
       setIsLiked(likes.includes(Number(id)));
 
       updateNotificationCount(parsedUser.id);
-      fetchInbox(parsedUser.id);
 
       window.addEventListener("notificationsSeen", () =>
         setNotificationsCount(0),
@@ -257,15 +204,18 @@ export default function ListingDetailPage() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  // 🔥 TEMİZLENEN VE SADELEŞEN MESAJ BUTONU KODU
+  // 🔥 TEMİZLENEN VE SADELEŞEN MESAJ BUTONU KODU (GLOBAL CHATBOX'I UYANDIRIR)
   const handleMessageClick = () => {
     if (!currentUser) return showToast("🔒 Mesaj atmak için giriş yapmalısın!");
     if (product && product.user) {
-      // Kendi içindeki orijinal Mesajlar kutusunu aç
-      openChatWith({ id: product.user.id, name: product.user.fullName });
-      
-      // Mesaj kutusuna otomatik olarak yazıyı doldur
-      setChatInput(`Merhaba, '${product.title}' ilanınla ilgileniyorum. Hala satılık mı?`);
+      // Global ChatBox'a sinyal gönderiyoruz (İkinci kutu açılmasını engeller)
+      window.dispatchEvent(new CustomEvent("openChatWithContext", {
+        detail: {
+            sellerId: product.user.id,
+            sellerName: product.user.fullName,
+            productTitle: product.title
+        }
+      }));
     }
   };
 
@@ -435,67 +385,6 @@ export default function ListingDetailPage() {
     );
   };
 
-  const openChatWith = (chatUser: { id: number; name: string }) => {
-    setActiveChatUser(chatUser);
-    setIsMessagesListOpen(false);
-    fetchChatHistory(chatUser.id);
-  };
-
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim() || !currentUser || !activeChatUser) return;
-
-    const content = chatInput;
-    setChatInput("");
-
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), text: content, isMine: true },
-    ]);
-
-    try {
-      const res = await fetch(
-        "https://unicycle-api.onrender.com/api/messages/send",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            senderId: currentUser.id,
-            receiverId: activeChatUser.id,
-            content: content,
-          }),
-        },
-      );
-      if (res.ok) {
-        fetchChatHistory(activeChatUser.id);
-        fetchInbox(currentUser.id);
-      }
-    } catch (e) {
-      console.error("Mesaj gönderilemedi", e);
-    }
-  };
-
-  // Polling: inbox ve aktif chat güncelleme
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (currentUser) {
-      interval = setInterval(() => {
-        fetchInbox(currentUser.id);
-        if (activeChatUser) {
-          fetchChatHistory(activeChatUser.id);
-        }
-      }, 3000);
-    }
-    return () => clearInterval(interval);
-  }, [currentUser, activeChatUser]);
-
-  // Chat penceresini en alta kaydır
-  useEffect(() => {
-    if (chatScrollRef.current) {
-      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-    }
-  }, [messages, activeChatUser]);
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
@@ -542,7 +431,7 @@ export default function ListingDetailPage() {
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
-            {/* ✨ LOGO (Kare kaldırıldı, şeffaf yapıldı) */}
+            {/* ✨ LOGO */}
             <div className="flex-shrink-0">
               <Link
                 href="/"
@@ -1143,185 +1032,6 @@ export default function ListingDetailPage() {
           </div>
         </div>
       </div>
-
-      {/* 💬 GERÇEK VERİTABANI İLE MESAJLAŞMA (INBOX) SİSTEMİ */}
-      {!isMessagesListOpen && !activeChatUser && (
-        <button
-          onClick={() => setIsMessagesListOpen(true)}
-          className="fixed bottom-6 right-4 sm:right-6 z-[9990] bg-blue-600 text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 hover:bg-blue-700 transition-all group"
-        >
-          <svg
-            className="w-6 h-6 sm:w-7 sm:h-7 group-hover:animate-pulse"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-            ></path>
-          </svg>
-          {totalUnreadMessages > 0 && (
-            <span className="absolute top-0 right-0 bg-red-500 w-4 h-4 sm:w-5 sm:h-5 text-[9px] sm:text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
-              {totalUnreadMessages}
-            </span>
-          )}
-        </button>
-      )}
-
-      {isMessagesListOpen && (
-        <div className="fixed bottom-0 right-0 sm:right-4 md:right-8 w-full sm:w-80 md:w-[350px] h-[55vh] sm:h-[450px] bg-white rounded-t-3xl sm:rounded-2xl shadow-[0_-15px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
-          <div className="bg-blue-600 text-white px-4 sm:px-5 py-4 sm:py-4 flex justify-between items-center shadow-md relative pt-6 sm:pt-4">
-            <div className="w-12 h-1.5 bg-white/40 rounded-full absolute top-2 left-1/2 -translate-x-1/2 sm:hidden z-50"></div>
-            <h3 className="font-bold text-base sm:text-lg flex items-center gap-2">
-              💬 Mesajlar
-            </h3>
-            <button
-              onClick={() => setIsMessagesListOpen(false)}
-              className="text-white/80 hover:text-white font-bold text-2xl sm:text-xl leading-none"
-            >
-              ✕
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto flex flex-col divide-y divide-slate-100 bg-white custom-scrollbar">
-            {inboxChats.length === 0 ? (
-              <div className="text-center text-slate-500 text-sm mt-16 font-medium px-4">
-                Henüz mesajın yok. İlk adımı sen at!
-              </div>
-            ) : (
-              inboxChats.map((chat) => (
-                <div
-                  key={chat.id}
-                  onClick={() => openChatWith(chat)}
-                  className="p-4 flex items-center gap-3 hover:bg-slate-50 cursor-pointer transition-colors"
-                >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-600 border border-blue-200 text-sm sm:text-base shrink-0">
-                    {chat.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-0.5">
-                      <span
-                        className={`font-bold truncate text-sm ${chat.unread > 0 ? "text-slate-900" : "text-slate-700"}`}
-                      >
-                        {chat.name}
-                      </span>
-                      <span className="text-[9px] sm:text-[10px] font-bold text-slate-400">
-                        {new Date(chat.time).toLocaleTimeString("tr-TR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <p
-                        className={`text-xs truncate ${chat.unread > 0 ? "font-bold text-slate-800" : "text-slate-500"}`}
-                      >
-                        {chat.lastMsg}
-                      </p>
-                      {chat.unread > 0 && (
-                        <span className="bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ml-2 shrink-0">
-                          {chat.unread}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {activeChatUser && (
-        <div className="fixed bottom-0 right-0 sm:right-4 md:right-8 w-full sm:w-80 md:w-[350px] h-[55vh] sm:h-[450px] bg-white rounded-t-3xl sm:rounded-2xl shadow-[0_-15px_40px_rgba(0,0,0,0.15)] sm:shadow-2xl border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
-          <div className="bg-blue-600 text-white px-4 sm:px-5 py-4 sm:py-4 flex justify-between items-center shadow-md relative pt-6 sm:pt-4">
-            <div className="w-12 h-1.5 bg-white/40 rounded-full absolute top-2 left-1/2 -translate-x-1/2 sm:hidden z-50"></div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                onClick={() => {
-                  setActiveChatUser(null);
-                  setIsMessagesListOpen(true);
-                }}
-                className="text-white/80 hover:text-white mr-0.5 sm:mr-1 font-black text-2xl sm:text-xl"
-              >
-                &larr;
-              </button>
-              <div className="relative">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white/20 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold border border-white/30">
-                  {activeChatUser.name.charAt(0).toUpperCase()}
-                </div>
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-blue-600 rounded-full"></span>
-              </div>
-              <div>
-                <h3 className="font-bold text-xs sm:text-sm leading-none">
-                  {activeChatUser.name}
-                </h3>
-                <span className="text-[9px] sm:text-[10px] text-blue-100">
-                  Çevrimiçi
-                </span>
-              </div>
-            </div>
-            <button
-              onClick={() => setActiveChatUser(null)}
-              className="text-white/80 hover:text-white transition-colors font-bold text-2xl sm:text-xl leading-none"
-            >
-              ✕
-            </button>
-          </div>
-          <div
-            ref={chatScrollRef}
-            className="flex-1 bg-slate-50 p-3 sm:p-4 overflow-y-auto flex flex-col gap-2 sm:gap-3 custom-scrollbar"
-          >
-            {messages.length === 0 ? (
-              <div className="text-center text-[10px] sm:text-xs text-slate-400 font-bold bg-slate-100 rounded-full w-max mx-auto px-4 py-1.5 mb-2">
-                Henüz mesaj yok. İlk adımı sen at!
-              </div>
-            ) : (
-              messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 sm:px-4 py-2.5 text-xs sm:text-[13px] shadow-sm ${msg.isMine ? "bg-blue-600 text-white self-end rounded-br-sm" : "bg-white text-slate-800 border border-slate-100 self-start rounded-bl-sm"}`}
-                >
-                  {msg.text}
-                </div>
-              ))
-            )}
-          </div>
-          <form
-            onSubmit={handleSendMessage}
-            className="p-3 sm:p-4 bg-white border-t border-slate-100 flex items-center gap-2 mb-1 sm:mb-0"
-          >
-            <input
-              type="text"
-              placeholder="Bir mesaj yaz..."
-              className="flex-1 bg-slate-100 text-slate-800 text-sm sm:text-sm px-4 sm:px-4 py-3 sm:py-3 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-600"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-            />
-            <button
-              type="submit"
-              disabled={!chatInput.trim()}
-              className="w-12 h-12 sm:w-12 sm:h-12 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-full flex items-center justify-center transition-colors shrink-0 shadow-sm"
-            >
-              <svg
-                className="w-5 h-5 sm:w-5 sm:h-5 ml-1"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                ></path>
-              </svg>
-            </button>
-          </form>
-        </div>
-      )}
 
       {/* 🌊 FOOTER */}
       <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-6 mt-10 sm:mt-16 rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full">

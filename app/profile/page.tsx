@@ -10,8 +10,6 @@ import {
   Share2,
   ShieldCheck,
   ChevronRight,
-  MessageSquare,
-  Send,
 } from "lucide-react";
 
 // 🎓 Türkiye'deki Üniversiteler Listesi
@@ -75,61 +73,9 @@ export default function ProfilePage() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notificationsList, setNotificationsList] = useState<any[]>([]);
 
-  // 💬 CHAT (MESAJLAŞMA) SİSTEMİ
-  const [isMessagesListOpen, setIsMessagesListOpen] = useState(false);
-  const [activeChatUser, setActiveChatUser] = useState<{
-    id: number;
-    name: string;
-  } | null>(null);
-  const [chatInput, setChatInput] = useState("");
-  const [inboxChats, setInboxChats] = useState<any[]>([]);
-  const [messages, setMessages] = useState<
-    { id: number; text: string; isMine: boolean }[]
-  >([]);
-
   const router = useRouter();
   const profileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
-  const chatScrollRef = useRef<HTMLDivElement>(null);
-
-  const totalUnreadMessages = inboxChats.reduce(
-    (total, chat) => total + chat.unread,
-    0,
-  );
-
-  const fetchInbox = async (userId: number) => {
-    try {
-      const res = await fetch(
-        `https://unicycle-api.onrender.com/api/messages/inbox/${userId}`,
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setInboxChats(data);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const fetchChatHistory = async (otherUserId: number) => {
-    if (!user) return;
-    try {
-      const res = await fetch(
-        `https://unicycle-api.onrender.com/api/messages/history?user1Id=${user.id}&user2Id=${otherUserId}`,
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const formattedMsgs = data.map((m: any) => ({
-          id: m.id,
-          text: m.content,
-          isMine: m.sender.id === user.id,
-        }));
-        setMessages(formattedMsgs);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const loadProfileData = () => {
     const storedUser = localStorage.getItem("user");
@@ -161,7 +107,6 @@ export default function ProfilePage() {
       }
 
       fetchMyRealListings(parsedUser.id);
-      fetchInbox(parsedUser.id);
 
       fetch(
         `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
@@ -237,17 +182,6 @@ export default function ProfilePage() {
     return () => window.removeEventListener("notificationsSeen", clearNotifs);
   }, []);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (user) {
-      interval = setInterval(() => {
-        fetchInbox(user.id);
-        if (activeChatUser) fetchChatHistory(activeChatUser.id);
-      }, 3000);
-    }
-    return () => clearInterval(interval);
-  }, [user, activeChatUser]);
-
   const handleCancel = () => {
     loadProfileData();
     setActiveModal("none");
@@ -311,12 +245,6 @@ export default function ProfilePage() {
     const timer = setTimeout(() => fetchLive(), 300);
     return () => clearTimeout(timer);
   }, [searchTerm]);
-
-  useEffect(() => {
-    if (chatScrollRef.current) {
-      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-    }
-  }, [messages, activeChatUser]);
 
   const handleImageUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -404,44 +332,6 @@ export default function ProfilePage() {
       setTimeout(() => setShowToast(false), 3000);
     } catch (error) {
       setIsSaving(false);
-    }
-  };
-
-  const openChatWith = (chatUser: { id: number; name: string }) => {
-    setActiveChatUser(chatUser);
-    setIsMessagesListOpen(false);
-    fetchChatHistory(chatUser.id);
-  };
-
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim() || !user || !activeChatUser) return;
-    const content = chatInput;
-    setChatInput("");
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), text: content, isMine: true },
-    ]);
-
-    try {
-      const res = await fetch(
-        "https://unicycle-api.onrender.com/api/messages/send",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            senderId: user.id,
-            receiverId: activeChatUser.id,
-            content: content,
-          }),
-        },
-      );
-      if (res.ok) {
-        fetchChatHistory(activeChatUser.id);
-        fetchInbox(user.id);
-      }
-    } catch (e) {
-      console.error(e);
     }
   };
 
@@ -643,20 +533,22 @@ export default function ProfilePage() {
           
           {/* ALT SATIR: MOBİL ARAMA ÇUBUĞU (TAM OLARAK ANASAYFADAKİ GİBİ) */}
           <div className="md:hidden pb-3 pt-1 w-full relative z-40">
-            <form onSubmit={handleSearchSubmit} className="w-full relative">
-              <input
-                type="text"
-                placeholder="Ürün, @üye veya ders notu ara..."
-                className="w-full bg-[#F3F4F6] text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-[#20B2AA] transition-all border border-transparent font-medium text-sm"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setIsDropdownOpen(true);
-                }}
-                onFocus={() => setIsDropdownOpen(true)}
-                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-              />
-              <span className="absolute left-3 top-2.5 text-slate-400 text-lg">🔍</span>
+            <form onSubmit={handleSearchSubmit} className="w-full relative flex gap-2">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="Ürün, @üye veya ders notu ara..."
+                  className="w-full bg-[#F3F4F6] text-slate-800 rounded-lg py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-[#20B2AA] transition-all font-medium text-sm"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setIsDropdownOpen(true);
+                  }}
+                  onFocus={() => setIsDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+                />
+                <span className="absolute left-3 top-2.5 text-slate-400 text-lg">🔍</span>
+              </div>
             </form>
 
             {/* Mobil Açılır Menü */}
@@ -682,6 +574,16 @@ export default function ProfilePage() {
           
         </div>
       </header>
+
+      {/* 🔙 GERİ DÖN */}
+      <div className="max-w-[800px] mx-auto w-full px-4 sm:px-0 mt-4 sm:mt-6 mb-6">
+        <button
+          onClick={() => router.back()}
+          className="font-bold text-slate-500 hover:text-blue-600 flex items-center gap-2 text-xs sm:text-sm"
+        >
+          &larr; Geri Dön
+        </button>
+      </div>
 
       {/* 👤 PROFİL BİLGİ ALANI */}
       <div className="max-w-5xl mx-auto mt-0 sm:mt-6 bg-white sm:rounded-t-[2.5rem] sm:rounded-b-2xl shadow-sm sm:border border-gray-200 overflow-hidden w-full relative">
@@ -841,130 +743,6 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
-
-      {/* 💬 CHAT WIDGET (YEPYENİ LACİVERT PREMIUM TASARIM) */}
-      {!isMessagesListOpen && !activeChatUser && (
-        <button
-          onClick={() => setIsMessagesListOpen(true)}
-          className="fixed bottom-6 right-4 sm:right-6 z-[9990] bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 hover:bg-blue-700 transition-all group"
-        >
-          <MessageSquare className="w-7 h-7 group-hover:animate-pulse" />
-          {totalUnreadMessages > 0 && (
-            <span className="absolute top-0 right-0 bg-red-500 w-5 h-5 text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
-              {totalUnreadMessages}
-            </span>
-          )}
-        </button>
-      )}
-
-      {/* INBOX (GELEN KUTUSU LİSTESİ) */}
-      {isMessagesListOpen && (
-        <div className="fixed bottom-0 right-0 sm:right-8 w-full sm:w-[350px] h-[60vh] sm:h-[500px] bg-white rounded-t-3xl sm:rounded-2xl shadow-[0_-15px_40px_rgba(0,0,0,0.2)] border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
-          <div className="bg-blue-600 text-white px-4 sm:px-5 py-4 flex justify-between items-center shadow-md relative pt-6 sm:pt-4">
-            <div className="w-12 h-1.5 bg-white/40 rounded-full absolute top-2 left-1/2 -translate-x-1/2 sm:hidden z-50"></div>
-            <h3 className="font-bold text-base sm:text-lg flex items-center gap-2">💬 Mesajlar</h3>
-            <button onClick={() => setIsMessagesListOpen(false)} className="text-white/80 hover:text-white font-bold text-2xl sm:text-xl leading-none">✕</button>
-          </div>
-          <div className="flex-1 overflow-y-auto flex flex-col divide-y divide-slate-100 bg-white custom-scrollbar">
-            {inboxChats.length === 0 ? (
-              <div className="text-center text-slate-500 text-sm mt-16 font-medium px-4">
-                Henüz mesajın yok.
-              </div>
-            ) : (
-              inboxChats.map((chat) => (
-                <div
-                  key={chat.id}
-                  onClick={() => openChatWith(chat)}
-                  className="p-4 flex items-center gap-3 hover:bg-slate-50 cursor-pointer transition-colors"
-                >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-600 border border-blue-200 text-sm sm:text-base shrink-0">
-                    {chat.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-0.5">
-                      <span className={`font-bold truncate text-sm ${chat.unread > 0 ? "text-slate-900" : "text-slate-700"}`}>{chat.name}</span>
-                      <span className="text-[9px] sm:text-[10px] font-bold text-slate-400">
-                        {new Date(chat.time).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <p className={`text-xs truncate ${chat.unread > 0 ? "font-bold text-slate-800" : "text-slate-500"}`}>{chat.lastMsg}</p>
-                      {chat.unread > 0 && <span className="bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ml-2 shrink-0">{chat.unread}</span>}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* AKTİF SOHBET PENCERESİ */}
-      {activeChatUser && (
-        <div className="fixed bottom-0 right-0 sm:right-8 w-full sm:w-[350px] h-[60vh] sm:h-[500px] bg-white rounded-t-3xl sm:rounded-2xl shadow-[0_-15px_40px_rgba(0,0,0,0.2)] border border-slate-200 flex flex-col z-[9999] animate-in slide-in-from-bottom-10 overflow-hidden">
-          <div className="bg-blue-600 text-white px-4 sm:px-5 py-4 flex justify-between items-center shadow-md relative pt-6 sm:pt-4">
-            <div className="w-12 h-1.5 bg-white/40 rounded-full absolute top-2 left-1/2 -translate-x-1/2 sm:hidden z-50"></div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                onClick={() => {
-                  setActiveChatUser(null);
-                  setIsMessagesListOpen(true);
-                }}
-                className="text-white/80 hover:text-white mr-0.5 sm:mr-1 font-black text-xl sm:text-lg"
-              >
-                &larr;
-              </button>
-              <div className="relative">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white/20 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold border border-white/30">
-                  {activeChatUser.name.charAt(0).toUpperCase()}
-                </div>
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-blue-600 rounded-full"></span>
-              </div>
-              <div>
-                <h3 className="font-bold text-xs sm:text-sm leading-none">{activeChatUser.name}</h3>
-                <span className="text-[9px] sm:text-[10px] text-blue-100">Çevrimiçi</span>
-              </div>
-            </div>
-            <button onClick={() => setActiveChatUser(null)} className="text-white/80 hover:text-white transition-colors font-bold text-xl sm:text-lg leading-none">✕</button>
-          </div>
-          <div
-            ref={chatScrollRef}
-            className="flex-1 bg-slate-50 p-3 sm:p-4 overflow-y-auto flex flex-col gap-2 sm:gap-3 custom-scrollbar"
-          >
-            {messages.length === 0 ? (
-              <div className="text-center text-[10px] sm:text-xs text-slate-400 font-bold bg-slate-100 rounded-full w-max mx-auto px-4 py-1.5 mb-2">Henüz mesaj yok. İlk adımı sen at!</div>
-            ) : (
-              messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 sm:px-4 py-2.5 text-xs sm:text-[13px] shadow-sm ${msg.isMine ? "bg-blue-600 text-white self-end rounded-br-sm" : "bg-white text-slate-800 border border-slate-100 self-start rounded-bl-sm"}`}
-                >
-                  {msg.text}
-                </div>
-              ))
-            )}
-          </div>
-          <form
-            onSubmit={handleSendMessage}
-            className="p-3 sm:p-4 bg-white border-t border-slate-100 flex items-center gap-2 mb-1 sm:mb-0"
-          >
-            <input
-              type="text"
-              placeholder="Mesaj yaz..."
-              className="flex-1 bg-slate-100 text-slate-800 text-sm px-4 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-600"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-            />
-            <button
-              type="submit"
-              disabled={!chatInput.trim()}
-              className="w-10 h-10 sm:w-11 sm:h-11 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-full flex items-center justify-center transition-colors shrink-0 shadow-sm"
-            >
-              <Send className="w-4 h-4 sm:w-5 sm:h-5 ml-0.5" />
-            </button>
-          </form>
-        </div>
-      )}
 
       {/* 📸 MODALLAR */}
       {activeModal === "cover" && (
@@ -1234,25 +1012,22 @@ export default function ProfilePage() {
       )}
 
       {/* 🌊 AÇIK RENK, MİNİMALİST FOOTER */}
-      <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-6 mt-10 rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full">
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-2 text-center md:text-left">
-            <div className="mb-3 sm:mb-4">
-              <span className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">
+          <div className="col-span-1 md:col-span-2">
+            <div className="mb-4">
+              <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
                 Uni<span className="text-[#20B2AA]">Cycle</span>
               </span>
             </div>
-
-            <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
+            <p className="text-sm font-medium text-slate-500 max-w-sm">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
               öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
             </p>
           </div>
-
-          <div className="text-center md:text-left">
-            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4">Platform</h4>
-
-            <ul className="space-y-2 text-xs sm:text-sm font-medium text-slate-500">
+          <div>
+            <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
+            <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button className="hover:text-blue-600 transition-colors">
                   Nasıl Çalışır?
@@ -1270,11 +1045,9 @@ export default function ProfilePage() {
               </li>
             </ul>
           </div>
-
-          <div className="text-center md:text-left">
-            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4">İletişim</h4>
-
-            <ul className="space-y-2 text-xs sm:text-sm font-medium text-slate-500">
+          <div>
+            <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
+            <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button className="hover:text-blue-600 transition-colors">
                   Destek Merkezi
@@ -1293,11 +1066,23 @@ export default function ProfilePage() {
             </ul>
           </div>
         </div>
-
-        <div className="max-w-[1400px] mx-auto mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-100 text-center text-[10px] sm:text-xs font-medium text-slate-400">
+        <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>
+
+      {/* 🚀 VERCEL SSR VE IOS CSS HACK'LERİ EKLENDİ */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        
+        .desktop-search { display: none; }
+        .mobile-search { display: block; }
+        @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }
+      `}} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -99,14 +99,6 @@ export default function PublicProfilePage() {
   >([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [notificationsCount, setNotificationsCount] = useState(0);
-
-  // 💬 CHAT PANELİ HAFIZASI
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatInput, setChatInput] = useState("");
-  const [messages, setMessages] = useState<
-    { id: number; text: string; isMine: boolean }[]
-  >([]);
-  const chatScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -220,12 +212,6 @@ export default function PublicProfilePage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  useEffect(() => {
-    if (chatScrollRef.current) {
-      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-    }
-  }, [messages, isChatOpen]);
-
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim() !== "") {
@@ -235,7 +221,6 @@ export default function PublicProfilePage() {
   };
 
   const handleLogout = async () => {
-    // 🚀 Çıkış yapmadan hemen önce Java'ya "Beni anında çevrimdışı yap!" diyoruz
     if (currentUser) {
       try {
         await fetch(
@@ -246,8 +231,6 @@ export default function PublicProfilePage() {
         console.error("Çıkış yapılırken sunucuya ulaşılamadı.");
       }
     }
-
-    // Sonra normal çıkış işlemlerine devam ediyoruz
     localStorage.removeItem("user");
     setCurrentUser(null);
     window.location.href = "/";
@@ -304,75 +287,26 @@ export default function PublicProfilePage() {
     }
   };
 
-  // 🚀 GERÇEK VERİTABANINDAN SOHBET GEÇMİŞİNİ ÇEKME FONKSİYONU
-  const fetchChatHistory = async () => {
-    if (!currentUser || !user) return;
-    try {
-      const res = await fetch(
-        `https://unicycle-api.onrender.com/api/messages/history?user1Id=${currentUser.id}&user2Id=${user.id}`,
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const formattedMsgs = data.map((m: any) => ({
-          id: m.id,
-          text: m.content,
-          isMine: m.sender.id === currentUser.id,
-        }));
-        setMessages(formattedMsgs);
-      }
-    } catch (e) {
-      console.error("Mesaj geçmişi çekilemedi", e);
+  // 🔥 İŞTE BÜTÜN SORUNU ÇÖZEN KISIM: GLOBAL CHATBOX'A SİNYAL GÖNDERİYORUZ
+  const handleMessageClick = () => {
+    if (!currentUser) return showToast("🔒 Mesaj atmak için giriş yapmalısın!");
+    if (user) {
+      window.dispatchEvent(new CustomEvent("openChatWithContext", {
+        detail: {
+            sellerId: user.id,
+            sellerName: user.fullName,
+            productTitle: "" // Profil sayfasından gidildiği için ilan adı boş
+        }
+      }));
     }
   };
 
-  // 🚀 GERÇEK VERİTABANINA MESAJ GÖNDERME FONKSİYONU (Sahte setTimeout silindi!)
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim() || !currentUser || !user) return;
-
-    const content = chatInput;
-    setChatInput("");
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), text: content, isMine: true },
-    ]);
-
-    try {
-      const res = await fetch("https://unicycle-api.onrender.com/api/messages/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          senderId: currentUser.id,
-          receiverId: user.id,
-          content: content,
-        }),
-      });
-      if (res.ok) {
-        fetchChatHistory();
-      }
-    } catch (e) {
-      console.error("Mesaj gönderilemedi", e);
-    }
-  };
-
-  // 🚀 POLLING: SOHBET AÇIKKEN YENİ MESAJLARI ANLIK ÇEKER
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (currentUser && user && isChatOpen) {
-      interval = setInterval(() => {
-        fetchChatHistory();
-      }, 3000);
-    }
-    return () => clearInterval(interval);
-  }, [currentUser, user, isChatOpen]);
-
-  // 🚀 ZAMAN MATEMATİĞİ (KURŞUN GEÇİRMEZ & AJAN VERSİYON)
+  // 🚀 ZAMAN MATEMATİĞİ (Kullanıcının Çevrimiçi Durumu)
   const checkIsOnline = (lastActiveRaw: any) => {
     if (!lastActiveRaw) return false;
 
     let lastActiveDate;
     if (Array.isArray(lastActiveRaw)) {
-      // Java dizisi olarak gelirse (Yıl, Ay, Gün, Saat, Dakika)
       lastActiveDate = new Date(
         lastActiveRaw[0],
         lastActiveRaw[1] - 1,
@@ -382,17 +316,13 @@ export default function PublicProfilePage() {
         lastActiveRaw[5] || 0,
       );
     } else {
-      // Metin olarak gelirse (Garantili okuma için Z harfini atıyoruz)
       const cleanString = lastActiveRaw.toString().replace("Z", "");
       lastActiveDate = new Date(cleanString);
     }
 
     const now = new Date();
-    // Aradaki farkı tam dakikaya çevir
-    const diffInMinutes =
-      (now.getTime() - lastActiveDate.getTime()) / (1000 * 60);
+    const diffInMinutes = (now.getTime() - lastActiveDate.getTime()) / (1000 * 60);
 
-    // Fark 5 dakikadan azsa (Hata payı için -2 ekledik) Yeşil yak!
     return diffInMinutes >= -2 && diffInMinutes <= 5;
   };
 
@@ -416,7 +346,6 @@ export default function PublicProfilePage() {
   const displayBio = profileData?.bio || "Merhaba! UniCycle'da yeniyim.";
   const isOwner = currentUser && Number(currentUser.id) === Number(id);
 
-  // 🚀 Kullanıcının online olup olmadığını burada hesaplıyoruz
   const isUserOnline = checkIsOnline(user.lastActive);
 
   return (
@@ -441,7 +370,7 @@ export default function PublicProfilePage() {
                   src="/logo.jpeg"
                   alt="UniCycle İkon"
                   fill
-                  className="object-contain drop-shadow-sm transition-all rounded-md"
+                  className="object-contain drop-shadow-sm transition-all rounded-md mix-blend-multiply"
                   priority
                 />
               </div>
@@ -657,10 +586,7 @@ export default function PublicProfilePage() {
                 ) : (
                   <>
                     <button
-                      onClick={() => {
-                        setIsChatOpen(true);
-                        fetchChatHistory(); // 🚀 TIKLANDIĞINDA GEÇMİŞİ ÇEK
-                      }}
+                      onClick={handleMessageClick}
                       className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold py-1.5 px-4 rounded-full text-xs sm:text-sm flex items-center gap-1.5 transition-colors"
                     >
                       <span>💬</span>{" "}
@@ -826,88 +752,6 @@ export default function PublicProfilePage() {
         </div>
       </footer>
 
-      {/* 💬 SAĞ ALTTAN ÇIKAN AKTİF SOHBET PANELİ (TAŞMA ENGELLİ PREMIUM SÜRÜM) 💬 */}
-      {isChatOpen && (
-        <div className="chat-panel animate-in slide-in-from-bottom-10 border border-slate-200">
-          <div
-            className="bg-blue-600 text-white px-4 py-3 rounded-t-2xl flex justify-between items-center cursor-pointer shadow-md shrink-0"
-            onClick={() => setIsChatOpen(false)}
-          >
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-sm font-bold border border-white/30">
-                  {safeFullName.charAt(0).toUpperCase()}
-                </div>
-                {/* 🚀 GERÇEK ZAMANLI RENK GÜNCELLEMESİ */}
-                <span
-                  className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-blue-600 rounded-full ${isUserOnline ? "bg-green-400" : "bg-red-500"}`}
-                ></span>
-              </div>
-              <div>
-                <h3 className="font-bold text-sm leading-none">
-                  {safeFullName.split(" ")[0]}
-                </h3>
-                {/* 🚀 GERÇEK ZAMANLI YAZI GÜNCELLEMESİ */}
-                <span className="text-[10px] text-blue-100">
-                  {isUserOnline ? "Çevrimiçi" : "Çevrimdışı"}
-                </span>
-              </div>
-            </div>
-            <button className="text-white/80 hover:text-white transition-colors text-xl font-bold leading-none">
-              ✕
-            </button>
-          </div>
-
-          <div
-            ref={chatScrollRef}
-            className="flex-1 bg-slate-50 p-3 sm:p-4 overflow-y-auto flex flex-col gap-2 sm:gap-3 custom-scrollbar"
-          >
-            <div className="text-center text-[10px] text-slate-400 font-bold bg-slate-100 rounded-full w-max mx-auto px-3 py-1 mb-2">
-              Bugün
-            </div>
-            {messages.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50">
-                <span className="text-4xl mb-2">👋</span>
-                <p className="text-xs font-bold text-slate-600">
-                  Hemen bir mesaj göndererek
-                  <br />
-                  sohbeti başlatın.
-                </p>
-              </div>
-            ) : (
-              messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 sm:px-4 py-2 text-xs sm:text-[13px] shadow-sm ${msg.isMine ? "bg-blue-600 text-white self-end rounded-br-sm" : "bg-white text-slate-800 border border-slate-100 self-start rounded-bl-sm"}`}
-                >
-                  {msg.text}
-                </div>
-              ))
-            )}
-          </div>
-
-          <form
-            onSubmit={handleSendMessage}
-            className="p-3 sm:p-4 bg-white border-t border-slate-100 flex items-center gap-2 shrink-0 mb-1 sm:mb-0"
-          >
-            <input
-              type="text"
-              placeholder="Bir mesaj yaz..."
-              className="flex-1 bg-slate-100 text-slate-800 text-sm px-4 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-            />
-            <button
-              type="submit"
-              disabled={!chatInput.trim()}
-              className="w-10 h-10 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-full flex items-center justify-center transition-colors shrink-0 shadow-sm"
-            >
-              <Send className="w-4 h-4 ml-0.5" />
-            </button>
-          </form>
-        </div>
-      )}
-
       {/* 🚀 VERCEL SSR VE IOS CSS HACK'LERİ EKLENDİ */}
       <style dangerouslySetInnerHTML={{
         __html: `
@@ -919,9 +763,6 @@ export default function PublicProfilePage() {
         .desktop-search { display: none; }
         .mobile-search { display: block; }
         @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }
-        
-        .chat-panel { position: fixed; bottom: 0; right: 0; width: 100%; height: 60vh; max-height: 520px; z-index: 9999; display: flex; flex-direction: column; background-color: white; border-top-left-radius: 1.5rem; border-top-right-radius: 1.5rem; box-shadow: 0 -15px 40px rgba(0,0,0,0.15); overflow: hidden; }
-        @media (min-width: 640px) { .chat-panel { right: 2rem; width: 350px; height: 500px; border-radius: 1rem; } }
       `}} />
     </div>
   );

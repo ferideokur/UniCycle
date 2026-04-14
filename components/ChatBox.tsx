@@ -4,19 +4,206 @@ import React, { useEffect, useState, useRef } from 'react';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
+// Tiplerimiz
+interface ChatMessage {
+    id: number;
+    text: string;
+    isMine: boolean;
+    createdAt?: string;
+}
+
+interface InboxItem {
+    id: number;
+    name: string;
+    lastMsg: string;
+    time: string;
+    unread: number;
+}
+
+interface ActiveChat {
+    id: number;
+    name: string;
+}
+
 export default function ChatBox() {
     const [isOpen, setIsOpen] = useState(false);
-    const [chatInput, setChatInput] = useState("");
-    const [messages, setMessages] = useState<{ id: number; text: string; isMine: boolean }[]>([]);
-    const [stompClient, setStompClient] = useState<any>(null);
+    const [view, setView] = useState<'inbox' | 'chat'>('inbox');
     const [currentUser, setCurrentUser] = useState<any>(null);
+    
+    // VERİ HAFIZALARI
+    const [inboxChats, setInboxChats] = useState<InboxItem[]>([]);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [activeChat, setActiveChat] = useState<ActiveChat | null>(null);
+    const [chatInput, setChatInput] = useState("");
+    
+    // ÇEVRİMİÇİ HAFIZASI
+    const [isUserOnline, setIsUserOnline] = useState(false);
+
+    const [stompClient, setStompClient] = useState<any>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
 
-    // 🚀 Varsayılan isim "Sohbet Kutusu" oldu.
-    const [receiverId, setReceiverId] = useState<number | null>(null);
-    const [receiverName, setReceiverName] = useState("Sohbet Kutusu");
-    const [isUserOnline, setIsUserOnline] = useState(true);
+    const totalUnreadMessages = inboxChats.reduce((total, chat) => total + (chat.unread || 0), 0);
 
+    // ==========================================
+    // 🧠 GİZLİ KARA LİSTE (SİLİNENLERİ SAKLAR)
+    // ==========================================
+    const getHiddenChats = () => JSON.parse(localStorage.getItem(`hidden_chats_${currentUser?.id}`) || "[]");
+    const getHiddenMsgs = () => JSON.parse(localStorage.getItem(`hidden_msgs_${currentUser?.id}`) || "[]");
+
+    // ==========================================
+    // 🧠 SİHİRLİ HAFIZA MOTORU (LOCAL STORAGE)
+    // ==========================================
+    const saveInboxToLocal = (newInbox: InboxItem[], userId: number) => {
+        const hiddenChats = JSON.parse(localStorage.getItem(`hidden_chats_${userId}`) || "[]");
+        const filteredInbox = newInbox.filter(chat => !hiddenChats.includes(chat.id));
+        setInboxChats(filteredInbox);
+        localStorage.setItem(`unicycle_inbox_${userId}`, JSON.stringify(filteredInbox));
+    };
+
+    const updateInboxLocally = (contactId: number, contactName: string, lastMsg: string, isUnread: boolean = false) => {
+        if (!currentUser) return;
+        
+        const hiddenChats = getHiddenChats();
+        if (hiddenChats.includes(contactId)) {
+            const newHidden = hiddenChats.filter((id: number) => id !== contactId);
+            localStorage.setItem(`hidden_chats_${currentUser.id}`, JSON.stringify(newHidden));
+        }
+
+        setInboxChats(prev => {
+            const filtered = prev.filter(c => c.id !== contactId);
+            const existing = prev.find(c => c.id === contactId);
+            
+            const updatedList = [{
+                id: contactId,
+                name: contactName,
+                lastMsg: lastMsg,
+                time: new Date().toISOString(),
+                unread: isUnread ? (existing ? existing.unread + 1 : 1) : 0
+            }, ...filtered];
+
+            localStorage.setItem(`unicycle_inbox_${currentUser.id}`, JSON.stringify(updatedList));
+            return updatedList;
+        });
+    };
+
+    // ==========================================
+    // 🕵️‍♀️ ÇEVRİMİÇİ / ÇEVRİMDIŞI DEDEKTİFİ
+    // ==========================================
+    const checkIsOnline = (lastActiveRaw: any) => {
+        if (!lastActiveRaw) return false;
+
+        let lastActiveDate;
+        if (Array.isArray(lastActiveRaw)) {
+            lastActiveDate = new Date(
+                lastActiveRaw[0], lastActiveRaw[1] - 1, lastActiveRaw[2],
+                lastActiveRaw[3], lastActiveRaw[4], lastActiveRaw[5] || 0,
+            );
+        } else {
+            const cleanString = lastActiveRaw.toString().replace("Z", "");
+            lastActiveDate = new Date(cleanString);
+        }
+
+        const now = new Date();
+        const diffInMinutes = (now.getTime() - lastActiveDate.getTime()) / (1000 * 60);
+
+        return diffInMinutes >= -2 && diffInMinutes <= 5; 
+    };
+
+    const fetchUserStatus = async (userId: number) => {
+        try {
+            const res = await fetch(`https://unicycle-api.onrender.com/api/users/${userId}`, { cache: "no-store" });
+            if (res.ok) {
+                const userData = await res.json();
+                setIsUserOnline(checkIsOnline(userData.lastActive));
+            }
+        } catch (e) {}
+    };
+
+    // ==========================================
+    // 🌐 API FONKSİYONLARI
+    // ==========================================
+    const loadInbox = async (userId: number) => {
+        try {
+            const localData = localStorage.getItem(`unicycle_inbox_${userId}`);
+            if (localData) {
+                const hiddenChats = JSON.parse(localStorage.getItem(`hidden_chats_${userId}`) || "[]");
+                const parsedLocal = JSON.parse(localData);
+                setInboxChats(parsedLocal.filter((c: any) => !hiddenChats.includes(c.id)));
+            }
+
+            const res = await fetch(`https://unicycle-api.onrender.com/api/messages/inbox/${userId}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data && Array.isArray(data)) {
+                    saveInboxToLocal(data, userId);
+                }
+            }
+        } catch (e) {}
+    };
+
+    const loadChatHistory = async (otherUserId: number, myUserId: number) => {
+        try {
+            const res = await fetch(`https://unicycle-api.onrender.com/api/messages/history?user1Id=${myUserId}&user2Id=${otherUserId}`);
+            if (res.ok) {
+                const data = await res.json();
+                
+                const hiddenMsgs = JSON.parse(localStorage.getItem(`hidden_msgs_${myUserId}`) || "[]");
+                
+                const formattedMsgs = data
+                    .filter((m: any) => !hiddenMsgs.includes(m.id)) 
+                    .map((m: any) => ({
+                        id: m.id,
+                        text: m.content,
+                        isMine: m.sender?.id === myUserId,
+                        createdAt: m.createdAt
+                    }));
+                setMessages(formattedMsgs);
+            }
+        } catch (e) {}
+    };
+
+    // 🗑️ TEK MESAJ SİLME
+    const handleDeleteMessage = async (msgId: number) => {
+        if (!window.confirm("Bu mesajı silmek istiyor musun?")) return;
+        
+        setMessages(prev => prev.filter(m => m.id !== msgId));
+        
+        const hiddenMsgs = getHiddenMsgs();
+        hiddenMsgs.push(msgId);
+        localStorage.setItem(`hidden_msgs_${currentUser.id}`, JSON.stringify(hiddenMsgs));
+
+        try {
+            await fetch(`https://unicycle-api.onrender.com/api/messages/${msgId}`, { method: "DELETE" });
+        } catch (err) {}
+    };
+
+    // 🗑️ TÜM SOHBETİ SİLME (Inbox Listesinden)
+    const handleDeleteConversation = async (contactId: number, e: React.MouseEvent) => {
+        e.stopPropagation(); 
+        if (!window.confirm("Bu kişiyle olan tüm sohbeti silmek istiyor musun?")) return;
+
+        setInboxChats(prev => prev.filter(c => c.id !== contactId));
+        
+        const hiddenChats = getHiddenChats();
+        if (!hiddenChats.includes(contactId)) hiddenChats.push(contactId);
+        localStorage.setItem(`hidden_chats_${currentUser.id}`, JSON.stringify(hiddenChats));
+
+        const localInbox = JSON.parse(localStorage.getItem(`unicycle_inbox_${currentUser.id}`) || "[]");
+        const updatedLocalInbox = localInbox.filter((c: any) => c.id !== contactId);
+        localStorage.setItem(`unicycle_inbox_${currentUser.id}`, JSON.stringify(updatedLocalInbox));
+
+        if (activeChat?.id === contactId) {
+            handleBackToInbox();
+        }
+
+        try {
+            await fetch(`https://unicycle-api.onrender.com/api/messages/conversation?user1Id=${currentUser.id}&user2Id=${contactId}`, { method: "DELETE" });
+        } catch(err) {}
+    };
+
+    // ==========================================
+    // 🔌 BAŞLANGIÇ VE WEBSOCKET
+    // ==========================================
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
         let userObj = null;
@@ -24,155 +211,290 @@ export default function ChatBox() {
             try {
                 userObj = JSON.parse(storedUser);
                 setCurrentUser(userObj);
-            } catch (e) { console.error(e); }
+            } catch (e) {}
         }
 
         if (!userObj) return;
 
-        const socket = new SockJS('http://localhost:8080/ws-chat');
+        loadInbox(userObj.id);
+
+        const socket = new SockJS('https://unicycle-api.onrender.com/ws-chat');
         const client = new Client({
             webSocketFactory: () => socket,
             onConnect: () => {
-                client.publish({
-                    destination: '/app/chat.connect',
-                    body: userObj.id.toString()
-                });
+                client.publish({ destination: '/app/chat.connect', body: userObj.id.toString() });
 
-                client.subscribe(`/queue/messages/${userObj.id}`, (msg) => {
+                client.subscribe(`/queue/messages/${userObj.id}`, (msg: any) => {
                     const receivedMessage = JSON.parse(msg.body);
-                    setMessages((prev) => [...prev, { 
-                        id: receivedMessage.id || Date.now(), 
-                        text: receivedMessage.content, 
-                        isMine: false 
-                    }]);
-                    setIsOpen(true); 
+                    
+                    if (receivedMessage.sender) {
+                        updateInboxLocally(
+                            receivedMessage.sender.id, 
+                            receivedMessage.sender.fullName || "Kullanıcı", 
+                            receivedMessage.content,
+                            true 
+                        );
+                    }
+
+                    if (activeChat?.id === receivedMessage.sender?.id) {
+                        setMessages((prev) => [...prev, { 
+                            id: receivedMessage.id || Date.now(), 
+                            text: receivedMessage.content, 
+                            isMine: false 
+                        }]);
+                    }
+                    
+                    setIsOpen(true);
                 });
-            },
+            }
         });
 
         client.activate();
         setStompClient(client);
 
         return () => { void client.deactivate(); };
-    }, []);
+    }, [activeChat]);
 
+    // 🎯 DİĞER SAYFALARDAN GELEN TETİKLEMELER
     useEffect(() => {
         const handleOpenChatSignal = (event: any) => {
             const { sellerId, sellerName, productTitle } = event.detail;
+            if (!sellerId) return;
+
+            const finalName = sellerName || "Satıcı";
+            setActiveChat({ id: sellerId, name: finalName });
+            setView('chat');
+            setIsOpen(true);
             
-            setReceiverId(sellerId);
-            setReceiverName(sellerName || "Satıcı");
-            setIsOpen(true); 
-            
+            // "Sohbet başlatıldı" yazısı KALDIRILDI! Artık boş (veya önceden ne varsa o) duracak
+            updateInboxLocally(sellerId, finalName, "");
+
+            if (currentUser) {
+                loadChatHistory(sellerId, currentUser.id);
+                fetchUserStatus(sellerId);
+            }
+
             if (productTitle) {
                 setChatInput(`Merhaba, '${productTitle}' ilanınla ilgileniyorum. Hala satılık mı?`);
             }
         };
 
         window.addEventListener("openChatWithContext", handleOpenChatSignal);
-        return () => {
-            window.removeEventListener("openChatWithContext", handleOpenChatSignal);
-        };
-    }, []);
+        return () => window.removeEventListener("openChatWithContext", handleOpenChatSignal);
+    }, [currentUser]);
 
+    // SCROLL VE POLLING
     useEffect(() => {
         if (chatScrollRef.current) {
             chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
         }
-    }, [messages, isOpen]);
+    }, [messages, view, isOpen]);
 
-    const handleSendMessage = (e: React.FormEvent) => {
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (currentUser) {
+            interval = setInterval(() => {
+                if (isOpen && view === 'chat' && activeChat) {
+                    loadChatHistory(activeChat.id, currentUser.id);
+                    fetchUserStatus(activeChat.id); 
+                } else if (isOpen && view === 'inbox') {
+                    loadInbox(currentUser.id);
+                }
+            }, 5000); 
+        }
+        return () => clearInterval(interval);
+    }, [currentUser, isOpen, view, activeChat]);
+
+    // ==========================================
+    // 🚀 MESAJ GÖNDERME
+    // ==========================================
+    const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!chatInput.trim() || !stompClient || !currentUser || !receiverId) return;
+        if (!chatInput.trim() || !currentUser || !activeChat) return;
 
-        const messageContent = chatInput;
+        const content = chatInput;
+        const tempId = Date.now();
         
-        const newMsg = { id: Date.now(), text: messageContent, isMine: true };
+        const newMsg = { id: tempId, text: content, isMine: true };
         setMessages((prev) => [...prev, newMsg]);
         setChatInput("");
 
-        const chatRequest = {
-            senderId: currentUser.id,
-            receiverId: receiverId,
-            content: messageContent
-        };
+        // EN SON MESAJ ANINDA LİSTEYE DÜŞECEK
+        updateInboxLocally(activeChat.id, activeChat.name, content);
 
-        stompClient.publish({
-            destination: '/app/chat.sendMessage',
-            body: JSON.stringify(chatRequest)
-        });
+        try {
+            await fetch("https://unicycle-api.onrender.com/api/messages/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    senderId: currentUser.id,
+                    receiverId: activeChat.id,
+                    content: content
+                })
+            });
+        } catch (err) {}
+    };
+
+    const handleOpenChatFromInbox = (chat: InboxItem) => {
+        setActiveChat({ id: chat.id, name: chat.name });
+        setView('chat');
+        
+        updateInboxLocally(chat.id, chat.name, chat.lastMsg, false);
+        
+        if (currentUser) {
+            loadChatHistory(chat.id, currentUser.id);
+            fetchUserStatus(chat.id); 
+        }
+    };
+
+    const handleBackToInbox = () => {
+        setActiveChat(null);
+        setView('inbox');
+        setChatInput("");
     };
 
     if (!currentUser) return null; 
 
+    // ==========================================
+    // 🎨 ARAYÜZ
+    // ==========================================
     return (
         <div className="fixed bottom-5 right-5 z-[9999]">
             {isOpen ? (
-                <div className="w-80 sm:w-[350px] h-[450px] bg-white rounded-t-2xl rounded-bl-2xl shadow-[0_-5px_40px_rgba(0,0,0,0.2)] border border-slate-200 flex flex-col animate-in slide-in-from-bottom-10 mb-2">
-                    <div 
-                        className="bg-blue-600 text-white px-4 py-3 rounded-t-2xl flex justify-between items-center cursor-pointer shadow-md"
-                        onClick={() => setIsOpen(false)}
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="relative">
-                                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-sm font-bold border border-white/30">
-                                    {/* 💡 SİHİR BURADA: Kişi varsa baş harfi, yoksa mesaj ikonu göster */}
-                                    {receiverId ? receiverName.charAt(0).toUpperCase() : "💬"}
-                                </div>
-                                {/* 💡 Kişi varsa yeşil nokta göster, yoksa gizle */}
-                                {receiverId && (
+                <div className="w-80 sm:w-[350px] h-[450px] bg-white rounded-t-2xl rounded-bl-2xl shadow-[0_-5px_40px_rgba(0,0,0,0.2)] border border-slate-200 flex flex-col animate-in slide-in-from-bottom-10 mb-2 overflow-hidden">
+                    
+                    {/* ÜST BAŞLIK */}
+                    <div className="bg-blue-600 text-white px-4 py-3 flex justify-between items-center shadow-md z-10">
+                        {view === 'chat' && activeChat ? (
+                            <div className="flex items-center gap-2">
+                                <button onClick={handleBackToInbox} className="text-white hover:text-blue-200 mr-1 font-black text-xl leading-none">
+                                    &larr;
+                                </button>
+                                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-sm font-bold border border-white/30 relative">
+                                    {activeChat.name.charAt(0).toUpperCase()}
                                     <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-blue-600 rounded-full ${isUserOnline ? 'bg-green-400' : 'bg-red-500'}`}></span>
-                                )}
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-sm leading-none">{receiverName}</h3>
-                                <span className="text-[10px] text-blue-100">
-                                    {/* 💡 Kişi yoksa Bekleniyor yaz */}
-                                    {receiverId ? (isUserOnline ? 'Çevrimiçi' : 'Çevrimdışı') : 'Mesaj bekleniyor...'}
-                                </span>
-                            </div>
-                        </div>
-                        <button className="text-white/80 hover:text-white transition-colors text-xl font-bold">✕</button>
-                    </div>
-
-                    <div ref={chatScrollRef} className="flex-1 bg-slate-50 p-4 overflow-y-auto flex flex-col gap-3">
-                        <div className="text-center text-[10px] text-slate-400 font-bold bg-slate-100 rounded-full w-max mx-auto px-3 py-1 mb-2">Bugün</div>
-                        {messages.length === 0 ? (
-                            <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50">
-                                {/* 💡 İçi boşken kafa karıştırmayan profesyonel bilgilendirme */}
-                                <span className="text-4xl mb-2">{receiverId ? "👋" : "📫"}</span>
-                                <p className="text-xs font-bold text-slate-600">
-                                    {receiverId 
-                                        ? "Hemen bir mesaj göndererek\nsohbeti başlatın." 
-                                        : "Sohbet başlatmak için bir ilan üzerinden 'Satıcıya Mesaj Gönder' butonuna tıklayın."}
-                                </p>
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-sm leading-none">{activeChat.name}</h3>
+                                    <span className="text-[10px] text-blue-100">{isUserOnline ? 'Çevrimiçi' : 'Çevrimdışı'}</span>
+                                </div>
                             </div>
                         ) : (
-                            messages.map((msg) => (
-                                <div key={msg.id} className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${msg.isMine ? "bg-blue-600 text-white self-end rounded-br-sm" : "bg-white text-slate-800 border border-slate-100 self-start rounded-bl-sm"}`}>
-                                    {msg.text}
-                                </div>
-                            ))
+                            <h3 className="font-bold text-base flex items-center gap-2">
+                                💬 Mesajlarım
+                            </h3>
+                        )}
+                        <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white transition-colors text-xl font-bold leading-none">✕</button>
+                    </div>
+
+                    <div className="flex-1 bg-slate-50 flex flex-col relative custom-scrollbar overflow-hidden">
+                        
+                        {view === 'chat' && activeChat ? (
+                            // --- SOHBET EKRANI ---
+                            <div ref={chatScrollRef} className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 custom-scrollbar">
+                                <div className="text-center text-[10px] text-slate-400 font-bold bg-slate-100 rounded-full w-max mx-auto px-3 py-1 mb-2">Güvenli Sohbet</div>
+                                
+                                {messages.length === 0 ? (
+                                    <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50">
+                                        <span className="text-4xl mb-2">👋</span>
+                                        <p className="text-xs font-bold text-slate-600">İlk mesajı göndererek<br/>sohbeti başlatın.</p>
+                                    </div>
+                                ) : (
+                                    messages.map((msg) => (
+                                        <div key={msg.id} className={`group flex flex-col ${msg.isMine ? 'items-end' : 'items-start'}`}>
+                                            <div className="flex items-center gap-2">
+                                                {/* 🗑️ TEK MESAJI SİL BUTONU (Üstüne gelince çıkar) */}
+                                                {msg.isMine && (
+                                                    <button onClick={() => handleDeleteMessage(msg.id)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 text-xs transition-opacity" title="Mesajı Sil">
+                                                        🗑️
+                                                    </button>
+                                                )}
+                                                
+                                                <div className={`max-w-[100%] rounded-2xl px-4 py-2 text-sm shadow-sm ${msg.isMine ? "bg-blue-600 text-white rounded-br-sm" : "bg-white text-slate-800 border border-slate-200 rounded-bl-sm"}`}>
+                                                    {msg.text}
+                                                </div>
+                                            </div>
+                                            {msg.isMine && (
+                                                <span className="text-[9px] text-blue-500 font-bold mt-0.5 mr-1">✓✓ Gönderildi</span>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        ) : (
+                            // --- GELEN KUTUSU (INBOX) EKRANI ---
+                            <div className="flex-1 overflow-y-auto flex flex-col divide-y divide-slate-100 bg-white custom-scrollbar">
+                                {inboxChats.length === 0 ? (
+                                    <div className="text-center flex flex-col items-center justify-center h-full opacity-60 px-4">
+                                        <span className="text-4xl mb-3">📫</span>
+                                        <p className="text-sm font-bold text-slate-600">Henüz mesajın yok.</p>
+                                        <p className="text-xs text-slate-500 mt-1">İlanlar üzerinden satıcılara mesaj gönderdiğinde listeni burada görebilirsin.</p>
+                                    </div>
+                                ) : (
+                                    inboxChats.map((chat) => (
+                                        <div key={chat.id} onClick={() => handleOpenChatFromInbox(chat)} className="group p-4 flex items-center gap-3 hover:bg-slate-50 cursor-pointer transition-colors relative">
+                                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-600 border border-blue-200 text-lg shrink-0">
+                                                {chat.name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-center mb-0.5">
+                                                    <span className={`font-bold truncate text-sm ${chat.unread > 0 ? "text-slate-900" : "text-slate-700"}`}>
+                                                        {chat.name}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    {/* "Sohbet Başlatıldı" YAZISI KALDIRILDI! ARTIK YENİ SOHBET YAZACAK */}
+                                                    <p className={`text-xs truncate pr-2 ${chat.unread > 0 ? "font-bold text-slate-800" : "text-slate-500"}`}>
+                                                        {chat.lastMsg || "Yeni sohbet..."}
+                                                    </p>
+                                                    {chat.unread > 0 && (
+                                                        <span className="bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 shadow-sm">
+                                                            {chat.unread}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            {/* 🗑️ GELEN KUTUSUNDAN KOMPLE SİL BUTONU */}
+                                            <button 
+                                                onClick={(e) => handleDeleteConversation(chat.id, e)} 
+                                                className="absolute right-4 opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-opacity bg-white hover:bg-red-50 rounded-full shadow-sm border border-slate-100" 
+                                                title="Sohbeti Sil"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
                         )}
                     </div>
 
-                    <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-slate-100 flex items-center gap-2 rounded-b-2xl">
-                        <input 
-                            type="text" 
-                            placeholder={receiverId ? "Bir mesaj yaz..." : "Sohbet edilecek kişi seçilmedi"} 
-                            className="flex-1 bg-slate-100 text-slate-800 text-sm px-4 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                            value={chatInput} 
-                            onChange={(e) => setChatInput(e.target.value)} 
-                            disabled={!receiverId}
-                        />
-                        <button type="submit" disabled={!chatInput.trim() || !receiverId} className="w-10 h-10 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-full flex items-center justify-center transition-colors shrink-0 shadow-sm">
-                            <svg className="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                        </button>
-                    </form>
+                    {view === 'chat' && activeChat && (
+                        <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-slate-100 flex items-center gap-2">
+                            <input 
+                                type="text" 
+                                placeholder="Bir mesaj yaz..." 
+                                className="flex-1 bg-slate-100 text-slate-800 text-sm px-4 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={chatInput} 
+                                onChange={(e) => setChatInput(e.target.value)} 
+                            />
+                            <button type="submit" disabled={!chatInput.trim()} className="w-10 h-10 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-full flex items-center justify-center transition-colors shrink-0 shadow-sm">
+                                <svg className="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                            </button>
+                        </form>
+                    )}
                 </div>
             ) : (
-                <button onClick={() => setIsOpen(true)} className="bg-blue-600 text-white w-14 h-14 rounded-full shadow-[0_5px_20px_rgba(37,99,235,0.4)] flex items-center justify-center hover:bg-blue-700 hover:scale-110 transition-all text-2xl">
-                    💬
+                <button onClick={() => setIsOpen(true)} className="relative bg-blue-600 text-white w-14 h-14 rounded-full shadow-[0_5px_20px_rgba(37,99,235,0.4)] flex items-center justify-center hover:bg-blue-700 hover:scale-110 transition-all text-2xl group">
+                    <svg className="w-6 h-6 sm:w-7 sm:h-7 group-hover:animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                    </svg>
+                    {totalUnreadMessages > 0 && (
+                        <span className="absolute top-0 right-0 bg-red-500 w-5 h-5 text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                            {totalUnreadMessages}
+                        </span>
+                    )}
                 </button>
             )}
         </div>
