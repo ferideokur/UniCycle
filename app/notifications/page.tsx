@@ -1,174 +1,153 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function NotificationsPage() {
-  const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      router.push("/login");
-      return;
-    }
-
-    try {
+    if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      setCurrentUser(parsedUser);
+      setUser(parsedUser);
 
+      // Veritabanından (SQL) güncel bildirimleri çek
       fetch(
         `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
       )
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) {
+            // LocalStorage'da daha önceden silinmiş gibi görünenleri filtrele
             const deletedNotifs = JSON.parse(
               localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
             );
-            const seenNotifs = JSON.parse(
-              localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
-            );
+            const activeNotifs = data
+              .filter((n: any) => !deletedNotifs.includes(n.id))
+              .reverse();
 
-            const activeNotifs = data.filter(
-              (n: any) => !deletedNotifs.includes(n.id),
-            );
-            setNotifications(activeNotifs.reverse());
+            setNotifications(activeNotifs);
 
-            const unread = activeNotifs.filter(
-              (n: any) => !seenNotifs.includes(n.id),
-            );
-            setUnreadCount(unread.length);
-
-            const allActiveIds = activeNotifs.map((n: any) => n.id);
+            // Sayfaya girildiği için okunmamış rozetini sıfırla (Tüm sayfalara sinyal gönder)
+            const seenNotifs = activeNotifs.map((n: any) => n.id);
             localStorage.setItem(
               `seenNotifs_${parsedUser.id}`,
-              JSON.stringify(allActiveIds),
+              JSON.stringify(seenNotifs),
             );
             window.dispatchEvent(new Event("notificationsSeen"));
           }
+          setLoading(false);
         })
-        .catch((err) => console.error("Bildirimler çekilirken hata:", err))
-        .finally(() => setIsLoading(false));
-    } catch (e) {
-      console.error(e);
-      setIsLoading(false);
+        .catch((err) => {
+          console.error("Bildirimler çekilemedi:", err);
+          setLoading(false);
+        });
+    } else {
+      window.location.href = "/login";
     }
-  }, [router]);
+  }, []);
 
-  const handleDeleteNotification = async (notificationId: number) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-    const deletedNotifs = JSON.parse(
-      localStorage.getItem(`deletedNotifs_${currentUser.id}`) || "[]",
+  // 🗑️ TEK BİR BİLDİRİMİ KALICI OLARAK SİL (Veritabanından)
+  const handleDelete = async (id: number) => {
+    // 1. Ekrandan anında sil (Kullanıcı beklemesin)
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+
+    // 2. Tarayıcı hafızasına not et (Yedek koruma)
+    const deleted = JSON.parse(
+      localStorage.getItem(`deletedNotifs_${user.id}`) || "[]",
     );
     localStorage.setItem(
-      `deletedNotifs_${currentUser.id}`,
-      JSON.stringify([...deletedNotifs, notificationId]),
+      `deletedNotifs_${user.id}`,
+      JSON.stringify([...deleted, id]),
     );
+
+    // 3. ARKADA JAVA'YA (VERİTABANI) SİLME İSTEĞİ GÖNDER (Kalıcı Çözüm)
     try {
       await fetch(
-        `https://unicycle-api.onrender.com/api/interaction/notifications/${notificationId}`,
-        { method: "DELETE" },
+        `https://unicycle-api.onrender.com/api/interaction/notifications/${id}`,
+        {
+          method: "DELETE",
+        },
       );
     } catch (err) {
-      console.error("Backend silme hatası:", err);
+      console.error("Backend'den silinemedi:", err);
     }
   };
 
-  const handleClearAll = () => {
+  // 🧹 TÜMÜNÜ KALICI OLARAK TEMİZLE
+  const handleClearAll = async () => {
+    if (
+      !window.confirm(
+        "Tüm bildirimleri kalıcı olarak silmek istediğine emin misin?",
+      )
+    )
+      return;
+
     const allIds = notifications.map((n) => n.id);
-    const deletedNotifs = JSON.parse(
-      localStorage.getItem(`deletedNotifs_${currentUser?.id}`) || "[]",
+
+    // 1. Ekranı tamamen temizle
+    setNotifications([]);
+
+    // 2. Tarayıcı hafızasına not et
+    const deleted = JSON.parse(
+      localStorage.getItem(`deletedNotifs_${user.id}`) || "[]",
     );
     localStorage.setItem(
-      `deletedNotifs_${currentUser?.id}`,
-      JSON.stringify([...deletedNotifs, ...allIds]),
+      `deletedNotifs_${user.id}`,
+      JSON.stringify([...deleted, ...allIds]),
     );
-    setNotifications([]);
-    setUnreadCount(0);
+
+    // 3. Veritabanından hepsini silmek için tek tek istek at
+    for (const id of allIds) {
+      try {
+        await fetch(
+          `https://unicycle-api.onrender.com/api/interaction/notifications/${id}`,
+          {
+            method: "DELETE",
+          },
+        );
+      } catch (err) {
+        console.error("Toplu silme hatası:", err);
+      }
+    }
   };
 
-  // 🔥 ÜST MENÜ (NAVBAR) İLE BİREBİR AYNI EMOJİ VE RENK MOTORU
-  const getNotificationStyle = (message: string) => {
-    const msg = message.toLowerCase();
-
-    // 1. ÖNCELİK: Beğeni ve Yorum (Çünkü cümlenin içinde 'ilan' kelimesi geçebilir, önce bunları yakalamalıyız)
-    if (msg.includes("beğen") || msg.includes("favori")) {
-      return {
-        icon: "💖",
-        bg: "bg-pink-50",
-        border: "border-pink-100",
-        text: "text-pink-500",
-      };
-    }
-    if (msg.includes("yorum") || msg.includes("mesaj")) {
-      return {
-        icon: "💬",
-        bg: "bg-emerald-50",
-        border: "border-emerald-100",
-        text: "text-emerald-500",
-      };
-    }
-
-    // 2. ÖNCELİK: İlan işlemleri ve Takip
-    if (
-      msg.includes("ilan") ||
-      msg.includes("ekledi") ||
-      msg.includes("takip")
-    ) {
-      return {
-        icon: "🔔",
-        bg: "bg-amber-50",
-        border: "border-amber-100",
-        text: "text-amber-500",
-      };
-    }
-
-    // DİĞER DURUMLAR
-    return {
-      icon: "✨",
-      bg: "bg-blue-50",
-      border: "border-blue-100",
-      text: "text-blue-500",
-    };
-  };
-
-  if (isLoading)
+  if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex justify-center items-center font-bold text-slate-500">
-        Bildirimler yükleniyor...
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+        <div className="animate-spin text-4xl">⏳</div>
       </div>
     );
+  }
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] font-sans pb-20">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans">
+      {/* 🚀 ÜST MENÜ (Sade ve Temiz) */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-[1000px] mx-auto px-4 h-20 flex justify-between items-center">
-          <Link
-            href="/"
-            className="flex items-center gap-3 hover:scale-105 transition-transform"
-          >
-            <Image
-              src="/logo.jpeg"
-              alt="Logo"
-              width={45}
-              height={45}
-              className="rounded-md"
-            />
-            <span className="text-2xl font-extrabold text-slate-800">
-              Uni<span className="text-[#20B2AA]">Cycle</span>
-            </span>
-          </Link>
-          <div className="flex gap-4 items-center">
+        <div className="max-w-[1000px] mx-auto px-4 sm:px-6">
+          <div className="flex justify-between items-center h-16 sm:h-20">
+            <Link
+              href="/"
+              className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform"
+            >
+              <Image
+                src="/logo.jpeg"
+                alt="UniCycle"
+                width={44}
+                height={44}
+                className="object-contain mix-blend-multiply sm:w-[52px] sm:h-[52px]"
+              />
+              <span className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">
+                Uni<span className="text-[#20B2AA]">Cycle</span>
+              </span>
+            </Link>
             <button
-              onClick={() => router.back()}
-              className="bg-slate-100 text-slate-600 px-5 py-2.5 rounded-full font-bold hover:bg-slate-200 transition-colors"
+              onClick={() => window.history.back()}
+              className="bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold px-4 py-2 rounded-full text-sm transition-colors"
             >
               Geri Dön
             </button>
@@ -176,15 +155,11 @@ export default function NotificationsPage() {
         </div>
       </header>
 
-      <div className="max-w-[800px] mx-auto px-4 mt-10">
-        <div className="flex justify-between items-end mb-6 border-b border-slate-200 pb-4">
-          <h1 className="text-3xl font-black text-slate-800 flex items-center gap-3">
+      {/* 📜 BİLDİRİM İÇERİĞİ */}
+      <main className="max-w-[800px] mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="flex justify-between items-end mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-black text-slate-800 tracking-tight">
             Bildirimler
-            {unreadCount > 0 && (
-              <span className="bg-red-100 text-red-600 text-sm font-bold py-1 px-3 rounded-full">
-                {unreadCount} Yeni
-              </span>
-            )}
           </h1>
           {notifications.length > 0 && (
             <button
@@ -198,49 +173,87 @@ export default function NotificationsPage() {
 
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
           {notifications.length === 0 ? (
-            <div className="py-24 flex flex-col items-center justify-center text-center">
-              <span className="text-6xl mb-4 opacity-50 drop-shadow-sm">
+            <div className="py-20 text-center px-4">
+              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
                 📭
-              </span>
-              <h2 className="text-2xl font-bold text-slate-700">Tertemiz!</h2>
-              <p className="text-slate-500 mt-2 font-medium">
-                Şu an için hiçbir bildirimin yok.
+              </div>
+              <h2 className="text-xl font-bold text-slate-800 mb-2">
+                Her Şey Tertemiz
+              </h2>
+              <p className="text-slate-500 font-medium">
+                Şu an için yeni bir bildirimin bulunmuyor.
               </p>
             </div>
           ) : (
-            <div className="flex flex-col divide-y divide-slate-100">
+            <div className="flex flex-col">
               {notifications.map((notif) => {
-                const style = getNotificationStyle(notif.message);
+                // 🔥 SENKRONİZE EDİLMİŞ EMOJİ MANTIĞI
+                let icon = "🔔";
+                let bg = "bg-blue-100";
+                let text = "text-blue-600";
+                const msgLower = notif.message?.toLowerCase() || "";
+
+                if (msgLower.includes("beğen") || msgLower.includes("favori")) {
+                  icon = "❤️";
+                  bg = "bg-red-100";
+                  text = "text-red-600";
+                } else if (
+                  msgLower.includes("mesaj") ||
+                  msgLower.includes("yorum") ||
+                  msgLower.includes("soru")
+                ) {
+                  icon = "💬";
+                  bg = "bg-green-100";
+                  text = "text-green-600";
+                } else if (msgLower.includes("takip")) {
+                  icon = "🌸";
+                  bg = "bg-pink-100";
+                  text = "text-pink-600";
+                } else if (
+                  msgLower.includes("ilan") ||
+                  msgLower.includes("ekledi")
+                ) {
+                  icon = "📦";
+                  bg = "bg-orange-100";
+                  text = "text-orange-600";
+                }
+
                 return (
                   <div
                     key={notif.id}
-                    className="p-5 sm:p-6 flex items-start sm:items-center gap-4 hover:bg-slate-50 transition-all group"
+                    className="flex items-center gap-4 p-5 sm:p-6 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors group"
                   >
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center text-xl border shrink-0 shadow-sm ${style.bg} ${style.border} ${style.text}`}
+                      className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full ${bg} flex items-center justify-center ${text} text-xl sm:text-2xl shrink-0 shadow-sm`}
                     >
-                      {style.icon}
+                      {icon}
                     </div>
-                    <div className="flex-1">
-                      <p className="text-slate-800 font-semibold text-[15px] leading-snug">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm sm:text-base font-bold text-slate-700 leading-snug">
                         {notif.message}
                       </p>
-                      <p className="text-[11px] font-bold text-slate-400 mt-1.5 uppercase tracking-wider">
-                        {notif.createdAt
-                          ? new Date(notif.createdAt).toLocaleDateString(
-                              "tr-TR",
-                            ) +
-                            " • " +
-                            new Date(notif.createdAt).toLocaleTimeString(
-                              "tr-TR",
-                              { hour: "2-digit", minute: "2-digit" },
-                            )
-                          : "Yeni"}
+                      <p className="text-xs font-semibold text-slate-400 mt-1.5 flex items-center gap-1.5">
+                        <span>
+                          {notif.createdAt
+                            ? new Date(notif.createdAt).toLocaleDateString(
+                                "tr-TR",
+                              )
+                            : "Bugün"}
+                        </span>
+                        <span>•</span>
+                        <span>
+                          {notif.createdAt
+                            ? new Date(notif.createdAt).toLocaleTimeString(
+                                "tr-TR",
+                                { hour: "2-digit", minute: "2-digit" },
+                              )
+                            : "Yeni"}
+                        </span>
                       </p>
                     </div>
                     <button
-                      onClick={() => handleDeleteNotification(notif.id)}
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0 border border-transparent hover:border-red-100"
+                      onClick={() => handleDelete(notif.id)}
+                      className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-100 lg:opacity-0 group-hover:opacity-100 shrink-0"
                       title="Bildirimi Sil"
                     >
                       <svg
@@ -260,11 +273,10 @@ export default function NotificationsPage() {
                   </div>
                 );
               })}
-              ;
             </div>
           )}
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
