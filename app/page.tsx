@@ -496,10 +496,10 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#F8FAFC] pb-20 font-sans w-full overflow-x-hidden flex flex-col">
       {/* 🚀 ÜST MENÜ */}
-      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20 gap-2 sm:gap-6">
-            {/* ✨ LOGO */}
+      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
+        <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
+            {/* ✨ LOGO (KARE SİLİNDİ, DÜMDÜZ VE SADE YAPILDI) */}
             <div className="flex-shrink-0">
               <Link
                 href="/"
@@ -510,15 +510,14 @@ export default function Home() {
                 }}
                 className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
               >
-                <div className="relative w-[44px] h-[44px] sm:w-[52px] sm:h-[52px] flex shrink-0">
-                  <Image
-                    src="/logo.jpeg"
-                    alt="UniCycle İkon"
-                    fill
-                    className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all bg-transparent"
-                    priority
-                  />
-                </div>
+                <Image
+                  src="/logo.jpeg"
+                  alt="UniCycle İkon"
+                  width={44}
+                  height={44}
+                  className="object-contain rounded-xl drop-shadow-sm transition-all sm:w-[52px] sm:h-[52px]"
+                  priority
+                />
                 <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
                   Uni<span className="text-[#20B2AA]">Cycle</span>
                 </span>
@@ -526,12 +525,12 @@ export default function Home() {
             </div>
 
             {/* 🚀 MASAÜSTÜ ARAMA ÇUBUĞU */}
-            <div className="hidden md:flex flex-1 max-w-3xl relative group z-50">
+            <div className="hidden md:flex flex-1 max-w-3xl relative group z-50 px-8">
               <form onSubmit={handleSearchSubmit} className="w-full relative">
                 <input
                   type="text"
                   placeholder="Ürün, @üye veya ders notu ara..."
-                  className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-transparent font-medium"
+                  className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-transparent font-medium"
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -550,7 +549,7 @@ export default function Home() {
 
               {/* 🌟 AÇILIR MENÜ (DROPDOWN) */}
               {isDropdownOpen && liveResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+                <div className="absolute top-full left-8 right-8 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
                   {liveResults.slice(0, 5).map((result, idx) => {
                     if (result.type === "user") {
                       return (
@@ -622,21 +621,26 @@ export default function Home() {
             </div>
 
             {/* 🚀 BUTONLAR */}
-            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-              {/* + İlan Ver */}
+            <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
+              {/* + İlan Ver (MASAÜSTÜ) */}
               <Link
                 href="/create-listing"
-                className="flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors text-[11px] sm:text-base border border-[#20B2AA] px-2 py-1.5 rounded-lg sm:border-none sm:px-0 sm:py-0 sm:rounded-none"
+                className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
               >
-                <span className="text-sm sm:text-xl">+</span>{" "}
-                <span className="hidden sm:inline">İlan Ver</span>
-                <span className="sm:hidden">İlan</span>
+                <span className="text-xl">+</span> İlan Ver
+              </Link>
+              {/* + İlan Ver (MOBİL) */}
+              <Link
+                href="/create-listing"
+                className="flex md:hidden font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors text-[11px] sm:text-base border border-[#20B2AA] px-2 py-1.5 rounded-lg"
+              >
+                <span className="text-sm">+</span> İlan
               </Link>
 
               {user ? (
                 <div className="flex items-center gap-2 sm:gap-4 relative">
                   {/* 🔔 ZİL BUTONU VE BİLDİRİM PANELİ */}
-                  <div className="relative">
+                  <div className="relative shrink-0">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                       className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors"
@@ -682,44 +686,17 @@ export default function Home() {
                               Şu an hiç bildirimin yok.
                             </div>
                           ) : (
-                            notificationsList.slice(0, 5).map((notif) => {
-                              let icon = "✨";
-                              let bg = "bg-blue-50";
-                              let text = "text-blue-500";
+                            notificationsList.slice(0, 5).map((notif: any) => {
+                              let icon = "✨"; let bg = "bg-blue-100"; let text = "text-blue-600";
                               const msgLower = notif.message.toLowerCase();
-
-                              if (
-                                msgLower.includes("beğen") ||
-                                msgLower.includes("favori")
-                              ) {
-                                icon = "💖";
-                                bg = "bg-pink-50";
-                                text = "text-pink-500";
-                              } else if (
-                                msgLower.includes("yorum") ||
-                                msgLower.includes("mesaj")
-                              ) {
-                                icon = "💬";
-                                bg = "bg-emerald-50";
-                                text = "text-emerald-500";
-                              } else if (
-                                msgLower.includes("ilan") ||
-                                msgLower.includes("ekledi") ||
-                                msgLower.includes("takip")
-                              ) {
-                                icon = "🔔";
-                                bg = "bg-amber-50";
-                                text = "text-amber-500";
-                              }
+                              if (msgLower.includes("takip")) { icon = "🌸"; bg = "bg-pink-100"; text = "text-pink-600"; }
+                              else if (msgLower.includes("ilan") || msgLower.includes("ekledi")) { icon = "📦"; bg = "bg-orange-100"; text = "text-orange-600"; }
+                              else if (msgLower.includes("beğen") || msgLower.includes("favori")) { icon = "❤️"; bg = "bg-red-100"; text = "text-red-600"; }
+                              else if (msgLower.includes("yorum")) { icon = "💬"; bg = "bg-green-100"; text = "text-green-600"; }
 
                               return (
-                                <div
-                                  key={notif.id}
-                                  className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center"
-                                >
-                                  <div
-                                    className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} text-lg shrink-0`}
-                                  >
+                                <div key={notif.id} className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center">
+                                  <div className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} text-lg shrink-0`}>
                                     {icon}
                                   </div>
                                   <div className="flex-1">
@@ -727,11 +704,7 @@ export default function Home() {
                                       {notif.message}
                                     </p>
                                     <p className="text-[10px] text-slate-400 mt-0.5">
-                                      {notif.createdAt
-                                        ? new Date(
-                                            notif.createdAt,
-                                          ).toLocaleDateString("tr-TR")
-                                        : "Yeni"}
+                                      {notif.createdAt ? new Date(notif.createdAt).toLocaleDateString('tr-TR') : "Yeni"}
                                     </p>
                                   </div>
                                 </div>
@@ -753,17 +726,17 @@ export default function Home() {
 
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all"
+                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm transition-all"
                   >
-                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs shrink-0">
                       👤
                     </div>
-                    <span className="hidden sm:block">Hesabım</span>
+                    <span className="hidden sm:block text-sm">Hesabım</span>
                   </Link>
 
                   <button
                     onClick={handleLogout}
-                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm"
+                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm shrink-0"
                   >
                     Çıkış
                   </button>
@@ -771,66 +744,66 @@ export default function Home() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center gap-2 bg-slate-800 text-white px-5 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm"
+                  className="flex items-center justify-center bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
                 >
                   Giriş Yap
                 </Link>
               )}
             </div>
           </div>
+        </div>
 
-          {/* 📱 MOBİL ARAMA ÇUBUĞU */}
-          <div className="md:hidden pb-3 pt-2 w-full relative z-40">
-            <form onSubmit={handleSearchSubmit} className="w-full relative">
-              <input
-                type="text"
-                placeholder="Ürün, @üye veya ders notu ara..."
-                className="w-full bg-slate-100 text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-transparent font-medium text-sm"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setIsDropdownOpen(true);
-                }}
-                onFocus={() => setIsDropdownOpen(true)}
-                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-              />
-              <span className="absolute left-3 top-2.5 text-slate-400 text-lg">
-                🔍
-              </span>
-            </form>
+        {/* 📱 SADECE MOBİL İÇİN ARAMA ÇUBUĞU (TAM EKRAN ENTEGRE) */}
+        <div className="md:hidden pb-3 pt-2 w-full relative z-40 px-4 bg-white border-t border-slate-50 shadow-sm">
+          <form onSubmit={handleSearchSubmit} className="w-full relative">
+            <input
+              type="text"
+              placeholder="Ürün, @üye veya ders notu ara..."
+              className="w-full bg-[#F3F4F6] text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-[#20B2AA] transition-all border border-transparent font-medium text-sm"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setIsDropdownOpen(true);
+              }}
+              onFocus={() => setIsDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+            />
+            <span className="absolute left-7 top-2.5 text-slate-400 text-lg">
+              🔍
+            </span>
+          </form>
 
-            {/* Mobil Canlı Arama Sonuçları */}
-            {isDropdownOpen && liveResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
-                {liveResults.slice(0, 4).map((result, idx) => (
-                  <Link
-                    href={
-                      result.type === "user"
-                        ? `/user/${result.item.id}`
-                        : `/listing-detail/${result.item.id}`
-                    }
-                    key={`mob-${idx}`}
-                    className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50"
-                  >
-                    <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
-                      {result.type === "user" ? (
-                        <span className="font-bold text-blue-600">
-                          {result.item.fullName.charAt(0).toUpperCase()}
-                        </span>
-                      ) : (
-                        <span className="text-xs">📦</span>
-                      )}
+          {/* Mobil Açılır Menü */}
+          {isDropdownOpen && liveResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+              {liveResults.slice(0, 4).map((result, idx) => (
+                <Link
+                  href={
+                    result.type === "user"
+                      ? `/user/${result.item.id}`
+                      : `/listing-detail/${result.item.id}`
+                  }
+                  key={`mob-${idx}`}
+                  className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50"
+                >
+                  <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
+                    {result.type === "user" ? (
+                      <span className="font-bold text-blue-600">
+                        {result.item.fullName.charAt(0).toUpperCase()}
+                      </span>
+                    ) : (
+                      <span className="text-xs">📦</span>
+                    )}
+                  </div>
+                  <div className="flex-1 truncate">
+                    <div className="font-bold text-slate-800 truncate text-xs">
+                      {result.item.fullName || result.item.title}
                     </div>
-                    <div className="flex-1 truncate">
-                      <div className="font-bold text-slate-800 truncate text-xs">
-                        {result.item.fullName || result.item.title}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
@@ -946,7 +919,7 @@ export default function Home() {
 
               {Object.keys(CATEGORY_MAP).map((cat) => {
                 let shortName = cat.split(" ")[1] || cat.split(" ")[0];
-                shortName = shortName.replace(/,/g, "");
+                shortName = shortName.replace(/,/g, ""); // Virgülleri uçurduk
                 return (
                   <button
                     key={cat}
@@ -1066,7 +1039,7 @@ export default function Home() {
                   <Link
                     href={`/listing-detail/${p.id}`}
                     key={p.id}
-                    className="group bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 border border-slate-100 flex flex-col"
+                    className="group bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 border border-slate-100 flex flex-col cursor-pointer block w-full h-full relative z-10"
                   >
                     <div className="aspect-[4/5] relative overflow-hidden bg-slate-100">
                       {p.photosBase64 && p.photosBase64.length > 0 ? (
@@ -1092,9 +1065,10 @@ export default function Home() {
                         </div>
                       )}
 
+                      {/* TIKLANMA ÇAKIŞMASINI ÖNLEYEN KALP BUTONU */}
                       <button
                         onClick={(e) => toggleLike(e, p)}
-                        className={`absolute top-2 right-2 sm:top-3 sm:right-3 p-2 sm:p-2.5 rounded-full shadow-md backdrop-blur-md transition-all hover:scale-110 active:scale-95 z-10 ${isLiked ? "bg-red-500/90 text-white" : "bg-white/90 text-gray-400 hover:text-red-500"}`}
+                        className={`absolute top-2 right-2 sm:top-3 sm:right-3 p-2 sm:p-2.5 rounded-full shadow-md backdrop-blur-md transition-all hover:scale-110 active:scale-95 z-30 ${isLiked ? "bg-red-500/90 text-white" : "bg-white/90 text-gray-400 hover:text-red-500"}`}
                       >
                         <svg
                           className="w-4 h-4 sm:w-5 sm:h-5 fill-current"
@@ -1193,10 +1167,11 @@ export default function Home() {
               öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
             </p>
           </div>
-
           <div className="text-center md:text-left">
-            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4">Platform</h4>
-            <ul className="space-y-2 text-xs sm:text-sm font-medium text-slate-500">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-sm sm:text-base">
+              Platform
+            </h4>
+            <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm font-medium text-slate-500">
               <li>
                 <button
                   onClick={() =>
@@ -1238,10 +1213,11 @@ export default function Home() {
               </li>
             </ul>
           </div>
-
           <div className="text-center md:text-left">
-            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4">İletişim</h4>
-            <ul className="space-y-2 text-xs sm:text-sm font-medium text-slate-500">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-sm sm:text-base">
+              İletişim
+            </h4>
+            <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm font-medium text-slate-500">
               <li>
                 <button
                   onClick={() =>
@@ -1284,11 +1260,21 @@ export default function Home() {
             </ul>
           </div>
         </div>
-
-        <div className="max-w-[1400px] mx-auto mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-100 text-center text-[10px] sm:text-xs font-medium text-slate-400">
+        <div className="max-w-[1400px] mx-auto mt-6 sm:mt-12 pt-4 sm:pt-8 border-t border-slate-100 text-center text-[10px] sm:text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>
-    </main>
+
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+      `,
+        }}
+      />
+    </div>
   );
 }
