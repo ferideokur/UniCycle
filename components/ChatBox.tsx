@@ -66,7 +66,7 @@ export default function ChatBox() {
 
     // ÇEVRİMİÇİ VE SCROLL HAFIZASI
     const [isUserOnline, setIsUserOnline] = useState(false);
-    const [isUserScrolling, setIsUserScrolling] = useState(false); // 🚀 KAYDIRMA DEDEKTİFİ
+    const [isUserScrolling, setIsUserScrolling] = useState(false); 
 
     const [stompClient, setStompClient] = useState<any>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -100,7 +100,6 @@ export default function ChatBox() {
             const filtered = prev.filter(c => c.id !== contactId);
             const existing = prev.find(c => c.id === contactId);
             
-            // Eğer WhatsApp tarzı alıntı kodu varsa inbox'ta çirkin görünmesin diye temizliyoruz
             const cleanLastMsg = lastMsg.replace(/\[REPLY:.*?\](.*?)\[\/REPLY\]/g, '↩️ $1 - ').trim();
 
             const updatedList = [{
@@ -296,7 +295,6 @@ export default function ChatBox() {
                             text: receivedMessage.content, 
                             isMine: false 
                         }]);
-                        // Karşıdan mesaj gelince bizi alta atsın diye scroll sıfırlama:
                         setIsUserScrolling(false);
                     }
                     setIsOpen(true);
@@ -319,7 +317,7 @@ export default function ChatBox() {
             setActiveChat({ id: sellerId, name: finalName });
             setView('chat');
             setIsOpen(true);
-            setIsUserScrolling(false); // Sohbet açılınca en alta insin
+            setIsUserScrolling(false); 
             
             updateInboxLocally(sellerId, finalName, "", false);
 
@@ -337,18 +335,14 @@ export default function ChatBox() {
         return () => window.removeEventListener("openChatWithContext", handleOpenChatSignal);
     }, [currentUser]);
 
-    // 🚀 SCROLL HATASINI ÇÖZEN KISIM 
-    // Kullanıcı yukarı kaydırmışsa "isUserScrolling" true olur ve bu useEffect aşağı inmesini engeller.
     useEffect(() => {
         if (chatScrollRef.current && !isUserScrolling) {
             chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
         }
     }, [messages, view, isOpen]);
 
-    // Kullanıcının kaydırıp kaydırmadığını anlayan dedektif
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-        // Eğer en alta çok yakın değilse, demek ki kullanıcı yukarı kaydırıp bir şey okuyor
         const isAtBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 20;
         setIsUserScrolling(!isAtBottom);
     };
@@ -380,10 +374,8 @@ export default function ChatBox() {
             return;
         }
 
-        // 🚀 WHATSAPP ALINTI FORMATINI HAZIRLIYORUZ
         let finalContent = chatInput;
         if (replyTo) {
-            // Arka planda mesaja gizli bir alıntı formatı ekliyoruz
             finalContent = `[REPLY:${replyTo.name}]${replyTo.text}[/REPLY]${chatInput}`;
         }
 
@@ -391,8 +383,8 @@ export default function ChatBox() {
         setMessages((prev) => [...prev, { id: tempId, text: finalContent, isMine: true }]);
         
         setChatInput("");
-        setReplyTo(null); // Mesaj gidince alıntıyı kapat
-        setIsUserScrolling(false); // Yeni mesaj atınca otomatik en alta in
+        setReplyTo(null); 
+        setIsUserScrolling(false); 
         
         updateInboxLocally(activeChat.id, activeChat.name, finalContent, false);
 
@@ -426,8 +418,8 @@ export default function ChatBox() {
         setMessages([]); 
         setActiveChat({ id: chat.id, name: chat.name });
         setView('chat');
-        setIsUserScrolling(false); // Yeni sohbete girince en altta başla
-        setReplyTo(null); // Başka sohbete geçince alıntıyı temizle
+        setIsUserScrolling(false); 
+        setReplyTo(null); 
         
         updateInboxLocally(chat.id, chat.name, chat.lastMsg, false);
         
@@ -445,7 +437,7 @@ export default function ChatBox() {
         setReplyTo(null);
     };
 
-    // 🚀 WHATSAPP TARZI MESAJ KUTUSUNU OLUŞTURAN RENDER FONKSİYONU
+    // 🚀 TAŞMA SORUNU ÇÖZÜLDÜ: break-words ve whitespace-pre-wrap eklendi
     const renderMessageText = (text: string, isMine: boolean) => {
         const replyMatch = text.match(/\[REPLY:(.*?)\](.*?)\[\/REPLY\]([\s\S]*)/);
         
@@ -455,26 +447,24 @@ export default function ChatBox() {
             const actualMsg = replyMatch[3];
             
             return (
-                <div className="flex flex-col">
-                    <div className={`rounded p-2 mb-1.5 border-l-4 text-[11px] leading-snug relative ${isMine ? 'bg-blue-700/30 border-blue-200' : 'bg-black/5 border-slate-400'}`}>
-                        <span className={`font-bold block mb-0.5 ${isMine ? 'text-blue-100' : 'text-slate-600'}`}>{repName}</span>
-                        <span className={`truncate block opacity-90 ${isMine ? 'text-blue-50' : 'text-slate-500'}`}>{repText}</span>
+                <div className="flex flex-col min-w-0">
+                    <div className={`rounded p-2 mb-1.5 border-l-4 text-[11px] leading-snug relative break-words whitespace-pre-wrap ${isMine ? 'bg-blue-700/30 border-blue-200' : 'bg-black/5 border-slate-400'}`}>
+                        <span className={`font-bold block mb-0.5 truncate ${isMine ? 'text-blue-100' : 'text-slate-600'}`}>{repName}</span>
+                        <span className="line-clamp-2 opacity-90">{repText}</span>
                     </div>
-                    <span>{actualMsg}</span>
+                    <span className="break-words whitespace-pre-wrap">{actualMsg}</span>
                 </div>
             );
         }
-        return <span>{text}</span>;
+        return <span className="break-words whitespace-pre-wrap">{text}</span>;
     };
 
     const handleReplyClick = (msg: ChatMessage) => {
-        // [REPLY...] gibi gizli kodları temizleyip sadece saf mesajı alıntılıyoruz
         const cleanText = msg.text.replace(/\[REPLY:.*?\](.*?)\[\/REPLY\]/g, '').trim();
         setReplyTo({
             name: msg.isMine ? "Sen" : (activeChat?.name || "Kullanıcı"),
             text: cleanText
         });
-        // Input'a odaklanmak için
         const inputEl = document.getElementById('chat-input-field');
         if (inputEl) inputEl.focus();
     };
@@ -490,25 +480,24 @@ export default function ChatBox() {
                         {view === 'chat' && activeChat ? (
                             <div className="flex items-center gap-2">
                                 <button onClick={handleBackToInbox} className="text-white hover:text-blue-200 mr-1 font-black text-xl leading-none"> &larr; </button>
-                                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-sm font-bold border border-white/30 relative">
+                                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-sm font-bold border border-white/30 relative shrink-0">
                                     {activeChat.name.charAt(0).toUpperCase()}
                                     <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-white rounded-full ${isUserOnline ? 'bg-green-400' : 'bg-red-500'}`}></span>
                                 </div>
-                                <div>
-                                    <h3 className="font-bold text-sm leading-none">{activeChat.name}</h3>
+                                <div className="min-w-0">
+                                    <h3 className="font-bold text-sm leading-none truncate">{activeChat.name}</h3>
                                     <span className="text-[10px] text-blue-100">{isUserOnline ? 'Çevrimiçi' : 'Çevrimdışı'}</span>
                                 </div>
                             </div>
                         ) : (
                             <h3 className="font-bold text-base flex items-center gap-2"> 💬 Mesajlarım </h3>
                         )}
-                        <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white transition-colors text-xl font-bold leading-none">✕</button>
+                        <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white transition-colors text-xl font-bold leading-none shrink-0">✕</button>
                     </div>
 
                     <div className="flex-1 bg-slate-50 flex flex-col relative custom-scrollbar overflow-hidden">
                         
                         {view === 'chat' && activeChat ? (
-                            // 🚀 onScroll FONKSİYONUMUZU BURAYA EKLEDİK
                             <div ref={chatScrollRef} onScroll={handleScroll} className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 custom-scrollbar">
                                 <div className="text-center text-[10px] text-slate-400 font-bold bg-slate-100 rounded-full w-max mx-auto px-3 py-1 mb-2">Güvenli Sohbet</div>
                                 
@@ -519,24 +508,21 @@ export default function ChatBox() {
                                     </div>
                                 ) : (
                                     messages.map((msg) => (
-                                        <div key={msg.id} className={`group flex flex-col ${msg.isMine ? 'items-end' : 'items-start'}`}>
-                                            <div className="flex items-center gap-2">
+                                        // 🚀 MESAJ BALONCUKLARINI YAN YANA DİZEN KISIM GÜNCELLENDİ (flex-row-reverse vb.)
+                                        <div key={msg.id} className={`group flex flex-col w-full ${msg.isMine ? 'items-end' : 'items-start'}`}>
+                                            <div className={`flex items-end gap-2 max-w-[85%] ${msg.isMine ? 'flex-row-reverse' : 'flex-row'}`}>
                                                 
-                                                {/* 🚀 SOLDAKİ AKSİYON BUTONLARI (Yanıtla ve Sil) */}
-                                                {msg.isMine ? (
-                                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5">
-                                                        <button onClick={() => handleReplyClick(msg)} className="text-blue-400 hover:text-blue-600 text-xs" title="Yanıtla">↩️</button>
-                                                        <button onClick={() => handleDeleteMessage(msg.id)} className="text-red-400 hover:text-red-600 text-xs" title="Mesajı Sil">🗑️</button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5 order-last">
-                                                        <button onClick={() => handleReplyClick(msg)} className="text-blue-400 hover:text-blue-600 text-xs" title="Yanıtla">↩️</button>
-                                                    </div>
-                                                )}
-                                                
-                                                <div className={`max-w-[100%] rounded-2xl px-4 py-2 text-sm shadow-sm ${msg.isMine ? "bg-blue-600 text-white rounded-br-sm" : "bg-white text-slate-800 border border-slate-200 rounded-bl-sm"}`}>
+                                                {/* Mesaj Baloncuğu */}
+                                                <div className={`min-w-0 break-words rounded-2xl px-4 py-2 text-sm shadow-sm ${msg.isMine ? "bg-blue-600 text-white rounded-br-sm" : "bg-white text-slate-800 border border-slate-200 rounded-bl-sm"}`}>
                                                     {renderMessageText(msg.text, msg.isMine)}
                                                 </div>
+                                                
+                                                {/* Aksiyon Butonları (Sil / Yanıtla) */}
+                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5 pb-1 shrink-0">
+                                                    <button onClick={() => handleReplyClick(msg)} className="text-blue-400 hover:text-blue-600 text-xs" title="Yanıtla">↩️</button>
+                                                    {msg.isMine && <button onClick={() => handleDeleteMessage(msg.id)} className="text-red-400 hover:text-red-600 text-xs" title="Mesajı Sil">🗑️</button>}
+                                                </div>
+
                                             </div>
                                             {msg.isMine && (
                                                 <span className="text-[9px] text-blue-500 font-bold mt-0.5 mr-1">✓✓ Gönderildi</span>
@@ -582,7 +568,6 @@ export default function ChatBox() {
 
                     {view === 'chat' && activeChat && (
                         <div className="bg-white border-t border-slate-100 flex flex-col">
-                            {/* 🚀 MESAJ YAZMA KUTUSUNUN ÜSTÜNDEKİ ALINTI ÖNİZLEMESİ */}
                             {replyTo && (
                                 <div className="bg-slate-50 border-l-4 border-blue-500 mx-3 mt-3 p-2.5 rounded-r-md relative shadow-sm">
                                     <span className="font-bold text-blue-600 text-xs block mb-0.5">{replyTo.name}</span>
@@ -596,7 +581,7 @@ export default function ChatBox() {
                                     id="chat-input-field"
                                     type="text" 
                                     placeholder="Bir mesaj yaz..." 
-                                    className="flex-1 bg-slate-100 text-slate-800 text-sm px-4 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="flex-1 min-w-0 bg-slate-100 text-slate-800 text-sm px-4 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     value={chatInput} 
                                     onChange={(e) => setChatInput(e.target.value)} 
                                     autoComplete="off"
