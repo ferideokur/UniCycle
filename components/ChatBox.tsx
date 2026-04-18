@@ -25,15 +25,26 @@ interface ActiveChat {
     name: string;
 }
 
-// 🛑 KÜFÜR VE ARGO FİLTRESİ
+// 🛑 ACIĞIMASIZ KÜFÜR VE ARGO FİLTRESİ 🚀
 const BANNED_WORDS = [
     "amk", "aq", "sik", "sikiş", "sex", "seks", "orospu", "piç", "pic",
-    "gavat", "yavşak", "pezevenk", "siktir", "yarrak", "amına", "göt", "kahpe"
+    "gavat", "yavşak", "pezevenk", "siktir", "yarrak", "amına", "göt", "kahpe",
+    "got", "amq", "oc", "oç"
 ];
 
 const containsBannedWord = (text: string) => {
-    const lowerText = text.toLowerCase();
-    return BANNED_WORDS.some(word => lowerText.includes(word));
+    // Türkçe/İngilizce karakter hilelerini bozan normalizasyon motoru 🚀
+    const normalize = (str: string) => {
+        return str.toLowerCase()
+            .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+            .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c');
+    };
+
+    const cleanText = normalize(text);
+    return BANNED_WORDS.some(word => {
+        const normalizedWord = normalize(word);
+        return cleanText.includes(normalizedWord);
+    });
 };
 
 export default function ChatBox() {
@@ -123,7 +134,6 @@ export default function ChatBox() {
         const diffLocal = (now.getTime() - dateLocal.getTime()) / (1000 * 60);
         const diffUTC = (now.getTime() - dateUTC.getTime()) / (1000 * 60);
 
-        // Türkiye (+3) saati veya UTC farklarını hesaplayıp online durumunu tespit eder
         return (
             (diffLocal >= -5 && diffLocal <= 5) || 
             (diffUTC >= -5 && diffUTC <= 5) ||
@@ -354,7 +364,7 @@ export default function ChatBox() {
                 } else if (!isOpen) {
                     loadInbox(currentUser.id);
                 }
-            }, 5000); 
+            }, 3000); // 🚀 Gecikmeyi çözmek için süreyi 5'ten 3 saniyeye düşürdük!
         }
         return () => clearInterval(interval);
     }, [currentUser, isOpen, view, activeChat]);
@@ -401,10 +411,14 @@ export default function ChatBox() {
                     message: `💬 ${currentUser.fullName} sana bir mesaj gönderdi. [ID:${currentUser.id}]`,
                 }),
             });
+            
+            // 🚀 Beklemeden yenileme (Gönderildi tıkını anında görmek için)
+            loadChatHistory(activeChat.id, currentUser.id);
         } catch (err) {}
     };
 
     const handleOpenChatFromInbox = (chat: InboxItem) => {
+        setMessages([]); // 🚀 HAYALET MESAJLARI ÖNLEME: Eski sohbeti anında sil!
         setActiveChat({ id: chat.id, name: chat.name });
         setView('chat');
         
@@ -419,6 +433,7 @@ export default function ChatBox() {
     const handleBackToInbox = () => {
         setActiveChat(null);
         setView('inbox');
+        setMessages([]); // 🚀 Temizlik imandan gelir, geri dönerken de siliyoruz!
         setChatInput("");
     };
 
