@@ -25,11 +25,17 @@ interface ActiveChat {
     name: string;
 }
 
-// 🛑 ACIĞIMASIZ KÜFÜR VE ARGO FİLTRESİ 🚀
+// 🛑 ACIĞIMASIZ KÜFÜR VE ARGO FİLTRESİ V2.0 🚀
 const BANNED_WORDS = [
-    "amk", "aq", "sik", "sikiş", "sex", "seks", "orospu", "piç", "pic",
-    "gavat", "yavşak", "pezevenk", "siktir", "yarrak", "amına", "göt", "kahpe",
-    "got", "amq", "oc", "oç"
+    // Temel Küfürler
+    "amk", "aq", "amq", "mk", "sik", "sikiş", "sikik", "sikerim", "sikerler", "sokam", "sokarım",
+    "orospu", "piç", "pic", "gavat", "yavşak", "yavsak", "pezevenk", "pzevenk",
+    "siktir", "sktir", "sktr", "sg", "yarrak", "yarak", "amına", "am", "amı", "amcık", "amcik",
+    "göt", "got", "götveren", "gotveren", "kahpe", "kaltak", "kancık", "kancik",
+    // Argo ve Hakaretler
+    "sürtük", "surtuk", "fahişe", "fahise", "ibne", "ipne", "dürzü", "durzu",
+    "dallama", "şerefsiz", "serefsiz", "haysiyetsiz", "oc", "oç", "amkoyim", "amkoyayım",
+    "taşşak", "tassak", "tasak", "çük", "cuk", "it", "köpek", "kopek", "bok", "veled", "velet"
 ];
 
 const containsBannedWord = (text: string) => {
@@ -41,9 +47,14 @@ const containsBannedWord = (text: string) => {
     };
 
     const cleanText = normalize(text);
+    
     return BANNED_WORDS.some(word => {
         const normalizedWord = normalize(word);
-        return cleanText.includes(normalizedWord);
+        // SADECE .includes() KULLANMIYORUZ! 
+        // \b ile kelimenin başı ve sonu boşluk/noktalama olmalı diyoruz. 
+        // Böylece "müzik" -> "muzik" (içinde sik var) engellenmiyor!
+        const regex = new RegExp(`\\b${normalizedWord}\\b`, 'i');
+        return regex.test(cleanText);
     });
 };
 
