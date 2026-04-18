@@ -25,6 +25,17 @@ interface ActiveChat {
     name: string;
 }
 
+// 🛑 KÜFÜR VE ARGO FİLTRESİ
+const BANNED_WORDS = [
+    "amk", "aq", "sik", "sikiş", "sex", "seks", "orospu", "piç", "pic",
+    "gavat", "yavşak", "pezevenk", "siktir", "yarrak", "amına", "göt", "kahpe"
+];
+
+const containsBannedWord = (text: string) => {
+    const lowerText = text.toLowerCase();
+    return BANNED_WORDS.some(word => lowerText.includes(word));
+};
+
 export default function ChatBox() {
     const [isOpen, setIsOpen] = useState(false);
     const [view, setView] = useState<'inbox' | 'chat'>('inbox');
@@ -41,6 +52,12 @@ export default function ChatBox() {
 
     const [stompClient, setStompClient] = useState<any>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
+
+    // 🚀 AKTİF SOHBET REFERANSI (Mesajların Karışmasını ve Geç Gelmesini Önler)
+    const activeChatRef = useRef<ActiveChat | null>(null);
+    useEffect(() => {
+        activeChatRef.current = activeChat;
+    }, [activeChat]);
 
     // 🔥 MAVİ İKONUN ÜSTÜNDEKİ ROZETİ (BADGE) HESAPLAYAN KISIM
     const totalUnreadMessages = inboxChats.reduce((total, chat) => total + (chat.unread || 0), 0);
@@ -274,7 +291,8 @@ export default function ChatBox() {
                         );
                     }
 
-                    if (activeChat?.id === receivedMessage.sender?.id) {
+                    // 🚀 BURADAKİ HATAYI ÇÖZDÜK: Eskiden activeChat yüzünden isimler karışıyordu. Şimdi Ref kullanıyoruz!
+                    if (activeChatRef.current?.id === receivedMessage.sender?.id) {
                         setMessages((prev) => [...prev, { 
                             id: receivedMessage.id || Date.now(), 
                             text: receivedMessage.content, 
@@ -291,7 +309,7 @@ export default function ChatBox() {
         setStompClient(client);
 
         return () => { void client.deactivate(); };
-    }, [activeChat]);
+    }, []); // 🚀 BURADAKİ BÜYÜK HATAYI ÇÖZDÜK: [activeChat] yerine [] yazarak kesintileri ve geç gelmeleri önledik!
 
     // 🎯 DİĞER SAYFALARDAN GELEN TETİKLEMELER
     useEffect(() => {
@@ -342,11 +360,18 @@ export default function ChatBox() {
     }, [currentUser, isOpen, view, activeChat]);
 
     // ==========================================
-    // 🚀 MESAJ GÖNDERME (ÇİFT MOTOR SÖKÜLDÜ!)
+    // 🚀 MESAJ GÖNDERME VE KÜFÜR FİLTRESİ
     // ==========================================
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!chatInput.trim() || !currentUser || !activeChat) return;
+
+        // 🛑 KÜFÜR FİLTRESİ DEVREDE
+        if (containsBannedWord(chatInput)) {
+            alert("⚠️ Lütfen mesajınızda argo, küfür veya uygunsuz kelimeler kullanmayınız.");
+            setChatInput("");
+            return;
+        }
 
         const content = chatInput;
         const tempId = Date.now();
