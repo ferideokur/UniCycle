@@ -258,13 +258,26 @@ export default function ChatBox() {
         } catch (e) {}
     };
 
+    // 🚀 GÜNCELLENEN KISIM BURASI
     const handleDeleteMessage = async (msgId: number) => {
         if (!window.confirm("Bu mesajı silmek istiyor musun?")) return;
+        
+        // 1. Ekrandan anında sil
         setMessages(prev => prev.filter(m => m.id !== msgId));
+        
         const hiddenMsgs = getHiddenMsgs();
         hiddenMsgs.push(msgId);
         localStorage.setItem(`hidden_msgs_${currentUser.id}`, JSON.stringify(hiddenMsgs));
-        try { await fetch(`https://unicycle-api.onrender.com/api/messages/${msgId}`, { method: "DELETE" }); } catch (err) {}
+        
+        try { 
+            // 2. Veritabanından silmesi için API'ye istek at
+            await fetch(`https://unicycle-api.onrender.com/api/messages/${msgId}`, { method: "DELETE" }); 
+            
+            // 🚀 3. Silme işlemi bitince, gelen kutusundaki "f" gibi eski yazıları temizlemek için inbox'ı tazele!
+            if (currentUser) {
+                loadInbox(currentUser.id);
+            }
+        } catch (err) {}
     };
 
     const handleDeleteConversation = async (contactId: number, e: React.MouseEvent) => {
