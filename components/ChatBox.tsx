@@ -25,34 +25,26 @@ interface ActiveChat {
     name: string;
 }
 
-// 🛑 ACIĞIMASIZ KÜFÜR VE ARGO FİLTRESİ V2.0 🚀
+// 🛑 ACIĞIMASIZ KÜFÜR VE ARGO FİLTRESİ V2.0
 const BANNED_WORDS = [
-    // Temel Küfürler
     "amk", "aq", "amq", "mk", "sik", "sikiş", "sikik", "sikerim", "sikerler", "sokam", "sokarım",
     "orospu", "piç", "pic", "gavat", "yavşak", "yavsak", "pezevenk", "pzevenk",
     "siktir", "sktir", "sktr", "sg", "yarrak", "yarak", "amına", "am", "amı", "amcık", "amcik",
     "göt", "got", "götveren", "gotveren", "kahpe", "kaltak", "kancık", "kancik",
-    // Argo ve Hakaretler
     "sürtük", "surtuk", "fahişe", "fahise", "ibne", "ipne", "dürzü", "durzu",
     "dallama", "şerefsiz", "serefsiz", "haysiyetsiz", "oc", "oç", "amkoyim", "amkoyayım",
     "taşşak", "tassak", "tasak", "çük", "cuk", "it", "köpek", "kopek", "bok", "veled", "velet"
 ];
 
 const containsBannedWord = (text: string) => {
-    // Türkçe/İngilizce karakter hilelerini bozan normalizasyon motoru 🚀
     const normalize = (str: string) => {
         return str.toLowerCase()
             .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
             .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c');
     };
-
     const cleanText = normalize(text);
-    
     return BANNED_WORDS.some(word => {
         const normalizedWord = normalize(word);
-        // SADECE .includes() KULLANMIYORUZ! 
-        // \b ile kelimenin başı ve sonu boşluk/noktalama olmalı diyoruz. 
-        // Böylece "müzik" -> "muzik" (içinde sik var) engellenmiyor!
         const regex = new RegExp(`\\b${normalizedWord}\\b`, 'i');
         return regex.test(cleanText);
     });
@@ -69,27 +61,26 @@ export default function ChatBox() {
     const [activeChat, setActiveChat] = useState<ActiveChat | null>(null);
     const [chatInput, setChatInput] = useState("");
     
-    // ÇEVRİMİÇİ HAFIZASI
+    // 🚀 WHATSAPP ALINTI (REPLY) HAFIZASI
+    const [replyTo, setReplyTo] = useState<{name: string, text: string} | null>(null);
+
+    // ÇEVRİMİÇİ VE SCROLL HAFIZASI
     const [isUserOnline, setIsUserOnline] = useState(false);
+    const [isUserScrolling, setIsUserScrolling] = useState(false); // 🚀 KAYDIRMA DEDEKTİFİ
 
     const [stompClient, setStompClient] = useState<any>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
 
-    // 🚀 AKTİF SOHBET REFERANSI (Mesajların Karışmasını ve Geç Gelmesini Önler)
     const activeChatRef = useRef<ActiveChat | null>(null);
     useEffect(() => {
         activeChatRef.current = activeChat;
     }, [activeChat]);
 
-    // 🔥 MAVİ İKONUN ÜSTÜNDEKİ ROZETİ (BADGE) HESAPLAYAN KISIM
     const totalUnreadMessages = inboxChats.reduce((total, chat) => total + (chat.unread || 0), 0);
 
     const getHiddenChats = () => JSON.parse(localStorage.getItem(`hidden_chats_${currentUser?.id}`) || "[]");
     const getHiddenMsgs = () => JSON.parse(localStorage.getItem(`hidden_msgs_${currentUser?.id}`) || "[]");
 
-    // ==========================================
-    // 🧠 SİHİRLİ HAFIZA MOTORU (LOCAL STORAGE)
-    // ==========================================
     const saveInboxToLocal = (newInbox: InboxItem[], userId: number) => {
         const hiddenChats = JSON.parse(localStorage.getItem(`hidden_chats_${userId}`) || "[]");
         const filteredInbox = newInbox.filter(chat => !hiddenChats.includes(chat.id));
@@ -99,7 +90,6 @@ export default function ChatBox() {
 
     const updateInboxLocally = (contactId: number, contactName: string, lastMsg: string, isUnread: boolean = false) => {
         if (!currentUser) return;
-        
         const hiddenChats = getHiddenChats();
         if (hiddenChats.includes(contactId)) {
             const newHidden = hiddenChats.filter((id: number) => id !== contactId);
@@ -110,10 +100,13 @@ export default function ChatBox() {
             const filtered = prev.filter(c => c.id !== contactId);
             const existing = prev.find(c => c.id === contactId);
             
+            // Eğer WhatsApp tarzı alıntı kodu varsa inbox'ta çirkin görünmesin diye temizliyoruz
+            const cleanLastMsg = lastMsg.replace(/\[REPLY:.*?\](.*?)\[\/REPLY\]/g, '↩️ $1 - ').trim();
+
             const updatedList = [{
                 id: contactId,
                 name: contactName,
-                lastMsg: lastMsg,
+                lastMsg: cleanLastMsg,
                 time: new Date().toISOString(),
                 unread: isUnread ? (existing ? existing.unread + 1 : 1) : 0
             }, ...filtered];
@@ -123,12 +116,8 @@ export default function ChatBox() {
         });
     };
 
-    // ==========================================
-    // 🕵️‍♀️ KURŞUN GEÇİRMEZ ÇEVRİMİÇİ DEDEKTİFİ
-    // ==========================================
     const checkIsOnline = (lastActiveRaw: any) => {
         if (!lastActiveRaw) return false;
-
         let dateLocal: Date;
         let dateUTC: Date;
 
@@ -163,9 +152,6 @@ export default function ChatBox() {
         } catch (e) {}
     };
 
-    // ==========================================
-    // 🕵️‍♀️ BİLDİRİMLERDEN "GELEN KUTUSU" YARATMA HACK'İ
-    // ==========================================
     const reconstructInboxFromNotifications = async (userId: number) => {
         try {
             const res = await fetch(`https://unicycle-api.onrender.com/api/interaction/notifications/${userId}`);
@@ -179,7 +165,6 @@ export default function ChatBox() {
                 if (n.message.includes("mesaj gönderdi") && !processed.includes(n.id)) {
                     let senderId = null;
                     let senderName = n.message.replace("💬 ", "").split(" sana")[0].trim();
-                    
                     const idMatch = n.message.match(/\[ID:(\d+)\]/);
                     if (idMatch) {
                         senderId = parseInt(idMatch[1]);
@@ -201,7 +186,6 @@ export default function ChatBox() {
                             const histData = await hist.json();
                             if (histData.length > 0) lastText = histData[histData.length - 1].content;
                         } catch(e) {}
-
                         updateInboxLocally(senderId, senderName, lastText, true);
                     }
                     processed.push(n.id);
@@ -215,9 +199,6 @@ export default function ChatBox() {
         } catch (e) {}
     };
 
-    // ==========================================
-    // 🌐 API FONKSİYONLARI
-    // ==========================================
     const loadInbox = async (userId: number) => {
         try {
             const localData = localStorage.getItem(`unicycle_inbox_${userId}`);
@@ -234,7 +215,6 @@ export default function ChatBox() {
                     saveInboxToLocal(data, userId);
                 }
             }
-
             reconstructInboxFromNotifications(userId);
         } catch (e) {}
     };
@@ -258,25 +238,15 @@ export default function ChatBox() {
         } catch (e) {}
     };
 
-    // 🚀 GÜNCELLENEN KISIM BURASI
     const handleDeleteMessage = async (msgId: number) => {
         if (!window.confirm("Bu mesajı silmek istiyor musun?")) return;
-        
-        // 1. Ekrandan anında sil
         setMessages(prev => prev.filter(m => m.id !== msgId));
-        
         const hiddenMsgs = getHiddenMsgs();
         hiddenMsgs.push(msgId);
         localStorage.setItem(`hidden_msgs_${currentUser.id}`, JSON.stringify(hiddenMsgs));
-        
         try { 
-            // 2. Veritabanından silmesi için API'ye istek at
             await fetch(`https://unicycle-api.onrender.com/api/messages/${msgId}`, { method: "DELETE" }); 
-            
-            // 🚀 3. Silme işlemi bitince, gelen kutusundaki "f" gibi eski yazıları temizlemek için inbox'ı tazele!
-            if (currentUser) {
-                loadInbox(currentUser.id);
-            }
+            if (currentUser) loadInbox(currentUser.id);
         } catch (err) {}
     };
 
@@ -294,9 +264,6 @@ export default function ChatBox() {
         try { await fetch(`https://unicycle-api.onrender.com/api/messages/conversation?user1Id=${currentUser.id}&user2Id=${contactId}`, { method: "DELETE" }); } catch(err) {}
     };
 
-    // ==========================================
-    // 🔌 BAŞLANGIÇ VE WEBSOCKET
-    // ==========================================
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
         let userObj = null;
@@ -315,7 +282,6 @@ export default function ChatBox() {
 
                 client.subscribe(`/queue/messages/${userObj.id}`, (msg: any) => {
                     const receivedMessage = JSON.parse(msg.body);
-                    
                     if (receivedMessage.sender) {
                         updateInboxLocally(
                             receivedMessage.sender.id, 
@@ -324,16 +290,15 @@ export default function ChatBox() {
                             true 
                         );
                     }
-
-                    // 🚀 BURADAKİ HATAYI ÇÖZDÜK: Eskiden activeChat yüzünden isimler karışıyordu. Şimdi Ref kullanıyoruz!
                     if (activeChatRef.current?.id === receivedMessage.sender?.id) {
                         setMessages((prev) => [...prev, { 
                             id: receivedMessage.id || Date.now(), 
                             text: receivedMessage.content, 
                             isMine: false 
                         }]);
+                        // Karşıdan mesaj gelince bizi alta atsın diye scroll sıfırlama:
+                        setIsUserScrolling(false);
                     }
-                    
                     setIsOpen(true);
                 });
             }
@@ -343,9 +308,8 @@ export default function ChatBox() {
         setStompClient(client);
 
         return () => { void client.deactivate(); };
-    }, []); // 🚀 BURADAKİ BÜYÜK HATAYI ÇÖZDÜK: [activeChat] yerine [] yazarak kesintileri ve geç gelmeleri önledik!
+    }, []);
 
-    // 🎯 DİĞER SAYFALARDAN GELEN TETİKLEMELER
     useEffect(() => {
         const handleOpenChatSignal = (event: any) => {
             const { sellerId, sellerName, productTitle } = event.detail;
@@ -355,6 +319,7 @@ export default function ChatBox() {
             setActiveChat({ id: sellerId, name: finalName });
             setView('chat');
             setIsOpen(true);
+            setIsUserScrolling(false); // Sohbet açılınca en alta insin
             
             updateInboxLocally(sellerId, finalName, "", false);
 
@@ -372,9 +337,21 @@ export default function ChatBox() {
         return () => window.removeEventListener("openChatWithContext", handleOpenChatSignal);
     }, [currentUser]);
 
+    // 🚀 SCROLL HATASINI ÇÖZEN KISIM 
+    // Kullanıcı yukarı kaydırmışsa "isUserScrolling" true olur ve bu useEffect aşağı inmesini engeller.
     useEffect(() => {
-        if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+        if (chatScrollRef.current && !isUserScrolling) {
+            chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+        }
     }, [messages, view, isOpen]);
+
+    // Kullanıcının kaydırıp kaydırmadığını anlayan dedektif
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+        // Eğer en alta çok yakın değilse, demek ki kullanıcı yukarı kaydırıp bir şey okuyor
+        const isAtBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 20;
+        setIsUserScrolling(!isAtBottom);
+    };
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -388,36 +365,41 @@ export default function ChatBox() {
                 } else if (!isOpen) {
                     loadInbox(currentUser.id);
                 }
-            }, 3000); // 🚀 Gecikmeyi çözmek için süreyi 5'ten 3 saniyeye düşürdük!
+            }, 3000);
         }
         return () => clearInterval(interval);
     }, [currentUser, isOpen, view, activeChat]);
 
-    // ==========================================
-    // 🚀 MESAJ GÖNDERME VE KÜFÜR FİLTRESİ
-    // ==========================================
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!chatInput.trim() || !currentUser || !activeChat) return;
 
-        // 🛑 KÜFÜR FİLTRESİ DEVREDE
         if (containsBannedWord(chatInput)) {
             alert("⚠️ Lütfen mesajınızda argo, küfür veya uygunsuz kelimeler kullanmayınız.");
             setChatInput("");
             return;
         }
 
-        const content = chatInput;
+        // 🚀 WHATSAPP ALINTI FORMATINI HAZIRLIYORUZ
+        let finalContent = chatInput;
+        if (replyTo) {
+            // Arka planda mesaja gizli bir alıntı formatı ekliyoruz
+            finalContent = `[REPLY:${replyTo.name}]${replyTo.text}[/REPLY]${chatInput}`;
+        }
+
         const tempId = Date.now();
+        setMessages((prev) => [...prev, { id: tempId, text: finalContent, isMine: true }]);
         
-        setMessages((prev) => [...prev, { id: tempId, text: content, isMine: true }]);
         setChatInput("");
-        updateInboxLocally(activeChat.id, activeChat.name, content, false);
+        setReplyTo(null); // Mesaj gidince alıntıyı kapat
+        setIsUserScrolling(false); // Yeni mesaj atınca otomatik en alta in
+        
+        updateInboxLocally(activeChat.id, activeChat.name, finalContent, false);
 
         const chatRequest = {
             senderId: currentUser.id,
             receiverId: activeChat.id,
-            content: content
+            content: finalContent
         };
 
         try {
@@ -436,15 +418,16 @@ export default function ChatBox() {
                 }),
             });
             
-            // 🚀 Beklemeden yenileme (Gönderildi tıkını anında görmek için)
             loadChatHistory(activeChat.id, currentUser.id);
         } catch (err) {}
     };
 
     const handleOpenChatFromInbox = (chat: InboxItem) => {
-        setMessages([]); // 🚀 HAYALET MESAJLARI ÖNLEME: Eski sohbeti anında sil!
+        setMessages([]); 
         setActiveChat({ id: chat.id, name: chat.name });
         setView('chat');
+        setIsUserScrolling(false); // Yeni sohbete girince en altta başla
+        setReplyTo(null); // Başka sohbete geçince alıntıyı temizle
         
         updateInboxLocally(chat.id, chat.name, chat.lastMsg, false);
         
@@ -457,15 +440,47 @@ export default function ChatBox() {
     const handleBackToInbox = () => {
         setActiveChat(null);
         setView('inbox');
-        setMessages([]); // 🚀 Temizlik imandan gelir, geri dönerken de siliyoruz!
+        setMessages([]); 
         setChatInput("");
+        setReplyTo(null);
+    };
+
+    // 🚀 WHATSAPP TARZI MESAJ KUTUSUNU OLUŞTURAN RENDER FONKSİYONU
+    const renderMessageText = (text: string, isMine: boolean) => {
+        const replyMatch = text.match(/\[REPLY:(.*?)\](.*?)\[\/REPLY\]([\s\S]*)/);
+        
+        if (replyMatch) {
+            const repName = replyMatch[1];
+            const repText = replyMatch[2];
+            const actualMsg = replyMatch[3];
+            
+            return (
+                <div className="flex flex-col">
+                    <div className={`rounded p-2 mb-1.5 border-l-4 text-[11px] leading-snug relative ${isMine ? 'bg-blue-700/30 border-blue-200' : 'bg-black/5 border-slate-400'}`}>
+                        <span className={`font-bold block mb-0.5 ${isMine ? 'text-blue-100' : 'text-slate-600'}`}>{repName}</span>
+                        <span className={`truncate block opacity-90 ${isMine ? 'text-blue-50' : 'text-slate-500'}`}>{repText}</span>
+                    </div>
+                    <span>{actualMsg}</span>
+                </div>
+            );
+        }
+        return <span>{text}</span>;
+    };
+
+    const handleReplyClick = (msg: ChatMessage) => {
+        // [REPLY...] gibi gizli kodları temizleyip sadece saf mesajı alıntılıyoruz
+        const cleanText = msg.text.replace(/\[REPLY:.*?\](.*?)\[\/REPLY\]/g, '').trim();
+        setReplyTo({
+            name: msg.isMine ? "Sen" : (activeChat?.name || "Kullanıcı"),
+            text: cleanText
+        });
+        // Input'a odaklanmak için
+        const inputEl = document.getElementById('chat-input-field');
+        if (inputEl) inputEl.focus();
     };
 
     if (!currentUser) return null; 
 
-    // ==========================================
-    // 🎨 ARAYÜZ
-    // ==========================================
     return (
         <div className="fixed bottom-5 right-5 z-[9999]">
             {isOpen ? (
@@ -474,9 +489,7 @@ export default function ChatBox() {
                     <div className="bg-blue-600 text-white px-4 py-3 flex justify-between items-center shadow-md z-10">
                         {view === 'chat' && activeChat ? (
                             <div className="flex items-center gap-2">
-                                <button onClick={handleBackToInbox} className="text-white hover:text-blue-200 mr-1 font-black text-xl leading-none">
-                                    &larr;
-                                </button>
+                                <button onClick={handleBackToInbox} className="text-white hover:text-blue-200 mr-1 font-black text-xl leading-none"> &larr; </button>
                                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-sm font-bold border border-white/30 relative">
                                     {activeChat.name.charAt(0).toUpperCase()}
                                     <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-white rounded-full ${isUserOnline ? 'bg-green-400' : 'bg-red-500'}`}></span>
@@ -487,9 +500,7 @@ export default function ChatBox() {
                                 </div>
                             </div>
                         ) : (
-                            <h3 className="font-bold text-base flex items-center gap-2">
-                                💬 Mesajlarım
-                            </h3>
+                            <h3 className="font-bold text-base flex items-center gap-2"> 💬 Mesajlarım </h3>
                         )}
                         <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white transition-colors text-xl font-bold leading-none">✕</button>
                     </div>
@@ -497,7 +508,8 @@ export default function ChatBox() {
                     <div className="flex-1 bg-slate-50 flex flex-col relative custom-scrollbar overflow-hidden">
                         
                         {view === 'chat' && activeChat ? (
-                            <div ref={chatScrollRef} className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 custom-scrollbar">
+                            // 🚀 onScroll FONKSİYONUMUZU BURAYA EKLEDİK
+                            <div ref={chatScrollRef} onScroll={handleScroll} className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 custom-scrollbar">
                                 <div className="text-center text-[10px] text-slate-400 font-bold bg-slate-100 rounded-full w-max mx-auto px-3 py-1 mb-2">Güvenli Sohbet</div>
                                 
                                 {messages.length === 0 ? (
@@ -509,14 +521,21 @@ export default function ChatBox() {
                                     messages.map((msg) => (
                                         <div key={msg.id} className={`group flex flex-col ${msg.isMine ? 'items-end' : 'items-start'}`}>
                                             <div className="flex items-center gap-2">
-                                                {msg.isMine && (
-                                                    <button onClick={() => handleDeleteMessage(msg.id)} className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 text-xs transition-opacity" title="Mesajı Sil">
-                                                        🗑️
-                                                    </button>
+                                                
+                                                {/* 🚀 SOLDAKİ AKSİYON BUTONLARI (Yanıtla ve Sil) */}
+                                                {msg.isMine ? (
+                                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5">
+                                                        <button onClick={() => handleReplyClick(msg)} className="text-blue-400 hover:text-blue-600 text-xs" title="Yanıtla">↩️</button>
+                                                        <button onClick={() => handleDeleteMessage(msg.id)} className="text-red-400 hover:text-red-600 text-xs" title="Mesajı Sil">🗑️</button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5 order-last">
+                                                        <button onClick={() => handleReplyClick(msg)} className="text-blue-400 hover:text-blue-600 text-xs" title="Yanıtla">↩️</button>
+                                                    </div>
                                                 )}
                                                 
                                                 <div className={`max-w-[100%] rounded-2xl px-4 py-2 text-sm shadow-sm ${msg.isMine ? "bg-blue-600 text-white rounded-br-sm" : "bg-white text-slate-800 border border-slate-200 rounded-bl-sm"}`}>
-                                                    {msg.text}
+                                                    {renderMessageText(msg.text, msg.isMine)}
                                                 </div>
                                             </div>
                                             {msg.isMine && (
@@ -542,27 +561,16 @@ export default function ChatBox() {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex justify-between items-center mb-0.5">
-                                                    <span className={`font-bold truncate text-sm ${chat.unread > 0 ? "text-slate-900" : "text-slate-700"}`}>
-                                                        {chat.name}
-                                                    </span>
+                                                    <span className={`font-bold truncate text-sm ${chat.unread > 0 ? "text-slate-900" : "text-slate-700"}`}> {chat.name} </span>
                                                 </div>
                                                 <div className="flex justify-between items-center">
-                                                    <p className={`text-xs truncate pr-2 ${chat.unread > 0 ? "font-bold text-slate-800" : "text-slate-500"}`}>
-                                                        {chat.lastMsg || "Yeni mesaj..."}
-                                                    </p>
+                                                    <p className={`text-xs truncate pr-2 ${chat.unread > 0 ? "font-bold text-slate-800" : "text-slate-500"}`}> {chat.lastMsg || "Yeni mesaj..."} </p>
                                                     {chat.unread > 0 && (
-                                                        <span className="bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 shadow-sm">
-                                                            {chat.unread}
-                                                        </span>
+                                                        <span className="bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 shadow-sm"> {chat.unread} </span>
                                                     )}
                                                 </div>
                                             </div>
-                                            
-                                            <button 
-                                                onClick={(e) => handleDeleteConversation(chat.id, e)} 
-                                                className="absolute right-4 opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-opacity bg-white hover:bg-red-50 rounded-full shadow-sm border border-slate-100" 
-                                                title="Sohbeti Sil"
-                                            >
+                                            <button onClick={(e) => handleDeleteConversation(chat.id, e)} className="absolute right-4 opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-opacity bg-white hover:bg-red-50 rounded-full shadow-sm border border-slate-100" title="Sohbeti Sil">
                                                 🗑️
                                             </button>
                                         </div>
@@ -573,18 +581,31 @@ export default function ChatBox() {
                     </div>
 
                     {view === 'chat' && activeChat && (
-                        <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-slate-100 flex items-center gap-2">
-                            <input 
-                                type="text" 
-                                placeholder="Bir mesaj yaz..." 
-                                className="flex-1 bg-slate-100 text-slate-800 text-sm px-4 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                value={chatInput} 
-                                onChange={(e) => setChatInput(e.target.value)} 
-                            />
-                            <button type="submit" disabled={!chatInput.trim()} className="w-10 h-10 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-full flex items-center justify-center transition-colors shrink-0 shadow-sm">
-                                <svg className="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                            </button>
-                        </form>
+                        <div className="bg-white border-t border-slate-100 flex flex-col">
+                            {/* 🚀 MESAJ YAZMA KUTUSUNUN ÜSTÜNDEKİ ALINTI ÖNİZLEMESİ */}
+                            {replyTo && (
+                                <div className="bg-slate-50 border-l-4 border-blue-500 mx-3 mt-3 p-2.5 rounded-r-md relative shadow-sm">
+                                    <span className="font-bold text-blue-600 text-xs block mb-0.5">{replyTo.name}</span>
+                                    <p className="text-slate-600 text-xs truncate pr-5">{replyTo.text}</p>
+                                    <button onClick={() => setReplyTo(null)} className="absolute top-2 right-2 text-slate-400 hover:text-slate-600" title="Alıntıyı İptal Et">✕</button>
+                                </div>
+                            )}
+
+                            <form onSubmit={handleSendMessage} className="p-3 flex items-center gap-2">
+                                <input 
+                                    id="chat-input-field"
+                                    type="text" 
+                                    placeholder="Bir mesaj yaz..." 
+                                    className="flex-1 bg-slate-100 text-slate-800 text-sm px-4 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    value={chatInput} 
+                                    onChange={(e) => setChatInput(e.target.value)} 
+                                    autoComplete="off"
+                                />
+                                <button type="submit" disabled={!chatInput.trim()} className="w-10 h-10 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-full flex items-center justify-center transition-colors shrink-0 shadow-sm">
+                                    <svg className="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                                </button>
+                            </form>
+                        </div>
                     )}
                 </div>
             ) : (
