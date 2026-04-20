@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { MapPin, Heart, Share2, ShieldCheck, ChevronRight } from "lucide-react";
 
 // 🎓 Türkiye'deki Üniversiteler Listesi
 const UNIVERSITIES = [
@@ -235,6 +234,42 @@ export default function ProfilePage() {
     window.location.href = "/";
   };
 
+  // 🚨 HESAP SİLME FONKSİYONU
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+
+    // Sadece tek bir net uyarı bırakıyoruz
+    const confirmFirst = window.confirm(
+      "⚠️ DİKKAT: Hesabını ve tüm ilanlarını kalıcı olarak silmek istediğine emin misin?",
+    );
+    if (!confirmFirst) return;
+
+    try {
+      setIsSaving(true);
+      const response = await fetch(
+        `https://unicycle-api.onrender.com/api/users/${user.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (response.ok) {
+        alert(
+          "Hesabın ve tüm verilerin başarıyla silindi. Seni özleyeceğiz! 👋",
+        );
+        localStorage.removeItem("user");
+        window.location.href = "/";
+      } else {
+        alert("Hesap silinirken bir hata oluştu.");
+      }
+    } catch (error) {
+      console.error("Silme hatası:", error);
+      alert("Sunucuya bağlanılamadı.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim() !== "")
@@ -329,7 +364,6 @@ export default function ProfilePage() {
     reader.readAsDataURL(file);
   };
 
-  // 🔥 SENKRONİZASYON MOTORU: Artık Java'daki veritabanını da güncelliyor!
   const saveAllData = async (isInfoUpdate = false) => {
     if (isInfoUpdate) {
       if (university === "Diğer..." && customUniversity.trim() === "") {
@@ -347,7 +381,6 @@ export default function ProfilePage() {
       const finalUniversity =
         university === "Diğer..." ? customUniversity.trim() : university;
 
-      // 1. ADIM: Java Backend'e Güncelleme İsteği At (SADECE BİLGİ GÜNCELLEMESİNDE)
       if (isInfoUpdate && user?.id) {
         const response = await fetch(
           `https://unicycle-api.onrender.com/api/users/${user.id}/update-university`,
@@ -357,13 +390,9 @@ export default function ProfilePage() {
             body: JSON.stringify({ university: finalUniversity }),
           },
         );
-
-        if (!response.ok) {
-          throw new Error("Veritabanı güncellenemedi!");
-        }
+        if (!response.ok) throw new Error("Veritabanı güncellenemedi!");
       }
 
-      // 2. ADIM: LocalStorage ve State Güncelle
       if (isInfoUpdate && newName.trim() !== user?.fullName) {
         const updatedUser = {
           ...user,
@@ -502,16 +531,201 @@ export default function ProfilePage() {
                 <span className="text-xl">+</span> İlan Ver
               </Link>
               <Link
-                href="/profile"
-                className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
+                href="/create-listing"
+                className="flex md:hidden font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors text-[11px] sm:text-base border border-[#20B2AA] px-2 py-1.5 rounded-lg"
               >
-                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
-                  👤
-                </div>
-                <span className="hidden sm:block text-sm">Hesabım</span>
+                <span className="text-sm">+</span> İlan
               </Link>
+
+              {user ? (
+                <div className="flex items-center gap-2 sm:gap-4 relative">
+                  <div className="relative shrink-0">
+                    <button
+                      onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                      className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-colors rounded-full flex items-center justify-center border border-slate-200"
+                    >
+                      <svg
+                        className="w-5 h-5 text-slate-600"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                        ></path>
+                      </svg>
+                      {notificationsCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
+                          {notificationsCount}
+                        </span>
+                      )}
+                    </button>
+
+                    {isNotificationOpen && (
+                      <div className="absolute top-full right-[-20px] sm:right-0 mt-3 w-[300px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                        <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                          <span className="font-bold text-slate-800">
+                            Bildirimler
+                          </span>
+                          {notificationsCount > 0 && (
+                            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                              {notificationsCount} Yeni
+                            </span>
+                          )}
+                        </div>
+                        <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                          {notificationsList.length === 0 ? (
+                            <div className="px-4 py-8 text-center text-slate-500 text-sm font-medium">
+                              Şu an hiç bildirimin yok.
+                            </div>
+                          ) : (
+                            notificationsList.slice(0, 5).map((notif: any) => {
+                              let icon = "✨";
+                              let bg = "bg-blue-100";
+                              let text = "text-blue-600";
+                              const msgLower = notif.message.toLowerCase();
+                              if (msgLower.includes("takip")) {
+                                icon = "🌸";
+                                bg = "bg-pink-100";
+                                text = "text-pink-600";
+                              } else if (
+                                msgLower.includes("ilan") ||
+                                msgLower.includes("ekledi")
+                              ) {
+                                icon = "📦";
+                                bg = "bg-orange-100";
+                                text = "text-orange-600";
+                              } else if (
+                                msgLower.includes("beğen") ||
+                                msgLower.includes("favori")
+                              ) {
+                                icon = "❤️";
+                                bg = "bg-red-100";
+                                text = "text-red-600";
+                              } else if (msgLower.includes("yorum")) {
+                                icon = "💬";
+                                bg = "bg-green-100";
+                                text = "text-green-600";
+                              }
+                              return (
+                                <div
+                                  key={notif.id}
+                                  className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center"
+                                >
+                                  <div
+                                    className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} text-lg shrink-0`}
+                                  >
+                                    {icon}
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="text-sm text-slate-700">
+                                      {notif.message}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400 mt-0.5">
+                                      {notif.createdAt
+                                        ? new Date(
+                                            notif.createdAt,
+                                          ).toLocaleDateString("tr-TR")
+                                        : "Yeni"}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                        <Link
+                          href="/notifications"
+                          onClick={() => setIsNotificationOpen(false)}
+                          className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors"
+                        >
+                          Tüm Bildirimleri Gör &rarr;
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
+                  >
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+                      👤
+                    </div>
+                    <span className="hidden sm:block text-sm">Hesabım</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm ml-2"
+                  >
+                    Çıkış
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-black transition-colors"
+                >
+                  Giriş Yap
+                </Link>
+              )}
             </div>
           </div>
+        </div>
+
+        {/* 📱 SADECE MOBİL İÇİN ARAMA ÇUBUĞU */}
+        <div className="md:hidden pb-3 pt-2 w-full relative z-40 px-4 bg-white border-t border-slate-50 shadow-sm">
+          <form onSubmit={handleSearchSubmit} className="w-full relative">
+            <input
+              type="text"
+              placeholder="Ürün, @üye veya ders notu ara..."
+              className="w-full bg-[#F3F4F6] text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-[#20B2AA] transition-all border border-transparent font-medium text-sm"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setIsDropdownOpen(true);
+              }}
+              onFocus={() => setIsDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+            />
+            <span className="absolute left-7 top-2.5 text-slate-400 text-lg">
+              🔍
+            </span>
+          </form>
+
+          {isDropdownOpen && liveResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+              {liveResults.slice(0, 4).map((result, idx) => (
+                <Link
+                  href={
+                    result.type === "user"
+                      ? `/user/${result.item.id}`
+                      : `/listing-detail/${result.item.id}`
+                  }
+                  key={`mob-${idx}`}
+                  className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50"
+                >
+                  <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
+                    {result.type === "user" ? (
+                      <span className="font-bold text-blue-600">
+                        {result.item.fullName.charAt(0).toUpperCase()}
+                      </span>
+                    ) : (
+                      <span className="text-xs">📦</span>
+                    )}
+                  </div>
+                  <div className="flex-1 truncate">
+                    <div className="font-bold text-slate-800 truncate text-xs">
+                      {result.item.fullName || result.item.title}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
@@ -581,13 +795,21 @@ export default function ProfilePage() {
             </div>
           </div>
           <div className="mt-2">
-            <h1 className="text-xl sm:text-3xl font-black flex items-center gap-2">
+            <h1 className="text-xl sm:text-3xl font-black flex items-center gap-2 capitalize">
               {user ? user.fullName : "Yükleniyor..."}{" "}
               <span className="text-blue-500">✓</span>
             </h1>
-            <p className="text-xs sm:text-lg font-bold text-gray-600 mt-1">
+
+            {user && (
+              <p className="text-sm font-bold text-slate-400 mt-0.5">
+                @{user.fullName.split(" ")[0].toLowerCase()}
+              </p>
+            )}
+
+            <p className="text-xs sm:text-lg font-bold text-gray-600 mt-2">
               👩‍🎓 {displayUniversity}
             </p>
+
             <p className="text-xs sm:text-[15px] text-gray-700 mt-2 font-medium whitespace-pre-wrap max-w-2xl leading-relaxed">
               {bio}
             </p>
@@ -777,20 +999,32 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
-            <div className="p-4 sm:p-6 bg-gray-50/50 border-t flex justify-end gap-2 sm:gap-3">
+
+            <div className="p-4 sm:p-6 bg-gray-50/50 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
+              {/* 🚨 HESABI SİL BUTONU */}
               <button
-                onClick={handleCancel}
-                className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-bold text-gray-500 hover:bg-gray-200 transition text-sm sm:text-base"
-              >
-                İptal
-              </button>
-              <button
-                onClick={() => saveAllData(true)}
+                onClick={handleDeleteAccount}
                 disabled={isSaving}
-                className="px-6 sm:px-10 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-white bg-[#20B2AA] hover:bg-teal-700 min-w-[100px] shadow-md transition-all text-sm sm:text-base"
+                className="w-full sm:w-auto px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl font-bold text-red-500 hover:bg-red-50 border border-transparent hover:border-red-200 transition-all text-sm sm:text-base order-2 sm:order-1"
               >
-                {isSaving ? "⏳..." : "Kaydet"}
+                🗑️ Hesabımı Kalıcı Olarak Sil
               </button>
+
+              <div className="flex gap-2 sm:gap-3 w-full sm:w-auto order-1 sm:order-2 justify-end">
+                <button
+                  onClick={handleCancel}
+                  className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-bold text-gray-500 hover:bg-gray-200 transition text-sm sm:text-base"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={() => saveAllData(true)}
+                  disabled={isSaving}
+                  className="px-6 sm:px-10 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-white bg-[#20B2AA] hover:bg-teal-700 min-w-[100px] shadow-md transition-all text-sm sm:text-base"
+                >
+                  {isSaving ? "⏳..." : "Kaydet"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -823,6 +1057,11 @@ export default function ProfilePage() {
                   Güvenlik İpuçları
                 </button>
               </li>
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Kampüs Kuralları
+                </button>
+              </li>
             </ul>
           </div>
           <div>
@@ -836,6 +1075,11 @@ export default function ProfilePage() {
               <li>
                 <button className="hover:text-blue-600 transition-colors">
                   Bize Ulaşın
+                </button>
+              </li>
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  S.S.S.
                 </button>
               </li>
             </ul>

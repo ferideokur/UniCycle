@@ -198,6 +198,9 @@ export default function Home() {
   const [selectedUniversity, setSelectedUniversity] =
     useState("Tüm Üniversiteler");
 
+  // 🚀 YENİ: Sıralama State'i
+  const [sortType, setSortType] = useState("En Yeni");
+
   const [user, setUser] = useState<{
     id: number;
     fullName: string;
@@ -238,7 +241,6 @@ export default function Home() {
     try {
       let url = "https://unicycle-api.onrender.com/api/products";
 
-      // Eğer "Tüm Üniversiteler" seçili değilse, URL'ye parametre ekle
       if (selectedUniversity !== "Tüm Üniversiteler") {
         url += `?university=${encodeURIComponent(selectedUniversity)}`;
       }
@@ -259,7 +261,6 @@ export default function Home() {
     }
   };
 
-  // KULLANICI VE BİLDİRİMLERİ İLK YÜKLEMEDE ÇEK
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -272,7 +273,6 @@ export default function Home() {
         );
         setLikedProducts(likes);
 
-        // 🔔 GERÇEK BİLDİRİMLERİ ÇEK
         fetch(
           `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
         )
@@ -312,12 +312,10 @@ export default function Home() {
       );
   }, []);
 
-  // 🚀 İLANLARI ÇEKME EFFECT'İ (Üniversite değiştiğinde yeniden çalışır)
   useEffect(() => {
     fetchAllListings();
   }, [selectedUniversity]);
 
-  // 🚀 CANLI ARAMA ETKİSİ
   useEffect(() => {
     const fetchLive = async () => {
       if (searchTerm.trim().length < 2) {
@@ -376,7 +374,6 @@ export default function Home() {
     window.location.href = "/";
   };
 
-  // 💖 BEĞENİ VE BİLDİRİM GÖNDERME MOTORU
   const toggleLike = async (e: React.MouseEvent, productObject: any) => {
     e.stopPropagation();
     e.preventDefault();
@@ -455,7 +452,6 @@ export default function Home() {
     }
   };
 
-  // 🗓️ AKADEMİK TAKVİME GÖRE AKILLI BANNER
   const getBannerContent = () => {
     const today = new Date();
     const month = today.getMonth() + 1;
@@ -564,6 +560,21 @@ export default function Home() {
     return matchesSearch && matchesCategory;
   });
 
+  // 🧮 YENİ: Seçilen Kurala Göre Ürünleri Sıralama Motoru
+  const sortedProducts = [...filteredProducts].sort((a: any, b: any) => {
+    switch (sortType) {
+      case "En Eski":
+        return a.id - b.id; // ID'si küçük olan (eski olan) başa
+      case "Fiyat (Artan)":
+        return Number(a.price || 0) - Number(b.price || 0); // Ucuzdan pahalıya
+      case "Fiyat (Azalan)":
+        return Number(b.price || 0) - Number(a.price || 0); // Pahalıdan ucuza
+      case "En Yeni":
+      default:
+        return b.id - a.id; // ID'si büyük olan (yeni olan) başa (Varsayılan)
+    }
+  });
+
   return (
     <main className="min-h-screen bg-[#F8FAFC] pb-20 font-sans w-full overflow-x-hidden flex flex-col">
       {/* 🚀 ÜST MENÜ */}
@@ -578,7 +589,7 @@ export default function Home() {
                   setActiveFilter("TÜMÜ");
                   setExpandedGroup(null);
                   setSearchTerm("");
-                  setSelectedUniversity("Tüm Üniversiteler"); // Logoya basınca filtre sıfırlanır
+                  setSelectedUniversity("Tüm Üniversiteler");
                 }}
                 className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
               >
@@ -760,7 +771,6 @@ export default function Home() {
                                 text = "text-blue-600";
                               const msgLower =
                                 notif.message?.toLowerCase() || "";
-
                               if (
                                 msgLower.includes("beğen") ||
                                 msgLower.includes("favori")
@@ -935,11 +945,7 @@ export default function Home() {
                 <li key={mainCat} className="mb-1">
                   <button
                     onClick={() => handleMainCategoryClick(mainCat)}
-                    className={`w-full text-left px-4 py-3 rounded-xl font-bold transition-all flex items-center justify-between ${
-                      isExpanded || isMainActive
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
-                    }`}
+                    className={`w-full text-left px-4 py-3 rounded-xl font-bold transition-all flex items-center justify-between ${isExpanded || isMainActive ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"}`}
                   >
                     <span className="truncate">{mainCat}</span>
                     <span
@@ -956,11 +962,7 @@ export default function Home() {
                           <li key={subCat}>
                             <button
                               onClick={() => setActiveFilter(subCat)}
-                              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                                isSubActive
-                                  ? "bg-blue-600 text-white shadow-sm"
-                                  : "text-slate-500 hover:bg-blue-50 hover:text-blue-700"
-                              }`}
+                              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-semibold transition-all ${isSubActive ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:bg-blue-50 hover:text-blue-700"}`}
                             >
                               {subCat}
                             </button>
@@ -1079,7 +1081,7 @@ export default function Home() {
                   : `${activeFilter}`}
             </h3>
 
-            {/* YENİ ÜNİVERSİTE AÇILIR MENÜSÜ */}
+            {/* YENİ ÜNİVERSİTE AÇILIR MENÜSÜ & SIRALAMA */}
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl shadow-sm border border-slate-200 w-full sm:w-auto hover:border-blue-400 transition-colors">
                 <span className="text-lg">🎓</span>
@@ -1096,8 +1098,25 @@ export default function Home() {
                 </select>
               </div>
 
-              <div className="text-xs sm:text-sm font-bold text-slate-500 hover:text-blue-600 cursor-pointer transition-colors whitespace-nowrap hidden sm:block">
-                Sırala: En Yeni ▾
+              {/* 🚀 YENİ: DİNAMİK SIRALAMA KUTUSU */}
+              <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-blue-300 transition-colors hidden sm:flex">
+                <span className="text-xs font-bold text-slate-500">
+                  Sırala:
+                </span>
+                <select
+                  className="bg-transparent text-slate-700 text-sm font-bold outline-none cursor-pointer"
+                  value={sortType}
+                  onChange={(e) => setSortType(e.target.value)}
+                >
+                  <option value="En Yeni">En Yeni İlanlar</option>
+                  <option value="En Eski">En Eski İlanlar</option>
+                  <option value="Fiyat (Artan)">
+                    Fiyat (Ucuzdan Pahalıya)
+                  </option>
+                  <option value="Fiyat (Azalan)">
+                    Fiyat (Pahalıdan Ucuza)
+                  </option>
+                </select>
               </div>
             </div>
           </div>
@@ -1128,7 +1147,7 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          ) : filteredProducts.length === 0 ? (
+          ) : sortedProducts.length === 0 ? (
             <div className="text-center py-12 sm:py-20 bg-white rounded-3xl sm:rounded-[3rem] border border-slate-100 shadow-sm mt-4 px-4">
               <div className="w-20 h-20 sm:w-24 sm:h-24 bg-slate-50 rounded-full flex items-center justify-center text-4xl sm:text-5xl mx-auto mb-4 sm:mb-6">
                 🕵️‍♀️
@@ -1151,7 +1170,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-              {filteredProducts.map((p: any) => {
+              {sortedProducts.map((p: any) => {
                 const isLiked = likedProducts.includes(p.id);
                 return (
                   <Link
@@ -1378,12 +1397,7 @@ export default function Home() {
       </footer>
       <style
         dangerouslySetInnerHTML={{
-          __html: `
-        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
-        @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-      `,
+          __html: `.custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; } @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }`,
         }}
       />
     </main>

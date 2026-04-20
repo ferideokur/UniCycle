@@ -169,7 +169,7 @@ export default function AuthPage() {
           setMessage("✅ " + userData.message + " Yönlendiriliyorsun...");
           setEmail("");
           setPassword("");
-          setTimeout(() => router.push("/profile"), 1500);
+          setTimeout(() => (window.location.href = "/profile"), 1500);
         } else {
           const errorText = await response.text();
           setMessage("❌ " + errorText);
