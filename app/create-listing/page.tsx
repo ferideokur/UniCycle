@@ -92,9 +92,13 @@ const CATEGORY_GROUPS = [
 export default function CreateListingPage() {
   const router = useRouter();
 
-  // 🧠 KULLANICI KİMLİĞİ (Java'ya Göndermek İçin ID'yi tutuyoruz)
+  // 🧠 KULLANICI KİMLİĞİ
   const [userId, setUserId] = useState<number | null>(null);
   const [userEmail, setUserEmail] = useState("");
+  // 🔥 YENİ: Kullanıcının üniversite bilgisini hafızada tutacağız
+  const [userUniversity, setUserUniversity] = useState<string>(
+    "Üniversite Belirtilmemiş",
+  );
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Ders Notları & Özetler");
@@ -119,8 +123,19 @@ export default function CreateListingPage() {
       router.push("/login");
     } else {
       const parsedUser = JSON.parse(userStr);
-      setUserId(parsedUser.id); // Java veritabanındaki benzersiz ID'si
+      setUserId(parsedUser.id);
       setUserEmail(parsedUser.email);
+
+      // 🔥 YENİ: Üniversite bilgisini Profil'den veya Kayıt verisinden çekiyoruz
+      const userProfileKey = `profile_${parsedUser.email}`;
+      const savedProfile = localStorage.getItem(userProfileKey);
+
+      if (savedProfile) {
+        const data = JSON.parse(savedProfile);
+        if (data.university) setUserUniversity(data.university);
+      } else if (parsedUser.university) {
+        setUserUniversity(parsedUser.university);
+      }
     }
   }, [router]);
 
@@ -186,7 +201,7 @@ export default function CreateListingPage() {
 
     const finalPrice = priceType === "fiyat" ? price : "0";
 
-    // Java DTO'sunun beklediği paket (Birebir isimler aynı olmalı)
+    // 🌟 YENİ: Java DTO'suna "university" alanını da ekliyoruz
     const listingPayload = {
       userId: userId,
       title: title,
@@ -196,15 +211,18 @@ export default function CreateListingPage() {
       price: parseFloat(finalPrice),
       description: description,
       photosBase64: photos,
+      university: userUniversity, // 🎓 Filtreleme için en kritik kod burası!
     };
 
     try {
-      // 🚀 JAVA'YA İSTEK ATIYORUZ (Doğru adres: /api/products)
-      const response = await fetch("https://unicycle-api.onrender.com/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(listingPayload),
-      });
+      const response = await fetch(
+        "https://unicycle-api.onrender.com/api/products",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(listingPayload),
+        },
+      );
 
       if (response.ok) {
         setIsSubmitting(false);
@@ -225,7 +243,6 @@ export default function CreateListingPage() {
   };
 
   return (
-    // 🔥 TAŞMA KORUMASI: w-full ve overflow-x-hidden eklendi
     <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans w-full overflow-x-hidden flex flex-col">
       {/* 🚀 ÜST MENÜ */}
       <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 shadow-sm">
@@ -284,6 +301,19 @@ export default function CreateListingPage() {
             className="bg-white rounded-2xl sm:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden p-5 sm:p-10"
           >
             <div className="space-y-6 sm:space-y-10">
+              {/* 🎓 YENİ: Kullanıcıya hangi okulda yayınlanacağını gösteren şık bir bilgi kutusu */}
+              <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl sm:rounded-2xl flex items-center gap-3">
+                <span className="text-2xl">🎓</span>
+                <div>
+                  <p className="text-xs sm:text-sm font-bold text-blue-800">
+                    İlanınız şu üniversitenin vitrininde yayınlanacak:
+                  </p>
+                  <p className="text-sm sm:text-base font-black text-blue-600">
+                    {userUniversity}
+                  </p>
+                </div>
+              </div>
+
               {/* 📸 1. ÇOKLU FOTOĞRAF GALERİSİ */}
               <div>
                 <div className="flex justify-between items-end mb-2 sm:mb-3">
@@ -319,13 +349,14 @@ export default function CreateListingPage() {
                       </button>
                     </div>
                   ))}
-
                   {photos.length < 5 && (
                     <div
                       onClick={() => fileInputRef.current?.click()}
                       className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl sm:rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50/50 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 shrink-0 transition-colors"
                     >
-                      <span className="text-2xl sm:text-3xl mb-0.5 sm:mb-1 text-blue-400">📷</span>
+                      <span className="text-2xl sm:text-3xl mb-0.5 sm:mb-1 text-blue-400">
+                        📷
+                      </span>
                       <span className="text-[10px] sm:text-xs font-bold text-blue-600 text-center leading-tight px-1">
                         Fotoğraf Ekle
                       </span>
@@ -416,7 +447,6 @@ export default function CreateListingPage() {
                   Nasıl Değerlendireceksin?
                 </label>
 
-                {/* Butonların kapsayıcısı (Taşmayı önlemek için flex-wrap ve gap eklendi) */}
                 <div className="flex flex-wrap bg-slate-100 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl mb-4 sm:mb-6 gap-1 sm:gap-0">
                   <button
                     type="button"
@@ -441,7 +471,6 @@ export default function CreateListingPage() {
                   </button>
                 </div>
 
-                {/* Alt Kısımlar (Render Bozukluğu Düzeltildi) */}
                 {priceType === "fiyat" && (
                   <div className="relative animate-in fade-in slide-in-from-top-2 w-full sm:max-w-sm">
                     <span className="absolute left-4 sm:left-6 top-3 sm:top-4 font-black text-slate-400 text-base sm:text-lg">
@@ -458,21 +487,23 @@ export default function CreateListingPage() {
                     />
                   </div>
                 )}
-                
+
                 {priceType === "takas" && (
                   <div className="bg-purple-50 p-3 sm:p-4 rounded-xl border border-purple-100 flex items-center gap-2 sm:gap-3 animate-in fade-in">
                     <span className="text-xl sm:text-2xl shrink-0">🤝</span>
                     <p className="text-xs sm:text-sm font-bold text-purple-700 leading-snug">
-                      Ürünün kampüste takas tekliflerine açık olarak listelenecek.
+                      Ürünün kampüste takas tekliflerine açık olarak
+                      listelenecek.
                     </p>
                   </div>
                 )}
-                
+
                 {priceType === "ucretsiz" && (
                   <div className="bg-green-50 p-3 sm:p-4 rounded-xl border border-green-100 flex items-center gap-2 sm:gap-3 animate-in fade-in">
                     <span className="text-xl sm:text-2xl shrink-0">🎁</span>
                     <p className="text-xs sm:text-sm font-bold text-green-700 leading-snug">
-                      Harika bir hareket! Ürünün ihtiyacı olan bir öğrenciye hediye edilecek.
+                      Harika bir hareket! Ürünün ihtiyacı olan bir öğrenciye
+                      hediye edilecek.
                     </p>
                   </div>
                 )}
@@ -499,13 +530,14 @@ export default function CreateListingPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`w-full py-4 sm:py-5 rounded-xl sm:rounded-[1.5rem] font-black text-base sm:text-lg text-white shadow-xl transition-all transform flex items-center justify-center gap-2 sm:gap-3 
-                    ${isSubmitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 hover:scale-[1.02] active:scale-95 shadow-blue-200"}`}
+                  className={`w-full py-4 sm:py-5 rounded-xl sm:rounded-[1.5rem] font-black text-base sm:text-lg text-white shadow-xl transition-all transform flex items-center justify-center gap-2 sm:gap-3 ${isSubmitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 hover:scale-[1.02] active:scale-95 shadow-blue-200"}`}
                 >
                   {isSubmitting ? (
                     <>
-                      <span className="animate-spin text-xl sm:text-2xl">⏳</span> İlan
-                      Kaydediliyor...
+                      <span className="animate-spin text-xl sm:text-2xl">
+                        ⏳
+                      </span>{" "}
+                      İlan Kaydediliyor...
                     </>
                   ) : (
                     "İlanı Yayına Al 🚀"
@@ -519,11 +551,7 @@ export default function CreateListingPage() {
 
       <style
         dangerouslySetInnerHTML={{
-          __html: `
-        .custom-scrollbar::-webkit-scrollbar { height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-      `,
+          __html: `.custom-scrollbar::-webkit-scrollbar { height: 6px; } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }`,
         }}
       />
     </div>

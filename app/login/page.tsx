@@ -122,14 +122,14 @@ export default function AuthPage() {
               fullName,
               email,
               password,
-              university: finalUniversity,
+              university: finalUniversity, // 🎓 EKSİK PARÇA TAMAMLANDI! Artık Java bu bilgiyi alıp SQL'e yazacak.
             }),
           },
         );
 
         const text = await response.text();
         if (response.ok) {
-          setMessage("✅ " + text);
+          setMessage("✅ Başarıyla kayıt oldun! Lütfen giriş yap.");
           setFullName("");
           setEmail("");
           setPassword("");
@@ -159,9 +159,12 @@ export default function AuthPage() {
 
         if (response.ok) {
           const userData = await response.json();
+          // 🚀 YENİ: Kullanıcının üniversite bilgisini de tarayıcı hafızasına alıyoruz!
           localStorage.setItem("user", JSON.stringify(userData));
-          if (userData.university)
+
+          if (userData.university) {
             localStorage.setItem("userUni", userData.university);
+          }
 
           setMessage("✅ " + userData.message + " Yönlendiriliyorsun...");
           setEmail("");
@@ -185,51 +188,19 @@ export default function AuthPage() {
       <style
         dangerouslySetInnerHTML={{
           __html: `
-        @keyframes spinSlow {
-          from { transform: translate(-50%, -50%) rotate(0deg); }
-          to { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-        @keyframes spinSlowReverse {
-          from { transform: translate(-50%, -50%) rotate(360deg); }
-          to { transform: translate(-50%, -50%) rotate(0deg); }
-        }
-        /* Geometrik Doku (Çok Daha Belirgin) */
-        .bg-grid-texture {
-          background-size: 50px 50px;
-          background-image: 
-            linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-          mask-image: radial-gradient(circle at center, black 60%, transparent 100%);
-        }
-        /* 3D UniCycle Heykeli (Kalın, Parlak ve Daha Büyük) */
-        .sculpture-ring-1 {
-          position: absolute; top: 50%; left: 50%;
-          width: 550px; height: 550px;
-          border: 3px solid rgba(32, 178, 170, 0.9); /* Kalın Turkuaz */
-          box-shadow: 0 0 20px rgba(32, 178, 170, 0.5); /* Neon Parlaması */
-          border-radius: 50%;
-          animation: spinSlow 20s linear infinite;
-          clip-path: polygon(0% 0%, 100% 0%, 100% 80%, 0% 100%);
-        }
-        .sculpture-ring-2 {
-          position: absolute; top: 50%; left: 50%;
-          width: 450px; height: 450px;
-          border: 3px solid rgba(59, 130, 246, 0.8); /* Kalın Mavi */
-          box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); /* Neon Parlaması */
-          border-radius: 50%;
-          animation: spinSlowReverse 15s linear infinite;
-          clip-path: polygon(0% 20%, 100% 0%, 100% 100%, 0% 80%);
-        }
+        @keyframes spinSlow { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes spinSlowReverse { from { transform: translate(-50%, -50%) rotate(360deg); } to { transform: translate(-50%, -50%) rotate(0deg); } }
+        .bg-grid-texture { background-size: 50px 50px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px); mask-image: radial-gradient(circle at center, black 60%, transparent 100%); }
+        .sculpture-ring-1 { position: absolute; top: 50%; left: 50%; width: 550px; height: 550px; border: 3px solid rgba(32, 178, 170, 0.9); box-shadow: 0 0 20px rgba(32, 178, 170, 0.5); border-radius: 50%; animation: spinSlow 20s linear infinite; clip-path: polygon(0% 0%, 100% 0%, 100% 80%, 0% 100%); }
+        .sculpture-ring-2 { position: absolute; top: 50%; left: 50%; width: 450px; height: 450px; border: 3px solid rgba(59, 130, 246, 0.8); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); border-radius: 50%; animation: spinSlowReverse 15s linear infinite; clip-path: polygon(0% 20%, 100% 0%, 100% 100%, 0% 80%); }
       `,
         }}
       />
 
       {/* 1. Derinlik: Okyanus/Turkuaz Renk Katmanı */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-[#0f2e36] to-slate-900 z-0"></div>
-
       {/* 2. Doku: Geometrik Grid Overlay */}
       <div className="absolute inset-0 bg-grid-texture z-0 opacity-100 mix-blend-overlay"></div>
-
       {/* 3. Merkezi Öğe: 3D Soyut UniCycle Heykeli */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none z-0">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#20B2AA] rounded-full blur-[100px] opacity-40"></div>

@@ -4,33 +4,71 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import {
-  MapPin,
-  Heart,
-  Share2,
-  ShieldCheck,
-  ChevronRight,
-} from "lucide-react";
+import { MapPin, Heart, Share2, ShieldCheck, ChevronRight } from "lucide-react";
 
 // 🎓 Türkiye'deki Üniversiteler Listesi
 const UNIVERSITIES = [
-  "Acıbadem Üniversitesi", "Akdeniz Üniversitesi", "Anadolu Üniversitesi", "Ankara Üniversitesi", 
-  "Atatürk Üniversitesi", "Bahçeşehir Üniversitesi", "Başkent Üniversitesi", "Bilkent Üniversitesi", 
-  "Boğaziçi Üniversitesi", "Bursa Uludağ Üniversitesi", "Celal Bayar Üniversitesi", "Çanakkale Onsekiz Mart Üniversitesi", 
-  "Çukurova Üniversitesi", "Dicle Üniversitesi", "Dokuz Eylül Üniversitesi", "Ege Üniversitesi", 
-  "Erciyes Üniversitesi", "Eskişehir Osmangazi Üniversitesi", "Fırat Üniversitesi", "Galatasaray Üniversitesi", 
-  "Gazi Üniversitesi", "Gaziantep Üniversitesi", "Gebze Teknik Üniversitesi", "Hacettepe Üniversitesi", 
-  "Hasan Kalyoncu Üniversitesi", "Isparta Süleyman Demirel Üniversitesi", "İbn Haldun Üniversitesi", 
-  "İstanbul Aydın Üniversitesi", "İstanbul Bilgi Üniversitesi", "İstanbul Kültür Üniversitesi", 
-  "İstanbul Medipol Üniversitesi", "İstanbul Okan Üniversitesi", "İstanbul Sabahattin Zaim Üniversitesi", 
-  "İstanbul Teknik Üniversitesi (İTÜ)", "İstanbul Ticaret Üniversitesi", "İstanbul Üniversitesi", 
-  "İzmir Ekonomi Üniversitesi", "İzmir Katip Çelebi Üniversitesi", "İzmir Yüksek Teknoloji Enstitüsü (İYTE)", 
-  "Kadir Has Üniversitesi", "Karadeniz Teknik Üniversitesi (KTÜ)", "Kırıkkale Üniversitesi", 
-  "Kocaeli Üniversitesi", "Koç Üniversitesi", "Marmara Üniversitesi", "Mef Üniversitesi", 
-  "Mimar Sinan Güzel Sanatlar Üniversitesi", "Muğla Sıtkı Koçman Üniversitesi", "Ondokuz Mayıs Üniversitesi", 
-  "Orta Doğu Teknik Üniversitesi (ODTÜ)", "Özyeğin Üniversitesi", "Pamukkale Üniversitesi", "Piri Reis Üniversitesi", 
-  "Sabancı Üniversitesi", "Sakarya Üniversitesi", "Selçuk Üniversitesi", "TOBB Ekonomi ve Teknoloji Üniversitesi", 
-  "Trakya Üniversitesi", "Türk-Alman Üniversitesi", "Yeditepe Üniversitesi", "Yıldız Teknik Üniversitesi (YTÜ)", 
+  "Acıbadem Üniversitesi",
+  "Akdeniz Üniversitesi",
+  "Anadolu Üniversitesi",
+  "Ankara Üniversitesi",
+  "Atatürk Üniversitesi",
+  "Bahçeşehir Üniversitesi",
+  "Başkent Üniversitesi",
+  "Bilkent Üniversitesi",
+  "Boğaziçi Üniversitesi",
+  "Bursa Uludağ Üniversitesi",
+  "Celal Bayar Üniversitesi",
+  "Çanakkale Onsekiz Mart Üniversitesi",
+  "Çukurova Üniversitesi",
+  "Dicle Üniversitesi",
+  "Dokuz Eylül Üniversitesi",
+  "Ege Üniversitesi",
+  "Erciyes Üniversitesi",
+  "Eskişehir Osmangazi Üniversitesi",
+  "Fırat Üniversitesi",
+  "Galatasaray Üniversitesi",
+  "Gazi Üniversitesi",
+  "Gaziantep Üniversitesi",
+  "Gebze Teknik Üniversitesi",
+  "Hacettepe Üniversitesi",
+  "Hasan Kalyoncu Üniversitesi",
+  "Isparta Süleyman Demirel Üniversitesi",
+  "İbn Haldun Üniversitesi",
+  "İstanbul Aydın Üniversitesi",
+  "İstanbul Bilgi Üniversitesi",
+  "İstanbul Kültür Üniversitesi",
+  "İstanbul Medipol Üniversitesi",
+  "İstanbul Okan Üniversitesi",
+  "İstanbul Sabahattin Zaim Üniversitesi",
+  "İstanbul Teknik Üniversitesi (İTÜ)",
+  "İstanbul Ticaret Üniversitesi",
+  "İstanbul Üniversitesi",
+  "İzmir Ekonomi Üniversitesi",
+  "İzmir Katip Çelebi Üniversitesi",
+  "İzmir Yüksek Teknoloji Enstitüsü (İYTE)",
+  "Kadir Has Üniversitesi",
+  "Karadeniz Teknik Üniversitesi (KTÜ)",
+  "Kırıkkale Üniversitesi",
+  "Kocaeli Üniversitesi",
+  "Koç Üniversitesi",
+  "Marmara Üniversitesi",
+  "Mef Üniversitesi",
+  "Mimar Sinan Güzel Sanatlar Üniversitesi",
+  "Muğla Sıtkı Koçman Üniversitesi",
+  "Ondokuz Mayıs Üniversitesi",
+  "Orta Doğu Teknik Üniversitesi (ODTÜ)",
+  "Özyeğin Üniversitesi",
+  "Pamukkale Üniversitesi",
+  "Piri Reis Üniversitesi",
+  "Sabancı Üniversitesi",
+  "Sakarya Üniversitesi",
+  "Selçuk Üniversitesi",
+  "TOBB Ekonomi ve Teknoloji Üniversitesi",
+  "Trakya Üniversitesi",
+  "Türk-Alman Üniversitesi",
+  "Yeditepe Üniversitesi",
+  "Yıldız Teknik Üniversitesi (YTÜ)",
   "Diğer...",
 ];
 
@@ -39,12 +77,14 @@ export default function ProfilePage() {
     id: number;
     fullName: string;
     email: string;
+    university?: string;
   } | null>(null);
 
   const [newName, setNewName] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [bio, setBio] = useState("Hoş geldin! Burası senin kişisel vitrinin.");
-  const [university, setUniversity] = useState("Piri Reis Üniversitesi");
+
+  const [university, setUniversity] = useState("Üniversite Belirtilmemiş");
   const [customUniversity, setCustomUniversity] = useState("");
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -104,6 +144,8 @@ export default function ProfilePage() {
         if (data.profileZoom) setProfileZoom(data.profileZoom);
         if (data.profileRotate) setProfileRotate(data.profileRotate);
         if (data.coverY) setCoverY(data.coverY);
+      } else if (parsedUser.university) {
+        setUniversity(parsedUser.university);
       }
 
       fetchMyRealListings(parsedUser.id);
@@ -257,7 +299,6 @@ export default function ProfilePage() {
     reader.onload = (event) => {
       const img = new window.Image();
       img.src = event.target?.result as string;
-
       img.onload = () => {
         const canvas = document.createElement("canvas");
         let width = img.width,
@@ -270,12 +311,10 @@ export default function ProfilePage() {
           width *= MAX_SIZE / height;
           height = MAX_SIZE;
         }
-
         canvas.width = width;
         canvas.height = height;
         canvas.getContext("2d")?.drawImage(img, 0, 0, width, height);
         const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-
         if (type === "profile") {
           setProfileImage(dataUrl);
           setProfileZoom(1);
@@ -290,6 +329,7 @@ export default function ProfilePage() {
     reader.readAsDataURL(file);
   };
 
+  // 🔥 SENKRONİZASYON MOTORU: Artık Java'daki veritabanını da güncelliyor!
   const saveAllData = async (isInfoUpdate = false) => {
     if (isInfoUpdate) {
       if (university === "Diğer..." && customUniversity.trim() === "") {
@@ -301,15 +341,41 @@ export default function ProfilePage() {
         return;
       }
     }
+
     try {
       setIsSaving(true);
       const finalUniversity =
         university === "Diğer..." ? customUniversity.trim() : university;
 
+      // 1. ADIM: Java Backend'e Güncelleme İsteği At (SADECE BİLGİ GÜNCELLEMESİNDE)
+      if (isInfoUpdate && user?.id) {
+        const response = await fetch(
+          `https://unicycle-api.onrender.com/api/users/${user.id}/update-university`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ university: finalUniversity }),
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Veritabanı güncellenemedi!");
+        }
+      }
+
+      // 2. ADIM: LocalStorage ve State Güncelle
       if (isInfoUpdate && newName.trim() !== user?.fullName) {
-        const updatedUser = { ...user, fullName: newName.trim() };
+        const updatedUser = {
+          ...user,
+          fullName: newName.trim(),
+          university: finalUniversity,
+        } as any;
         localStorage.setItem("user", JSON.stringify(updatedUser));
-        setUser(updatedUser as any);
+        setUser(updatedUser);
+      } else {
+        const updatedUser = { ...user, university: finalUniversity } as any;
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setUser(updatedUser);
       }
 
       localStorage.setItem(
@@ -331,6 +397,8 @@ export default function ProfilePage() {
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
     } catch (error) {
+      console.error(error);
+      alert("Hata oluştu! Lütfen Java sunucunuzun çalıştığından emin olun.");
       setIsSaving(false);
     }
   };
@@ -347,14 +415,10 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 🚀 NAVBAR (ANASAYFA İLE %100 AYNI HİZALAMA VE ARAMA ÇUBUĞU EKLENDİ) */}
+      {/* 🚀 NAVBAR */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          
-          {/* ÜST SATIR: LOGO, MASAÜSTÜ ARAMA VE BUTONLAR */}
           <div className="flex justify-between items-center h-16 sm:h-20 pt-1 sm:pt-0 gap-2">
-            
-            {/* LOGO */}
             <div className="flex-shrink-0">
               <Link
                 href="/"
@@ -375,7 +439,6 @@ export default function ProfilePage() {
               </Link>
             </div>
 
-            {/* MASAÜSTÜ ARAMA ÇUBUĞU (GİZLİ MOBİLDE) */}
             <div className="hidden md:flex flex-1 max-w-3xl relative group z-50 px-8">
               <form onSubmit={handleSearchSubmit} className="w-full relative">
                 <input
@@ -397,23 +460,25 @@ export default function ProfilePage() {
                   Ara
                 </button>
               </form>
-
-              {/* MASAÜSTÜ AÇILIR MENÜ */}
               {isDropdownOpen && liveResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
                   {liveResults.slice(0, 5).map((result, idx) => (
                     <Link
-                      href={result.type === "user" ? `/user/${result.item.id}` : `/listing-detail/${result.item.id}`}
+                      href={
+                        result.type === "user"
+                          ? `/user/${result.item.id}`
+                          : `/listing-detail/${result.item.id}`
+                      }
                       key={idx}
                       className="flex items-center gap-3 px-5 py-2 hover:bg-slate-50 transition-colors"
                     >
                       <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0 text-sm">
-                        {result.type === "user" ? result.item.fullName.charAt(0).toUpperCase() : "📦"}
+                        {result.type === "user"
+                          ? result.item.fullName.charAt(0).toUpperCase()
+                          : "📦"}
                       </div>
-                      <div>
-                        <div className="font-bold text-slate-800 text-sm">
-                          {result.item.fullName || result.item.title}
-                        </div>
+                      <div className="font-bold text-slate-800 text-sm">
+                        {result.item.fullName || result.item.title}
                       </div>
                     </Link>
                   ))}
@@ -429,149 +494,24 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* SAĞ BUTONLAR: İLAN, ZİL, PROFİL */}
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              
-              {/* İlan Ver (Masaüstü) */}
               <Link
                 href="/create-listing"
                 className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
               >
                 <span className="text-xl">+</span> İlan Ver
               </Link>
-
-              {/* İlan Ver (Mobil - Tam Olarak Anasayfadaki Gibi) */}
               <Link
-                href="/create-listing"
-                className="flex md:hidden font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors text-[11px] sm:text-base border border-[#20B2AA] px-2 py-1.5 rounded-lg"
+                href="/profile"
+                className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
               >
-                <span className="text-sm">+</span> İlan
-              </Link>
-
-              {user ? (
-                <div className="flex items-center gap-2 sm:gap-4 relative">
-                  
-                  {/* ZİL BUTONU VE PANEL */}
-                  <div className="relative shrink-0">
-                    <button
-                      onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                      className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-colors rounded-full flex items-center justify-center border border-slate-200"
-                    >
-                      <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                      </svg>
-                      {notificationsCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
-                          {notificationsCount}
-                        </span>
-                      )}
-                    </button>
-
-                    {isNotificationOpen && (
-                      <div className="absolute top-full right-[-20px] sm:right-0 mt-3 w-[300px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
-                        <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                          <span className="font-bold text-slate-800">Bildirimler</span>
-                          {notificationsCount > 0 && <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{notificationsCount} Yeni</span>}
-                        </div>
-                        <div className="max-h-80 overflow-y-auto custom-scrollbar">
-                          {notificationsList.length === 0 ? (
-                            <div className="px-4 py-8 text-center text-slate-500 text-sm font-medium">Şu an hiç bildirimin yok.</div>
-                          ) : (
-                            notificationsList.slice(0, 5).map((notif: any) => {
-                              let icon = "✨"; let bg = "bg-blue-100"; let text = "text-blue-600";
-                              const msgLower = notif.message.toLowerCase();
-                              if (msgLower.includes("takip")) { icon = "🌸"; bg = "bg-pink-100"; text = "text-pink-600"; }
-                              else if (msgLower.includes("ilan") || msgLower.includes("ekledi")) { icon = "📦"; bg = "bg-orange-100"; text = "text-orange-600"; }
-                              else if (msgLower.includes("beğen") || msgLower.includes("favori")) { icon = "❤️"; bg = "bg-red-100"; text = "text-red-600"; }
-                              else if (msgLower.includes("yorum")) { icon = "💬"; bg = "bg-green-100"; text = "text-green-600"; }
-
-                              return (
-                                <div key={notif.id} className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center">
-                                  <div className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} text-lg shrink-0`}>{icon}</div>
-                                  <div className="flex-1">
-                                    <p className="text-sm text-slate-700">{notif.message}</p>
-                                    <p className="text-[10px] text-slate-400 mt-0.5">{notif.createdAt ? new Date(notif.createdAt).toLocaleDateString('tr-TR') : "Yeni"}</p>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                        <Link href="/notifications" onClick={() => setIsNotificationOpen(false)} className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors">Tüm Bildirimleri Gör &rarr;</Link>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* PROFİL BUTONU */}
-                  <Link
-                    href="/profile"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
-                  >
-                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
-                      👤
-                    </div>
-                    <span className="hidden sm:block text-sm">Hesabım</span>
-                  </Link>
-
-                  <button
-                    onClick={handleLogout}
-                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold text-sm transition-colors"
-                  >
-                    Çıkış
-                  </button>
+                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+                  👤
                 </div>
-              ) : (
-                <Link
-                  href="/login"
-                  className="bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-black transition-colors"
-                >
-                  Giriş Yap
-                </Link>
-              )}
+                <span className="hidden sm:block text-sm">Hesabım</span>
+              </Link>
             </div>
           </div>
-          
-          {/* ALT SATIR: MOBİL ARAMA ÇUBUĞU (TAM OLARAK ANASAYFADAKİ GİBİ) */}
-          <div className="md:hidden pb-3 pt-1 w-full relative z-40">
-            <form onSubmit={handleSearchSubmit} className="w-full relative flex gap-2">
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  placeholder="Ürün, @üye veya ders notu ara..."
-                  className="w-full bg-[#F3F4F6] text-slate-800 rounded-lg py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-[#20B2AA] transition-all font-medium text-sm"
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setIsDropdownOpen(true);
-                  }}
-                  onFocus={() => setIsDropdownOpen(true)}
-                  onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-                />
-                <span className="absolute left-3 top-2.5 text-slate-400 text-lg">🔍</span>
-              </div>
-            </form>
-
-            {/* Mobil Açılır Menü */}
-            {isDropdownOpen && liveResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
-                {liveResults.slice(0, 4).map((result, idx) => (
-                  <Link
-                    href={result.type === "user" ? `/user/${result.item.id}` : `/listing-detail/${result.item.id}`}
-                    key={`mob-${idx}`}
-                    className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50"
-                  >
-                    <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
-                      {result.type === "user" ? <span className="font-bold text-blue-600">{result.item.fullName.charAt(0).toUpperCase()}</span> : <span className="text-xs">📦</span>}
-                    </div>
-                    <div className="flex-1 truncate">
-                      <div className="font-bold text-slate-800 truncate text-xs">{result.item.fullName || result.item.title}</div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-          
         </div>
       </header>
 
@@ -697,38 +637,53 @@ export default function ProfilePage() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {myListings.map((listing) => (
-                <Link
-                  href={`/listing-detail/${listing.id}`}
+                <div
                   key={listing.id}
                   className="group block relative cursor-pointer"
                 >
-                  <div className="aspect-[4/5] rounded-xl sm:rounded-2xl overflow-hidden bg-gray-100 mb-2 relative border shadow-sm group-hover:shadow-md transition">
-                    {listing.photosBase64?.[0] ? (
-                      <img
-                        src={listing.photosBase64[0]}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-3xl">
-                        📦
-                      </div>
-                    )}
-                    
-                    {listing.priceType === "takas" && <div className="absolute top-2 left-2 bg-purple-600 text-white text-[9px] sm:text-[10px] font-black px-2 py-1 rounded-md uppercase shadow-sm">Takaslık</div>}
-                    {listing.priceType === "ucretsiz" && <div className="absolute top-2 left-2 bg-green-500 text-white text-[9px] sm:text-[10px] font-black px-2 py-1 rounded-md uppercase shadow-sm">Ücretsiz</div>}
-
-                    <button
-                      onClick={(e) => handleDeleteListing(listing.id, e)}
-                      className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white p-1.5 sm:p-2 rounded-full opacity-100 lg:opacity-0 group-hover:opacity-100 transition shadow-lg z-20 hover:scale-110"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-gray-800 line-clamp-1 mb-0.5 sm:mb-1" title={listing.title}>
+                  <Link
+                    href={`/listing-detail/${listing.id}`}
+                    className="block"
+                  >
+                    <div className="aspect-[4/5] rounded-xl sm:rounded-2xl overflow-hidden bg-gray-100 mb-2 relative border shadow-sm group-hover:shadow-md transition">
+                      {listing.photosBase64?.[0] ? (
+                        <img
+                          src={listing.photosBase64[0]}
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-3xl">
+                          📦
+                        </div>
+                      )}
+                      {listing.priceType === "takas" && (
+                        <div className="absolute top-2 left-2 bg-purple-600 text-white text-[9px] sm:text-[10px] font-black px-2 py-1 rounded-md uppercase shadow-sm">
+                          Takaslık
+                        </div>
+                      )}
+                      {listing.priceType === "ucretsiz" && (
+                        <div className="absolute top-2 left-2 bg-green-500 text-white text-[9px] sm:text-[10px] font-black px-2 py-1 rounded-md uppercase shadow-sm">
+                          Ücretsiz
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                  <button
+                    onClick={(e) => handleDeleteListing(listing.id, e)}
+                    className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white p-1.5 sm:p-2 rounded-full shadow-lg z-20 hover:scale-110"
+                  >
+                    🗑️
+                  </button>
+                  <Link
+                    href={`/listing-detail/${listing.id}`}
+                    className="block"
+                  >
+                    <h3 className="text-xs sm:text-sm font-bold text-gray-800 line-clamp-1 mb-0.5 sm:mb-1">
                       {listing.title}
                     </h3>
-                    <p className="text-[10px] sm:text-xs text-gray-500 mb-1 line-clamp-1">{listing.category}</p>
+                    <p className="text-[10px] sm:text-xs text-gray-500 mb-1 line-clamp-1">
+                      {listing.category}
+                    </p>
                     <div className="text-sm sm:text-lg font-black text-gray-900">
                       {listing.priceType === "fiyat"
                         ? `₺${listing.price}`
@@ -736,8 +691,8 @@ export default function ProfilePage() {
                           ? "Takas"
                           : "Bedava"}
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                </div>
               ))}
             </div>
           )}
@@ -745,250 +700,80 @@ export default function ProfilePage() {
       </div>
 
       {/* 📸 MODALLAR */}
-      {activeModal === "cover" && (
-        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white w-full max-w-2xl rounded-2xl sm:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-            <div className="p-4 sm:p-6 border-b flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-lg sm:text-xl font-black text-gray-800">Kapak Düzenle</h2>
-              <button onClick={handleCancel} className="text-gray-400 hover:text-gray-800 text-2xl sm:text-3xl transition-colors">✕</button>
-            </div>
-            <div className="p-4 sm:p-8 bg-gray-50/30">
-              <div
-                onClick={() => coverInputRef.current?.click()}
-                className="h-32 sm:h-48 w-full rounded-xl sm:rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer relative bg-gray-200 shadow-inner hover:bg-gray-100 transition-colors overflow-hidden"
-              >
-                {coverImage && (
-                  <img
-                    src={coverImage}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    style={{ objectPosition: `center ${coverY}%` }}
-                  />
-                )}
-                <div className="absolute bg-black/60 text-white font-bold py-1.5 sm:py-2 px-4 sm:px-6 rounded-full flex items-center gap-2 hover:scale-105 transition text-xs sm:text-base">
-                  📷 Fotoğraf Seç
-                </div>
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                ref={coverInputRef}
-                onChange={(e) => handleImageUpload(e, "cover")}
-              />
-              {coverImage && (
-                <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 bg-white p-3 sm:p-4 rounded-xl border border-gray-200 shadow-sm">
-                  <span className="text-xs sm:text-sm font-bold text-gray-600 whitespace-nowrap">
-                    ↕️ Yukarı/Aşağı:
-                  </span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={coverY}
-                    onChange={(e) => setCoverY(parseInt(e.target.value))}
-                    className="w-full accent-gray-700"
-                  />
-                  <button
-                    onClick={() => setCoverImage(null)}
-                    className="text-red-500 font-bold text-xs sm:text-sm whitespace-nowrap hover:bg-red-50 px-3 py-1.5 rounded-lg transition w-full sm:w-auto"
-                  >
-                    🗑️ Kaldır
-                  </button>
-                </div>
-              )}
-            </div>
-            <div className="p-4 sm:p-6 bg-white border-t flex justify-end gap-2 sm:gap-3">
-              <button
-                onClick={handleCancel}
-                className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-bold text-gray-500 hover:bg-gray-100 text-sm sm:text-base transition-colors"
-              >
-                İptal
-              </button>
-              <button
-                onClick={() => saveAllData(false)}
-                disabled={isSaving}
-                className="px-6 sm:px-10 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-white bg-[#20B2AA] hover:bg-teal-700 min-w-[100px] sm:min-w-[140px] shadow-md transition-all text-sm sm:text-base"
-              >
-                {isSaving ? "⏳..." : "Kaydet"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeModal === "profile" && (
-        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white w-full max-w-2xl rounded-2xl sm:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-            <div className="p-4 sm:p-6 border-b flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-lg sm:text-xl font-black text-gray-800">Profil Fotoğrafı</h2>
-              <button onClick={handleCancel} className="text-gray-400 hover:text-gray-800 text-2xl sm:text-3xl transition-colors">✕</button>
-            </div>
-            <div className="p-4 sm:p-8 flex flex-col md:flex-row gap-6 sm:gap-8 items-center bg-gray-50/30">
-              <div className="relative w-32 h-32 sm:w-48 sm:h-48 bg-gray-100 rounded-full overflow-hidden border-4 border-white shrink-0 shadow-lg flex items-center justify-center">
-                <img
-                  src={profileImage || defaultAvatar}
-                  className="w-full h-full object-cover origin-center"
-                  style={{
-                    transform: `scale(${profileZoom}) rotate(${profileRotate}deg)`,
-                  }}
-                />
-              </div>
-              <div className="flex-1 w-full space-y-4 sm:space-y-6">
-                <div>
-                  <div className="flex justify-between items-center mb-1 sm:mb-2">
-                    <span className="text-xs sm:text-sm font-bold text-gray-600">🔍 Yakınlaştır</span>
-                    <span className="text-[10px] sm:text-xs font-black text-teal-700 bg-teal-50 px-2 py-1 rounded-md">{profileZoom}x</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="3"
-                    step="0.1"
-                    value={profileZoom}
-                    onChange={(e) => setProfileZoom(parseFloat(e.target.value))}
-                    className="w-full accent-gray-700"
-                  />
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-1 sm:mb-2">
-                    <span className="text-xs sm:text-sm font-bold text-gray-600">🔄 Düzelt (Döndür)</span>
-                    <span className="text-[10px] sm:text-xs font-black text-teal-700 bg-teal-50 px-2 py-1 rounded-md">{profileRotate}°</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-45"
-                    max="45"
-                    step="1"
-                    value={profileRotate}
-                    onChange={(e) =>
-                      setProfileRotate(parseFloat(e.target.value))
-                    }
-                    className="w-full accent-gray-700"
-                  />
-                </div>
-                <div className="flex gap-2 sm:gap-3 pt-2">
-                  <button
-                    onClick={() => profileInputRef.current?.click()}
-                    className="flex-1 bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg sm:rounded-xl transition shadow-sm text-xs sm:text-base"
-                  >
-                    📷 Yeni Seç
-                  </button>
-                  {profileImage && (
-                    <button
-                      onClick={() => {
-                        setProfileImage(null);
-                        setProfileZoom(1);
-                        setProfileRotate(0);
-                      }}
-                      className="text-red-500 font-bold py-2 sm:py-2.5 px-3 sm:px-4 hover:bg-red-50 rounded-lg sm:rounded-xl transition text-xs sm:text-base"
-                    >
-                      🗑️ Kaldır
-                    </button>
-                  )}
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  ref={profileInputRef}
-                  onChange={(e) => handleImageUpload(e, "profile")}
-                />
-              </div>
-            </div>
-            <div className="p-4 sm:p-6 bg-white border-t flex justify-end gap-2 sm:gap-3">
-              <button
-                onClick={handleCancel}
-                className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-bold text-gray-500 hover:bg-gray-100 text-sm sm:text-base transition-colors"
-              >
-                İptal
-              </button>
-              <button
-                onClick={() => saveAllData(false)}
-                disabled={isSaving}
-                className="px-6 sm:px-10 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-white bg-[#20B2AA] hover:bg-teal-700 min-w-[100px] sm:min-w-[140px] shadow-md transition-all text-sm sm:text-base"
-              >
-                {isSaving ? "⏳..." : "Kaydet"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {activeModal === "info" && (
         <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-2xl rounded-2xl sm:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
             <div className="p-4 sm:p-6 border-b flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-lg sm:text-xl font-black text-gray-800">Bilgilerini Düzenle</h2>
-              <button onClick={handleCancel} className="text-gray-400 hover:text-gray-800 text-2xl sm:text-3xl transition-colors">✕</button>
+              <h2 className="text-lg sm:text-xl font-black text-gray-800">
+                Bilgilerini Düzenle
+              </h2>
+              <button
+                onClick={handleCancel}
+                className="text-gray-400 hover:text-gray-800 text-2xl sm:text-3xl transition-colors"
+              >
+                ✕
+              </button>
             </div>
             <div className="p-4 sm:p-8 space-y-4 sm:space-y-6 overflow-y-auto bg-white custom-scrollbar">
-              <div className="space-y-3 sm:space-y-4">
-                <div>
-                  <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1 sm:mb-2">Ad Soyad</label>
+              <div>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1 sm:mb-2">
+                  Ad Soyad
+                </label>
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="w-full bg-gray-50 text-gray-900 rounded-lg sm:rounded-xl py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-gray-200 font-bold text-sm sm:text-base"
+                />
+              </div>
+              {newName.trim() !== user?.fullName && (
+                <div className="bg-red-50 border border-red-200 p-3 sm:p-4 rounded-lg sm:rounded-xl">
+                  <label className="block text-xs sm:text-sm font-bold text-red-700 mb-1">
+                    🔒 Güvenlik Doğrulaması
+                  </label>
                   <input
-                    type="text"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className="w-full bg-gray-50 text-gray-900 rounded-lg sm:rounded-xl py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-gray-200 font-bold text-sm sm:text-base"
+                    type="password"
+                    value={passwordConfirm}
+                    onChange={(e) => setPasswordConfirm(e.target.value)}
+                    placeholder="Şifrenizi girin..."
+                    className="w-full bg-white text-gray-900 rounded-lg sm:rounded-xl py-2 sm:py-2.5 px-3 sm:px-4 border border-red-200 text-sm"
                   />
                 </div>
-                {newName.trim() !== user?.fullName && (
-                  <div className="bg-red-50 border border-red-200 p-3 sm:p-4 rounded-lg sm:rounded-xl animate-in fade-in slide-in-from-top-2">
-                    <label className="block text-xs sm:text-sm font-bold text-red-700 mb-1">
-                      🔒 Güvenlik Doğrulaması
-                    </label>
-                    <p className="text-[10px] sm:text-xs text-red-600 mb-2 sm:mb-3 font-medium">İsmini değiştirmek için mevcut şifreni girmelisin.</p>
-                    <input
-                      type="password"
-                      value={passwordConfirm}
-                      onChange={(e) => setPasswordConfirm(e.target.value)}
-                      placeholder="Şifrenizi girin..."
-                      className="w-full bg-white text-gray-900 rounded-lg sm:rounded-xl py-2 sm:py-2.5 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-red-500 border border-red-200 text-sm"
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="space-y-3 sm:space-y-4">
-                <div>
-                  <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1 sm:mb-2">
-                    Üniversite
-                  </label>
-                  <select
-                    value={university}
-                    onChange={(e) => setUniversity(e.target.value)}
-                    className="w-full bg-gray-50 text-gray-900 rounded-lg sm:rounded-xl py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-gray-200 font-semibold text-xs sm:text-sm appearance-none"
-                  >
-                    {UNIVERSITIES.map((u) => (
-                      <option key={u} value={u}>
-                        {u}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {university === "Diğer..." && (
-                  <div className="animate-in fade-in slide-in-from-top-2">
-                    <label className="block text-xs sm:text-sm font-bold text-red-600 mb-1 sm:mb-2">
-                      Lütfen Üniversitenizin Adını Yazın *
-                    </label>
-                    <input
-                      type="text"
-                      value={customUniversity}
-                      onChange={(e) => setCustomUniversity(e.target.value)}
-                      placeholder="Örn: X Teknik Üniversitesi"
-                      className="w-full bg-red-50 text-gray-900 rounded-lg sm:rounded-xl py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-red-500 border border-red-200 font-semibold text-sm"
-                      required
-                    />
-                  </div>
-                )}
-              </div>
+              )}
               <div>
-                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1 sm:mb-2">Hakkımda</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1 sm:mb-2">
+                  Üniversite
+                </label>
+                <select
+                  value={university}
+                  onChange={(e) => setUniversity(e.target.value)}
+                  className="w-full bg-gray-50 text-gray-900 rounded-lg sm:rounded-xl py-2.5 sm:py-3 px-3 sm:px-4 border border-gray-200 font-semibold text-xs sm:text-sm"
+                >
+                  {UNIVERSITIES.map((u) => (
+                    <option key={u} value={u}>
+                      {u}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {university === "Diğer..." && (
+                <input
+                  type="text"
+                  value={customUniversity}
+                  onChange={(e) => setCustomUniversity(e.target.value)}
+                  placeholder="Örn: X Teknik Üniversitesi"
+                  className="w-full bg-red-50 text-gray-900 rounded-lg sm:rounded-xl py-2.5 sm:py-3 px-3 sm:px-4 border border-red-200 font-semibold text-sm"
+                />
+              )}
+              <div>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1 sm:mb-2">
+                  Hakkımda
+                </label>
                 <textarea
                   rows={4}
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
-                  placeholder="Bölümünü, neler sattığını veya ilgi alanlarını yaz..."
-                  className="w-full bg-gray-50 text-gray-900 rounded-lg sm:rounded-xl py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-gray-200 resize-none font-medium text-sm sm:text-base"
+                  className="w-full bg-gray-50 text-gray-900 rounded-lg sm:rounded-xl py-2.5 sm:py-3 px-3 sm:px-4 border border-gray-200 resize-none font-medium text-sm sm:text-base"
                 />
               </div>
             </div>
@@ -1002,7 +787,7 @@ export default function ProfilePage() {
               <button
                 onClick={() => saveAllData(true)}
                 disabled={isSaving}
-                className="px-6 sm:px-10 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-white bg-[#20B2AA] hover:bg-teal-700 min-w-[100px] sm:min-w-[140px] shadow-md transition-all hover:scale-105 text-sm sm:text-base"
+                className="px-6 sm:px-10 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-white bg-[#20B2AA] hover:bg-teal-700 min-w-[100px] shadow-md transition-all text-sm sm:text-base"
               >
                 {isSaving ? "⏳..." : "Kaydet"}
               </button>
@@ -1011,7 +796,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 🌊 AÇIK RENK, MİNİMALİST FOOTER */}
+      {/* 🌊 FOOTER */}
       <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
@@ -1038,11 +823,6 @@ export default function ProfilePage() {
                   Güvenlik İpuçları
                 </button>
               </li>
-              <li>
-                <button className="hover:text-blue-600 transition-colors">
-                  Kampüs Kuralları
-                </button>
-              </li>
             </ul>
           </div>
           <div>
@@ -1058,11 +838,6 @@ export default function ProfilePage() {
                   Bize Ulaşın
                 </button>
               </li>
-              <li>
-                <button className="hover:text-blue-600 transition-colors">
-                  S.S.S.
-                </button>
-              </li>
             </ul>
           </div>
         </div>
@@ -1071,18 +846,19 @@ export default function ProfilePage() {
         </div>
       </footer>
 
-      {/* 🚀 VERCEL SSR VE IOS CSS HACK'LERİ EKLENDİ */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
         @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-        
         .desktop-search { display: none; }
         .mobile-search { display: block; }
         @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }
-      `}} />
+      `,
+        }}
+      />
     </div>
   );
 }

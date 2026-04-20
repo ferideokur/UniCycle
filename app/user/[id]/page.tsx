@@ -14,72 +14,6 @@ import {
   Send,
 } from "lucide-react";
 
-// 🎓 Türkiye'deki Üniversiteler Listesi
-const UNIVERSITIES = [
-  "Acıbadem Üniversitesi",
-  "Akdeniz Üniversitesi",
-  "Anadolu Üniversitesi",
-  "Ankara Üniversitesi",
-  "Atatürk Üniversitesi",
-  "Bahçeşehir Üniversitesi",
-  "Başkent Üniversitesi",
-  "Bilkent Üniversitesi",
-  "Boğaziçi Üniversitesi",
-  "Bursa Uludağ Üniversitesi",
-  "Celal Bayar Üniversitesi",
-  "Çanakkale Onsekiz Mart Üniversitesi",
-  "Çukurova Üniversitesi",
-  "Dicle Üniversitesi",
-  "Dokuz Eylül Üniversitesi",
-  "Ege Üniversitesi",
-  "Erciyes Üniversitesi",
-  "Eskişehir Osmangazi Üniversitesi",
-  "Fırat Üniversitesi",
-  "Galatasaray Üniversitesi",
-  "Gazi Üniversitesi",
-  "Gaziantep Üniversitesi",
-  "Gebze Teknik Üniversitesi",
-  "Hacettepe Üniversitesi",
-  "Hasan Kalyoncu Üniversitesi",
-  "Isparta Süleyman Demirel Üniversitesi",
-  "İbn Haldun Üniversitesi",
-  "İstanbul Aydın Üniversitesi",
-  "İstanbul Bilgi Üniversitesi",
-  "İstanbul Kültür Üniversitesi",
-  "İstanbul Medipol Üniversitesi",
-  "İstanbul Okan Üniversitesi",
-  "İstanbul Sabahattin Zaim Üniversitesi",
-  "İstanbul Teknik Üniversitesi (İTÜ)",
-  "İstanbul Ticaret Üniversitesi",
-  "İstanbul Üniversitesi",
-  "İzmir Ekonomi Üniversitesi",
-  "İzmir Katip Çelebi Üniversitesi",
-  "İzmir Yüksek Teknoloji Enstitüsü (İYTE)",
-  "Kadir Has Üniversitesi",
-  "Karadeniz Teknik Üniversitesi (KTÜ)",
-  "Kırıkkale Üniversitesi",
-  "Kocaeli Üniversitesi",
-  "Koç Üniversitesi",
-  "Marmara Üniversitesi",
-  "Mef Üniversitesi",
-  "Mimar Sinan Güzel Sanatlar Üniversitesi",
-  "Muğla Sıtkı Koçman Üniversitesi",
-  "Ondokuz Mayıs Üniversitesi",
-  "Orta Doğu Teknik Üniversitesi (ODTÜ)",
-  "Özyeğin Üniversitesi",
-  "Pamukkale Üniversitesi",
-  "Piri Reis Üniversitesi",
-  "Sabancı Üniversitesi",
-  "Sakarya Üniversitesi",
-  "Selçuk Üniversitesi",
-  "TOBB Ekonomi ve Teknoloji Üniversitesi",
-  "Trakya Üniversitesi",
-  "Türk-Alman Üniversitesi",
-  "Yeditepe Üniversitesi",
-  "Yıldız Teknik Üniversitesi (YTÜ)",
-  "Diğer...",
-];
-
 export default function PublicProfilePage() {
   const { id } = useParams();
   const router = useRouter();
@@ -139,19 +73,24 @@ export default function PublicProfilePage() {
     const fetchData = async () => {
       try {
         // Kullanıcı bilgisini çek (Önbelleği kırarak her seferinde güncel veriyi alırız)
-        const userRes = await fetch(`https://unicycle-api.onrender.com/api/users/${id}`, {
-          cache: "no-store",
-        });
+        const userRes = await fetch(
+          `https://unicycle-api.onrender.com/api/users/${id}`,
+          {
+            cache: "no-store",
+          },
+        );
         if (!userRes.ok) throw new Error("Kullanıcı bulunamadı");
         const userData = await userRes.json();
         setUser(userData);
 
-        // Profil detaylarını çek
+        // Profil detaylarını çek (Kendi profili ise localStorage'dan resimleri alır)
         const savedProfile = localStorage.getItem(`profile_${userData.email}`);
         if (savedProfile) setProfileData(JSON.parse(savedProfile));
 
         // Kullanıcının ilanlarını çek
-        const prodRes = await fetch("https://unicycle-api.onrender.com/api/products");
+        const prodRes = await fetch(
+          "https://unicycle-api.onrender.com/api/products",
+        );
         if (prodRes.ok) {
           const allProducts = await prodRes.json();
           if (Array.isArray(allProducts)) {
@@ -271,14 +210,17 @@ export default function PublicProfilePage() {
       );
 
       if (newFollowState) {
-        await fetch("https://unicycle-api.onrender.com/api/interaction/notifications", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: Number(id),
-            message: `${currentUser.fullName} seni takip etmeye başladı.`,
-          }),
-        });
+        await fetch(
+          "https://unicycle-api.onrender.com/api/interaction/notifications",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: Number(id),
+              message: `${currentUser.fullName} seni takip etmeye başladı.`,
+            }),
+          },
+        );
       }
     } catch (err) {
       console.error("Takip işlemi başarısız:", err);
@@ -287,66 +229,52 @@ export default function PublicProfilePage() {
     }
   };
 
-  // 🔥 İŞTE BÜTÜN SORUNU ÇÖZEN KISIM: GLOBAL CHATBOX'A SİNYAL GÖNDERİYORUZ
+  // 🔥 GLOBAL CHATBOX'A SİNYAL GÖNDERİYORUZ
   const handleMessageClick = () => {
     if (!currentUser) return showToast("🔒 Mesaj atmak için giriş yapmalısın!");
     if (user) {
-      window.dispatchEvent(new CustomEvent("openChatWithContext", {
-        detail: {
+      window.dispatchEvent(
+        new CustomEvent("openChatWithContext", {
+          detail: {
             sellerId: user.id,
             sellerName: user.fullName,
-            productTitle: "" // Profil sayfasından gidildiği için ilan adı boş
-        }
-      }));
-    }
-  };
-
-  // 🚀 ZAMAN MATEMATİĞİ (Kullanıcının Çevrimiçi Durumu)
-  const checkIsOnline = (lastActiveRaw: any) => {
-    if (!lastActiveRaw) return false;
-
-    let lastActiveDate;
-    if (Array.isArray(lastActiveRaw)) {
-      lastActiveDate = new Date(
-        lastActiveRaw[0],
-        lastActiveRaw[1] - 1,
-        lastActiveRaw[2],
-        lastActiveRaw[3],
-        lastActiveRaw[4],
-        lastActiveRaw[5] || 0,
+            productTitle: "", // Profil sayfasından gidildiği için ilan adı boş
+          },
+        }),
       );
-    } else {
-      const cleanString = lastActiveRaw.toString().replace("Z", "");
-      lastActiveDate = new Date(cleanString);
     }
-
-    const now = new Date();
-    const diffInMinutes = (now.getTime() - lastActiveDate.getTime()) / (1000 * 60);
-
-    return diffInMinutes >= -2 && diffInMinutes <= 5;
   };
 
   if (isLoading)
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-bold text-slate-500">
-        Yükleniyor...
+        <div className="animate-spin text-4xl sm:text-5xl">⏳</div>
       </div>
     );
+
   if (!user)
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-bold text-2xl text-slate-700">
-        Kullanıcı Bulunamadı
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
+        <h2 className="text-2xl font-bold text-slate-800">
+          Kullanıcı bulunamadı!
+        </h2>
+        <button
+          onClick={() => router.back()}
+          className="mt-4 text-blue-600 font-bold hover:underline"
+        >
+          Geri Dön
+        </button>
       </div>
     );
 
   const safeLiveResults = Array.isArray(liveResults) ? liveResults : [];
   const safeFullName = user?.fullName || "Kullanıcı";
   const defaultAvatar = `https://ui-avatars.com/api/?name=${safeFullName}&background=0D8ABC&color=fff&size=256`;
-  const displayUniversity = profileData?.university || "Piri Reis Üniversitesi";
+
+  // 🎓 İŞTE BÜYÜK ÇÖZÜM BURASI: Önce Veritabanına Bak, Bulamazsan Belirtilmemiş Yaz!
+  const displayUniversity = user?.university || "Üniversite Belirtilmemiş";
   const displayBio = profileData?.bio || "Merhaba! UniCycle'da yeniyim.";
   const isOwner = currentUser && Number(currentUser.id) === Number(id);
-
-  const isUserOnline = checkIsOnline(user.lastActive);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans relative w-full overflow-x-hidden flex flex-col">
@@ -385,7 +313,7 @@ export default function PublicProfilePage() {
               <input
                 type="text"
                 placeholder="Ürün, @üye veya ders notu ara..."
-                className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] font-medium"
+                className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-transparent font-medium"
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -471,7 +399,9 @@ export default function PublicProfilePage() {
                   href="/profile"
                   className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
                 >
-                  <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">👤</div>
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+                    👤
+                  </div>
                   <span className="hidden sm:block text-sm">Hesabım</span>
                 </Link>
                 <button
@@ -494,7 +424,10 @@ export default function PublicProfilePage() {
 
         {/* 🚀 MOBİL ARAMA ÇUBUĞU */}
         <div className="mobile-search pb-3 pt-1 w-full relative z-40 px-4 bg-white border-b border-gray-100 shadow-sm">
-          <form onSubmit={handleSearchSubmit} className="w-full relative flex gap-2">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="w-full relative flex gap-2"
+          >
             <div className="flex-1 relative">
               <input
                 type="text"
@@ -508,7 +441,9 @@ export default function PublicProfilePage() {
                 onFocus={() => setIsDropdownOpen(true)}
                 onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
               />
-              <span className="absolute left-3 top-2.5 text-slate-400 text-lg">🔍</span>
+              <span className="absolute left-3 top-2.5 text-slate-400 text-lg">
+                🔍
+              </span>
             </div>
           </form>
           {isDropdownOpen && safeLiveResults.length > 0 && (
@@ -587,14 +522,14 @@ export default function PublicProfilePage() {
                   <>
                     <button
                       onClick={handleMessageClick}
-                      className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold py-1.5 px-4 rounded-full text-xs sm:text-sm flex items-center gap-1.5 transition-colors"
+                      className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold py-1.5 px-4 rounded-full text-xs sm:text-sm flex items-center gap-1.5 transition-colors shadow-sm"
                     >
-                      <span>💬</span>{" "}
+                      <MessageSquare className="w-4 h-4" />{" "}
                       <span className="hidden sm:inline">Mesaj At</span>
                     </button>
                     <button
                       onClick={handleFollowToggle}
-                      className={`font-bold py-1.5 px-4 sm:py-2 sm:px-6 rounded-full text-xs sm:text-sm transition-all shadow-sm ${isFollowing ? "bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200" : "bg-blue-600 text-white hover:bg-blue-700"}`}
+                      className={`font-bold py-1.5 px-4 sm:py-2 sm:px-6 rounded-full text-xs sm:text-sm transition-all shadow-sm flex items-center gap-1.5 ${isFollowing ? "bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200" : "bg-blue-600 text-white hover:bg-blue-700"}`}
                     >
                       {isFollowing ? (
                         <>
@@ -612,14 +547,18 @@ export default function PublicProfilePage() {
 
             <div className="text-left">
               <h1 className="text-2xl sm:text-3xl font-black text-gray-900 flex items-center gap-2">
-                {safeFullName} <span className="text-blue-500 text-xl">✓</span>
+                {safeFullName}{" "}
+                <ShieldCheck className="text-blue-500 w-5 h-5 sm:w-7 sm:h-7" />
               </h1>
               <p className="text-sm font-bold text-slate-500 mt-0.5">
                 @{safeFullName.split(" ")[0].toLowerCase()}
               </p>
-              <div className="mt-4 flex items-center gap-2 text-sm font-bold text-slate-600">
-                <span>🏫</span> {displayUniversity}
-              </div>
+
+              {/* 🎓 ÜNİVERSİTE ALANI */}
+              <p className="text-xs sm:text-lg font-bold text-gray-600 mt-2">
+                👩‍🎓 {displayUniversity}
+              </p>
+
               <p className="text-slate-700 mt-3 text-sm font-medium leading-relaxed">
                 {displayBio}
               </p>
@@ -628,31 +567,33 @@ export default function PublicProfilePage() {
         </div>
 
         {/* 🛍️ VİTRİN */}
-        <div className="mt-8 mb-8">
-          <h2 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
-            🛍️ Vitrin{" "}
-            <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full text-xs">
+        <div className="mt-8 mb-8 bg-white rounded-3xl shadow-sm border border-gray-200 p-6 sm:p-8">
+          <h2 className="text-lg sm:text-2xl font-black text-slate-800 mb-6 flex items-center gap-2">
+            🛍️ {safeFullName.split(" ")[0]}'in Vitrini{" "}
+            <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-sm">
               {listings.length}
             </span>
           </h2>
           {listings.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-gray-300">
+            <div className="text-center py-16 bg-gray-50 rounded-3xl border border-dashed border-gray-300">
               <span className="text-5xl block mb-4">📭</span>
-              <h3 className="text-xl font-bold">Vitrin boş!</h3>
+              <h3 className="text-xl font-bold text-slate-600">
+                Kullanıcının henüz bir ilanı yok.
+              </h3>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {listings.map((p) => (
                 <Link
                   href={`/listing-detail/${p.id}`}
                   key={p.id}
-                  className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 flex flex-col hover:shadow-md transition-all hover:-translate-y-1"
+                  className="group block relative cursor-pointer"
                 >
-                  <div className="aspect-[4/5] bg-slate-50 p-2 relative">
+                  <div className="aspect-[4/5] rounded-xl sm:rounded-2xl overflow-hidden bg-gray-100 mb-2 relative border shadow-sm group-hover:shadow-md transition">
                     {p.photosBase64?.[0] ? (
                       <img
                         src={p.photosBase64[0]}
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-3xl">
@@ -660,24 +601,27 @@ export default function PublicProfilePage() {
                       </div>
                     )}
                     {p.priceType === "takas" && (
-                      <div className="absolute top-2 left-2 bg-purple-600 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase shadow-sm">
+                      <div className="absolute top-2 left-2 bg-purple-600 text-white text-[9px] sm:text-[10px] font-black px-2 py-1 rounded-md uppercase shadow-sm">
                         Takaslık
                       </div>
                     )}
                     {p.priceType === "ucretsiz" && (
-                      <div className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase shadow-sm">
+                      <div className="absolute top-2 left-2 bg-green-500 text-white text-[9px] sm:text-[10px] font-black px-2 py-1 rounded-md uppercase shadow-sm">
                         Ücretsiz
                       </div>
                     )}
                   </div>
-                  <div className="p-3 flex-1 flex flex-col border-t border-slate-50">
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider line-clamp-1 mb-1">
-                      {p.category}
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-800 line-clamp-1 mb-1 group-hover:text-blue-600">
+                  <div>
+                    <h3
+                      className="text-xs sm:text-sm font-bold text-gray-800 line-clamp-1 mb-0.5 sm:mb-1"
+                      title={p.title}
+                    >
                       {p.title}
                     </h3>
-                    <div className="mt-auto text-base font-black text-blue-600">
+                    <p className="text-[10px] sm:text-xs text-gray-500 mb-1 line-clamp-1">
+                      {p.category}
+                    </p>
+                    <div className="text-sm sm:text-lg font-black text-gray-900">
                       {p.priceType === "fiyat"
                         ? `₺${p.price}`
                         : p.priceType === "takas"
@@ -692,7 +636,7 @@ export default function PublicProfilePage() {
         </div>
       </div>
 
-      {/* 🌊 AÇIK RENK, MİNİMALİST FOOTER */}
+      {/* 🌊 FOOTER */}
       <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
@@ -752,18 +696,19 @@ export default function PublicProfilePage() {
         </div>
       </footer>
 
-      {/* 🚀 VERCEL SSR VE IOS CSS HACK'LERİ EKLENDİ */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
         @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-        
         .desktop-search { display: none; }
         .mobile-search { display: block; }
         @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }
-      `}} />
+      `,
+        }}
+      />
     </div>
   );
 }
