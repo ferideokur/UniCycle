@@ -201,6 +201,9 @@ export default function Home() {
   // 🚀 YENİ: Sıralama State'i
   const [sortType, setSortType] = useState("En Yeni");
 
+  // 🎨 YENİ TASARIM: Filtre Menüsü Aç/Kapa State'i
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+
   const [user, setUser] = useState<{
     id: number;
     fullName: string;
@@ -560,11 +563,15 @@ export default function Home() {
     return matchesSearch && matchesCategory;
   });
 
-  // 🧮 YENİ: Seçilen Kurala Göre Ürünleri Sıralama Motoru
+  // 🧮 Seçilen Kurala Göre Ürünleri Sıralama Motoru (En Çok Beğeni Mantığıyla Birlikte)
   const sortedProducts = [...filteredProducts].sort((a: any, b: any) => {
     switch (sortType) {
       case "En Eski":
         return a.id - b.id; // ID'si küçük olan (eski olan) başa
+      case "En Çok Beğeni":
+        return (b.likeCount || 0) - (a.likeCount || 0); // Beğenisi çok olan başa
+      case "En Az Beğeni":
+        return (a.likeCount || 0) - (b.likeCount || 0); // Beğenisi az olan başa
       case "Fiyat (Artan)":
         return Number(a.price || 0) - Number(b.price || 0); // Ucuzdan pahalıya
       case "Fiyat (Azalan)":
@@ -1071,53 +1078,93 @@ export default function Home() {
             </div>
           )}
 
-          {/* 🎓 ÜNİVERSİTE FİLTRESİ VE BAŞLIK BÖLÜMÜ */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-4 sm:mb-6 pb-2 sm:pb-4 gap-4">
-            <h3 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">
-              {searchTerm
-                ? `"${searchTerm}" araması`
-                : activeFilter === "TÜMÜ"
-                  ? "Kampüsün En Yenileri"
-                  : `${activeFilter}`}
-            </h3>
+          {/* 🎓 YEPYENİ VE ŞIK TASARIM: AÇILIR KAPANIR FİLTRE BUTONU */}
+          <div className="flex flex-row justify-between items-center mb-6 pb-4 border-b border-slate-200 relative">
+            <div>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">
+                {searchTerm
+                  ? `"${searchTerm}" araması`
+                  : activeFilter === "TÜMÜ"
+                    ? "Kampüsün En Yenileri"
+                    : `${activeFilter}`}
+              </h3>
+              {(selectedUniversity !== "Tüm Üniversiteler" || sortType !== "En Yeni") && (
+                <p className="text-[10px] sm:text-xs text-blue-600 font-bold mt-1 bg-blue-50 inline-block px-2 py-1 rounded-md">
+                  {selectedUniversity !== "Tüm Üniversiteler" ? `🎓 ${selectedUniversity}` : ""}
+                  {selectedUniversity !== "Tüm Üniversiteler" && sortType !== "En Yeni" ? " • " : ""}
+                  {sortType !== "En Yeni" ? `↕️ ${sortType}` : ""}
+                </p>
+              )}
+            </div>
 
-            {/* YENİ ÜNİVERSİTE AÇILIR MENÜSÜ & SIRALAMA */}
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl shadow-sm border border-slate-200 w-full sm:w-auto hover:border-blue-400 transition-colors">
-                <span className="text-lg">🎓</span>
-                <select
-                  className="bg-transparent text-slate-700 text-sm font-bold w-full outline-none cursor-pointer truncate"
-                  value={selectedUniversity}
-                  onChange={(e) => setSelectedUniversity(e.target.value)}
-                >
-                  {UNIVERSITIES.map((uni) => (
-                    <option key={uni} value={uni}>
-                      {uni}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {/* 🚀 MODERN FİLTRE BUTONU VE AÇILIR MENÜ */}
+            <div className="relative">
+              <button
+                onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
+                className={`flex items-center gap-2.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-sm border transition-all font-bold text-sm ${isFilterMenuOpen ? "bg-[#20B2AA] text-white border-[#20B2AA] shadow-md" : "bg-white text-slate-700 border-slate-200 hover:border-[#20B2AA] hover:text-[#20B2AA]"}`}
+              >
+                {/* 🎨 Tam Google Tarzı Özel SVG İkon */}
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="8" cy="8" r="2.5"></circle>
+                  <line x1="2" y1="8" x2="5.5" y2="8"></line>
+                  <line x1="10.5" y1="8" x2="22" y2="8"></line>
+                  <circle cx="16" cy="16" r="2.5"></circle>
+                  <line x1="2" y1="16" x2="13.5" y2="16"></line>
+                  <line x1="18.5" y1="16" x2="22" y2="16"></line>
+                </svg>
+                <span className="hidden sm:block">Filtrele & Sırala</span>
+              </button>
 
-              {/* 🚀 YENİ: DİNAMİK SIRALAMA KUTUSU */}
-              <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-blue-300 transition-colors hidden sm:flex">
-                <span className="text-xs font-bold text-slate-500">
-                  Sırala:
-                </span>
-                <select
-                  className="bg-transparent text-slate-700 text-sm font-bold outline-none cursor-pointer"
-                  value={sortType}
-                  onChange={(e) => setSortType(e.target.value)}
-                >
-                  <option value="En Yeni">En Yeni İlanlar</option>
-                  <option value="En Eski">En Eski İlanlar</option>
-                  <option value="Fiyat (Artan)">
-                    Fiyat (Ucuzdan Pahalıya)
-                  </option>
-                  <option value="Fiyat (Azalan)">
-                    Fiyat (Pahalıdan Ucuza)
-                  </option>
-                </select>
-              </div>
+              {/* 🔽 AÇILIR MENÜ KUTUSU */}
+              {isFilterMenuOpen && (
+                <div className="absolute right-0 top-full mt-3 w-72 sm:w-80 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-slate-100 p-5 z-[100] animate-in fade-in slide-in-from-top-2">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-black text-slate-800">Görünümü Özelleştir</h4>
+                    <button onClick={() => setIsFilterMenuOpen(false)} className="text-slate-400 hover:text-red-500 font-bold">✕</button>
+                  </div>
+                  
+                  {/* Üniversite Seçimi */}
+                  <div className="mb-4">
+                    <label className="block text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-wider">🎓 Kampüs Seçimi</label>
+                    <select
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all cursor-pointer"
+                      value={selectedUniversity}
+                      onChange={(e) => setSelectedUniversity(e.target.value)}
+                    >
+                      {UNIVERSITIES.map((uni) => (
+                        <option key={uni} value={uni}>
+                          {uni}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Sıralama Seçimi */}
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-wider">↕️ Sıralama Ölçütü</label>
+                    <select
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all cursor-pointer"
+                      value={sortType}
+                      onChange={(e) => setSortType(e.target.value)}
+                    >
+                      <option value="En Yeni">✨ En Yeni İlanlar</option>
+                      <option value="En Eski">🕰️ En Eski İlanlar</option>
+                      <option value="En Çok Beğeni">❤️ En Çok Beğenilenler</option>
+                      <option value="En Az Beğeni">💔 En Az Beğenilenler</option>
+                      <option value="Fiyat (Artan)">📉 Fiyat (Ucuzdan Pahalıya)</option>
+                      <option value="Fiyat (Azalan)">📈 Fiyat (Pahalıdan Ucuza)</option>
+                    </select>
+                  </div>
+
+                  {/* Tamamla Butonu */}
+                  <button 
+                    onClick={() => setIsFilterMenuOpen(false)}
+                    className="w-full mt-5 bg-slate-800 text-white font-bold py-2.5 rounded-xl hover:bg-black transition-colors shadow-sm"
+                  >
+                    Sonuçları Göster
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
