@@ -193,63 +193,40 @@ export default function Home() {
 
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState("TÜMÜ");
-
-  // 🎓 YENİ: Seçili Üniversite State'i
   const [selectedUniversity, setSelectedUniversity] =
     useState("Tüm Üniversiteler");
-
-  // 🚀 YENİ: Sıralama State'i
   const [sortType, setSortType] = useState("En Yeni");
-
-  // 🎨 YENİ TASARIM: Filtre Menüsü Aç/Kapa State'i
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-
   const [user, setUser] = useState<{
     id: number;
     fullName: string;
     email: string;
   } | null>(null);
-
   const [likedProducts, setLikedProducts] = useState<number[]>([]);
-
-  // 🚀 CANLI ARAMA (LIVE SEARCH) HAFIZASI
   const [liveResults, setLiveResults] = useState<
     { type: "user" | "product"; item: any }[]
   >([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  // 🔔 BİLDİRİM VE AÇILIR MENÜ HAFIZASI
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notificationsList, setNotificationsList] = useState<any[]>([]);
-
-  // 📜 ALT MENÜ (FOOTER) POP-UP HAFIZASI
   const [infoModal, setInfoModal] = useState<{
     isOpen: boolean;
     title: string;
     content: string;
-  }>({
-    isOpen: false,
-    title: "",
-    content: "",
-  });
+  }>({ isOpen: false, title: "", content: "" });
 
   const openInfoModal = (title: string, content: string) => {
     setInfoModal({ isOpen: true, title, content });
   };
 
-  // 🌐 JAVA'DAN GERÇEK İLANLARI ÇEKME MOTORU (Üniversite Filtreli)
   const fetchAllListings = async () => {
     setIsLoading(true);
     try {
       let url = "https://unicycle-api.onrender.com/api/products";
-
-      if (selectedUniversity !== "Tüm Üniversiteler") {
+      if (selectedUniversity !== "Tüm Üniversiteler")
         url += `?university=${encodeURIComponent(selectedUniversity)}`;
-      }
-
       const response = await fetch(url);
-
       if (response.ok) {
         const data = await response.json();
         if (Array.isArray(data)) {
@@ -258,7 +235,7 @@ export default function Home() {
         }
       }
     } catch (error) {
-      console.error("Java'ya bağlanılamadı. Arka planda açık mı?", error);
+      console.error("Java bağlanılamadı", error);
     } finally {
       setIsLoading(false);
     }
@@ -270,7 +247,6 @@ export default function Home() {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
-
         const likes = JSON.parse(
           localStorage.getItem(`likes_${parsedUser.email}`) || "[]",
         );
@@ -294,13 +270,11 @@ export default function Home() {
               const unreadNotifs = activeNotifs.filter(
                 (n: any) => !seenNotifs.includes(n.id),
               );
-
               setNotificationsCount(unreadNotifs.length);
               setNotificationsList(activeNotifs);
             }
           })
-          .catch((err) => console.error("Bildirimler çekilemedi:", err));
-
+          .catch((err) => console.error("Bildirim hatası:", err));
         window.addEventListener("notificationsSeen", () =>
           setNotificationsCount(0),
         );
@@ -308,7 +282,6 @@ export default function Home() {
         console.error(e);
       }
     }
-
     return () =>
       window.removeEventListener("notificationsSeen", () =>
         setNotificationsCount(0),
@@ -325,17 +298,13 @@ export default function Home() {
         setLiveResults([]);
         return;
       }
-
       try {
         const isUserSearch = searchTerm.startsWith("@");
         const query = isUserSearch
           ? searchTerm.substring(1).trim()
           : searchTerm.trim();
-
         if (!query) return;
-
         let combined: { type: "user" | "product"; item: any }[] = [];
-
         if (isUserSearch) {
           const userRes = await fetch(
             `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
@@ -350,22 +319,18 @@ export default function Home() {
             `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`,
           );
           if (prodRes.ok) {
-            const products = await prodRes.json();
-            if (Array.isArray(products)) {
-              products.sort((a: any, b: any) => b.id - a.id);
-              combined = products.map((p: any) => ({
-                type: "product",
-                item: p,
-              }));
+            const prods = await prodRes.json();
+            if (Array.isArray(prods)) {
+              prods.sort((a: any, b: any) => b.id - a.id);
+              combined = prods.map((p: any) => ({ type: "product", item: p }));
             }
           }
         }
         setLiveResults(combined);
       } catch (error) {
-        console.error("Canlı arama hatası:", error);
+        console.error("Arama hatası", error);
       }
     };
-
     const timer = setTimeout(() => fetchLive(), 300);
     return () => clearTimeout(timer);
   }, [searchTerm]);
@@ -380,16 +345,9 @@ export default function Home() {
   const toggleLike = async (e: React.MouseEvent, productObject: any) => {
     e.stopPropagation();
     e.preventDefault();
-
-    if (!user) {
-      alert("Beğenmek için giriş yapmalısın!");
-      return;
-    }
-
+    if (!user) return alert("Beğenmek için giriş yapmalısın!");
     let newLikes = [...likedProducts];
-    const isAlreadyLiked = newLikes.includes(productObject.id);
-
-    if (isAlreadyLiked) {
+    if (newLikes.includes(productObject.id)) {
       newLikes = newLikes.filter((id) => id !== productObject.id);
       try {
         await fetch(
@@ -397,7 +355,7 @@ export default function Home() {
           { method: "DELETE" },
         );
       } catch (err) {
-        console.error("Beğeni silinemedi:", err);
+        console.error(err);
       }
     } else {
       newLikes.push(productObject.id);
@@ -411,9 +369,8 @@ export default function Home() {
           }),
         });
       } catch (err) {
-        console.error("Beğeni kaydedilemedi:", err);
+        console.error(err);
       }
-
       if (productObject.user && productObject.user.id !== user.id) {
         try {
           await fetch(
@@ -428,11 +385,10 @@ export default function Home() {
             },
           );
         } catch (err) {
-          console.error("Bildirim gönderilemedi:", err);
+          console.error(err);
         }
       }
     }
-
     setLikedProducts(newLikes);
     localStorage.setItem(`likes_${user.email}`, JSON.stringify(newLikes));
   };
@@ -459,8 +415,7 @@ export default function Home() {
     const today = new Date();
     const month = today.getMonth() + 1;
     const year = today.getFullYear();
-
-    if (year === 2025 && (month === 9 || month === 10)) {
+    if (year === 2025 && (month === 9 || month === 10))
       return {
         tag: "YENİ DÖNEM",
         title: "Güz Dönemi Başladı!",
@@ -470,7 +425,7 @@ export default function Home() {
         filterItem: "TÜMÜ",
         icon: "🎒",
       };
-    } else if (year === 2025 && month === 11) {
+    if (year === 2025 && month === 11)
       return {
         tag: "SINAV HAFTASI",
         title: "Güz Vizeleri Geldi Çattı!",
@@ -480,10 +435,7 @@ export default function Home() {
         filterItem: "Ders Notları & Özetler",
         icon: "📝",
       };
-    } else if (
-      (year === 2025 && month === 12) ||
-      (year === 2026 && month === 1)
-    ) {
+    if ((year === 2025 && month === 12) || (year === 2026 && month === 1))
       return {
         tag: "FİNAL DÖNEMİ",
         title: "Finaller Kapıda!",
@@ -493,7 +445,7 @@ export default function Home() {
         filterItem: "Çıkmış Sorular",
         icon: "🎓",
       };
-    } else if (year === 2026 && (month === 2 || month === 3)) {
+    if (year === 2026 && (month === 2 || month === 3))
       return {
         tag: "BAHAR DÖNEMİ",
         title: "Bahar Dönemi Başladı!",
@@ -503,7 +455,7 @@ export default function Home() {
         filterItem: "Ders & Sınav Kitapları",
         icon: "📚",
       };
-    } else if (year === 2026 && month === 4) {
+    if (year === 2026 && month === 4)
       return {
         tag: "VİZE HAFTASI",
         title: "Bahar Vizeleri Başlıyor!",
@@ -513,7 +465,7 @@ export default function Home() {
         filterItem: "Ders Notları & Özetler",
         icon: "✍️",
       };
-    } else if (year === 2026 && (month === 5 || month === 6)) {
+    if (year === 2026 && (month === 5 || month === 6))
       return {
         tag: "FİNAL DÖNEMİ",
         title: "Final Haftası Yaklaşıyor!",
@@ -523,24 +475,21 @@ export default function Home() {
         filterItem: "Çıkmış Sorular",
         icon: "🎯",
       };
-    } else {
-      return {
-        tag: "YAZ TATİLİ",
-        title: "Kampüste Yaz Geldi!",
-        desc: "Kullanmadığın ders kitaplarını ve eşyalarını satarak tatil harçlığını çıkarmanın tam zamanı.",
-        btn: "Hemen İlan Ver",
-        link: "/create-listing",
-        icon: "🏖️",
-      };
-    }
+    return {
+      tag: "YAZ TATİLİ",
+      title: "Kampüste Yaz Geldi!",
+      desc: "Kullanmadığın ders kitaplarını ve eşyalarını satarak tatil harçlığını çıkarmanın tam zamanı.",
+      btn: "Hemen İlan Ver",
+      link: "/create-listing",
+      icon: "🏖️",
+    };
   };
 
   const bannerData = getBannerContent();
 
   const handleBannerClick = () => {
-    if (bannerData.link) {
-      router.push(bannerData.link);
-    } else {
+    if (bannerData.link) router.push(bannerData.link);
+    else {
       setExpandedGroup(bannerData.filterGroup || null);
       setActiveFilter(bannerData.filterItem || "TÜMÜ");
     }
@@ -551,34 +500,28 @@ export default function Home() {
       ?.toLowerCase()
       .includes(searchTerm.toLowerCase());
     let matchesCategory = false;
-
-    if (activeFilter === "TÜMÜ") {
-      matchesCategory = true;
-    } else if (CATEGORY_MAP[activeFilter]) {
+    if (activeFilter === "TÜMÜ") matchesCategory = true;
+    else if (CATEGORY_MAP[activeFilter])
       matchesCategory = CATEGORY_MAP[activeFilter].includes(p.category);
-    } else {
-      matchesCategory = p.category === activeFilter;
-    }
-
+    else matchesCategory = p.category === activeFilter;
     return matchesSearch && matchesCategory;
   });
 
-  // 🧮 Seçilen Kurala Göre Ürünleri Sıralama Motoru (En Çok Beğeni Mantığıyla Birlikte)
   const sortedProducts = [...filteredProducts].sort((a: any, b: any) => {
     switch (sortType) {
       case "En Eski":
-        return a.id - b.id; // ID'si küçük olan (eski olan) başa
+        return a.id - b.id;
       case "En Çok Beğeni":
-        return (b.likeCount || 0) - (a.likeCount || 0); // Beğenisi çok olan başa
+        return (b.likeCount || 0) - (a.likeCount || 0);
       case "En Az Beğeni":
-        return (a.likeCount || 0) - (b.likeCount || 0); // Beğenisi az olan başa
+        return (a.likeCount || 0) - (b.likeCount || 0);
       case "Fiyat (Artan)":
-        return Number(a.price || 0) - Number(b.price || 0); // Ucuzdan pahalıya
+        return Number(a.price || 0) - Number(b.price || 0);
       case "Fiyat (Azalan)":
-        return Number(b.price || 0) - Number(a.price || 0); // Pahalıdan ucuza
+        return Number(b.price || 0) - Number(a.price || 0);
       case "En Yeni":
       default:
-        return b.id - a.id; // ID'si büyük olan (yeni olan) başa (Varsayılan)
+        return b.id - a.id;
     }
   });
 
@@ -588,7 +531,6 @@ export default function Home() {
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
         <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
-            {/* ✨ LOGO */}
             <div className="flex-shrink-0">
               <Link
                 href="/"
@@ -602,10 +544,10 @@ export default function Home() {
               >
                 <Image
                   src="/logo.jpeg"
-                  alt="UniCycle İkon"
+                  alt="UniCycle"
                   width={44}
                   height={44}
-                  className="object-contain bg-transparent mix-blend-multiply transition-all sm:w-[52px] sm:h-[52px]"
+                  className="object-contain bg-transparent mix-blend-multiply rounded-md sm:w-[52px] sm:h-[52px]"
                   priority
                 />
                 <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
@@ -614,13 +556,15 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* 🚀 MASAÜSTÜ ARAMA ÇUBUĞU */}
-            <div className="hidden md:flex flex-1 max-w-3xl relative group z-50 px-8">
-              <form onSubmit={handleSearchSubmit} className="w-full relative">
+            {/* ✨ PREMIUM ARAMA ÇUBUĞU (Ana Sayfa İçin) */}
+            <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
+              <form
+                onSubmit={handleSearchSubmit}
+                className="w-full relative flex items-center"
+              >
                 <input
                   type="text"
                   placeholder="Ürün, @üye veya ders notu ara..."
-                  className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-transparent font-medium"
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -628,76 +572,48 @@ export default function Home() {
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
                   onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+                  className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
                 />
-                <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                  🔍
-                </span>
+                <svg
+                  className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
                 <button type="submit" className="hidden">
                   Ara
                 </button>
               </form>
 
-              {/* 🌟 AÇILIR MENÜ (DROPDOWN) */}
               {isDropdownOpen && liveResults.length > 0 && (
-                <div className="absolute top-full left-8 right-8 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
-                  {liveResults.slice(0, 5).map((result, idx) => {
-                    if (result.type === "user") {
-                      return (
-                        <Link
-                          href={`/user/${result.item.id}`}
-                          key={`u-${result.item.id}-${idx}`}
-                          className="flex items-center gap-3 px-5 py-2 hover:bg-slate-50 transition-colors"
-                        >
-                          <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0 text-sm">
-                            {result.item.fullName
-                              ? result.item.fullName.charAt(0).toUpperCase()
-                              : "U"}
-                          </div>
-                          <div>
-                            <div className="font-bold text-slate-800 text-sm">
-                              {result.item.fullName}
-                            </div>
-                            <div className="text-[11px] text-slate-500 font-medium">
-                              Kullanıcı • @
-                              {result.item.fullName.split(" ")[0].toLowerCase()}
-                            </div>
-                          </div>
-                        </Link>
-                      );
-                    } else {
-                      return (
-                        <Link
-                          href={`/listing-detail/${result.item.id}`}
-                          key={`p-${result.item.id}-${idx}`}
-                          className="flex items-center gap-3 px-5 py-2 hover:bg-slate-50 transition-colors"
-                        >
-                          <div className="w-10 h-10 bg-slate-100 rounded-md overflow-hidden flex shrink-0 border border-slate-200">
-                            {result.item.photosBase64 &&
-                            result.item.photosBase64[0] ? (
-                              <img
-                                src={result.item.photosBase64[0]}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span className="m-auto text-lg">📦</span>
-                            )}
-                          </div>
-                          <div className="flex-1 truncate">
-                            <div className="font-bold text-slate-800 truncate text-sm">
-                              {result.item.title}
-                            </div>
-                            <div className="text-[11px] font-bold text-blue-600 mt-0.5">
-                              {result.item.priceType === "fiyat"
-                                ? `₺${result.item.price}`
-                                : result.item.priceType === "takas"
-                                  ? "Takas"
-                                  : "Ücretsiz"}
-                            </div>
-                          </div>
-                        </Link>
-                      );
-                    }
-                  })}
+                <div className="absolute top-full left-6 right-10 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+                  {liveResults.slice(0, 5).map((result, idx) => (
+                    <Link
+                      href={
+                        result.type === "user"
+                          ? `/user/${result.item.id}`
+                          : `/listing-detail/${result.item.id}`
+                      }
+                      key={idx}
+                      className="flex items-center gap-3 px-5 py-2 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0 text-sm">
+                        {result.type === "user"
+                          ? result.item.fullName.charAt(0).toUpperCase()
+                          : "📦"}
+                      </div>
+                      <div className="font-bold text-slate-800 text-sm">
+                        {result.item.fullName || result.item.title}
+                      </div>
+                    </Link>
+                  ))}
                   <div
                     className="px-5 py-2.5 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
                     onClick={handleSearchSubmit}
@@ -710,7 +626,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* 🚀 BUTONLAR */}
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
               <Link
                 href="/create-listing"
@@ -728,14 +643,34 @@ export default function Home() {
 
               {user ? (
                 <div className="flex items-center gap-2 sm:gap-4 relative">
+                  <Link
+                    href="/favorites"
+                    className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                    title="Favorilerim"
+                  >
+                    <svg
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
+                    </svg>
+                  </Link>
+
                   <div className="relative shrink-0">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                      className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors"
+                      className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                       title="Bildirimler"
                     >
                       <svg
-                        className="w-5 h-5 text-slate-600"
+                        className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
@@ -748,12 +683,11 @@ export default function Home() {
                         ></path>
                       </svg>
                       {notificationsCount > 0 && (
-                        <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
                           {notificationsCount}
                         </span>
                       )}
                     </button>
-
                     {isNotificationOpen && (
                       <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -805,7 +739,6 @@ export default function Home() {
                                 bg = "bg-orange-100";
                                 text = "text-orange-600";
                               }
-
                               return (
                                 <div
                                   key={notif.id}
@@ -853,7 +786,6 @@ export default function Home() {
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
                   </Link>
-
                   <button
                     onClick={handleLogout}
                     className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm shrink-0"
@@ -873,13 +805,16 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 📱 SADECE MOBİL İÇİN ARAMA ÇUBUĞU */}
+        {/* 📱 MOBİL ARAMA ÇUBUĞU */}
         <div className="md:hidden pb-3 pt-2 w-full relative z-40 px-4 bg-white border-t border-slate-50 shadow-sm">
-          <form onSubmit={handleSearchSubmit} className="w-full relative">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="w-full relative flex items-center"
+          >
             <input
               type="text"
-              placeholder="Ürün, @üye veya ders notu ara..."
-              className="w-full bg-[#F3F4F6] text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-[#20B2AA] transition-all border border-transparent font-medium text-sm"
+              placeholder="Ürün veya @üye ara..."
+              className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-[#20B2AA]/30 border border-transparent transition-all font-semibold text-sm shadow-inner"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -888,11 +823,23 @@ export default function Home() {
               onFocus={() => setIsDropdownOpen(true)}
               onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
             />
-            <span className="absolute left-7 top-2.5 text-slate-400 text-lg">
-              🔍
-            </span>
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <button type="submit" className="hidden">
+              Ara
+            </button>
           </form>
-
           {isDropdownOpen && liveResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
               {liveResults.slice(0, 4).map((result, idx) => (
@@ -926,9 +873,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* 🖥️ ANA DÜZEN */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8 flex gap-8 items-start w-full">
-        {/* 🗂️ AKORDEON SOL MENÜ */}
         <aside className="w-72 hidden lg:block sticky top-28 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
           <h3 className="font-black text-lg text-slate-800 mb-5 pl-2">
             Kategoriler
@@ -984,9 +929,7 @@ export default function Home() {
           </ul>
         </aside>
 
-        {/* 🛍️ SAĞ İÇERİK ALANI */}
         <section className="flex-1 min-w-0 w-full">
-          {/* 🔥 YUVARLAK İKONLAR (MOBİL) */}
           <div className="block lg:hidden bg-white -mx-4 px-4 py-5 mb-4 border-b border-slate-100 shadow-sm">
             <div className="flex justify-between overflow-x-auto custom-scrollbar gap-4">
               {QUICK_LINKS.map((link, idx) => (
@@ -1011,7 +954,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 🔥 MOBİL KATEGORİ MENÜSÜ */}
           <div className="block lg:hidden mb-6">
             <div className="flex overflow-x-auto custom-scrollbar gap-2 pb-2 -mx-4 px-4">
               <button
@@ -1052,7 +994,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* 🌟 DİNAMİK BANNER */}
           {activeFilter === "TÜMÜ" && searchTerm === "" && (
             <div className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 md:p-12 mb-8 sm:mb-10 text-white shadow-xl relative overflow-hidden flex items-center">
               <div className="relative z-10 max-w-lg">
@@ -1078,7 +1019,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* 🎓 YEPYENİ VE ŞIK TASARIM: AÇILIR KAPANIR FİLTRE BUTONU */}
           <div className="flex flex-row justify-between items-center mb-6 pb-4 border-b border-slate-200 relative">
             <div>
               <h3 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">
@@ -1088,23 +1028,34 @@ export default function Home() {
                     ? "Kampüsün En Yenileri"
                     : `${activeFilter}`}
               </h3>
-              {(selectedUniversity !== "Tüm Üniversiteler" || sortType !== "En Yeni") && (
+              {(selectedUniversity !== "Tüm Üniversiteler" ||
+                sortType !== "En Yeni") && (
                 <p className="text-[10px] sm:text-xs text-blue-600 font-bold mt-1 bg-blue-50 inline-block px-2 py-1 rounded-md">
-                  {selectedUniversity !== "Tüm Üniversiteler" ? `🎓 ${selectedUniversity}` : ""}
-                  {selectedUniversity !== "Tüm Üniversiteler" && sortType !== "En Yeni" ? " • " : ""}
+                  {selectedUniversity !== "Tüm Üniversiteler"
+                    ? `🎓 ${selectedUniversity}`
+                    : ""}
+                  {selectedUniversity !== "Tüm Üniversiteler" &&
+                  sortType !== "En Yeni"
+                    ? " • "
+                    : ""}
                   {sortType !== "En Yeni" ? `↕️ ${sortType}` : ""}
                 </p>
               )}
             </div>
-
-            {/* 🚀 MODERN FİLTRE BUTONU VE AÇILIR MENÜ */}
             <div className="relative">
               <button
                 onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
-                className={`flex items-center gap-2.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-sm border transition-all font-bold text-sm ${isFilterMenuOpen ? "bg-[#20B2AA] text-white border-[#20B2AA] shadow-md" : "bg-white text-slate-700 border-slate-200 hover:border-[#20B2AA] hover:text-[#20B2AA]"}`}
+                className={`flex items-center gap-2.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-sm border transition-all font-bold text-sm ${isFilterMenuOpen ? "bg-blue-600 text-white border-blue-600 shadow-md" : "bg-white text-slate-700 border-slate-200 hover:border-blue-600 hover:text-blue-600"}`}
               >
-                {/* 🎨 Tam Google Tarzı Özel SVG İkon */}
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  className="w-5 h-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <circle cx="8" cy="8" r="2.5"></circle>
                   <line x1="2" y1="8" x2="5.5" y2="8"></line>
                   <line x1="10.5" y1="8" x2="22" y2="8"></line>
@@ -1114,20 +1065,25 @@ export default function Home() {
                 </svg>
                 <span className="hidden sm:block">Filtrele & Sırala</span>
               </button>
-
-              {/* 🔽 AÇILIR MENÜ KUTUSU */}
               {isFilterMenuOpen && (
-                <div className="absolute right-0 top-full mt-3 w-72 sm:w-80 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-slate-100 p-5 z-[100] animate-in fade-in slide-in-from-top-2">
+                <div className="absolute right-0 top-full mt-3 w-72 sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 p-5 z-[100] animate-in fade-in slide-in-from-top-2">
                   <div className="flex justify-between items-center mb-4">
-                    <h4 className="font-black text-slate-800">Görünümü Özelleştir</h4>
-                    <button onClick={() => setIsFilterMenuOpen(false)} className="text-slate-400 hover:text-red-500 font-bold">✕</button>
+                    <h4 className="font-black text-slate-800">
+                      Görünümü Özelleştir
+                    </h4>
+                    <button
+                      onClick={() => setIsFilterMenuOpen(false)}
+                      className="text-slate-400 hover:text-red-500 font-bold"
+                    >
+                      ✕
+                    </button>
                   </div>
-                  
-                  {/* Üniversite Seçimi */}
                   <div className="mb-4">
-                    <label className="block text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-wider">🎓 Kampüs Seçimi</label>
+                    <label className="block text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-wider">
+                      🎓 Kampüs Seçimi
+                    </label>
                     <select
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all cursor-pointer"
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-600 transition-all cursor-pointer"
                       value={selectedUniversity}
                       onChange={(e) => setSelectedUniversity(e.target.value)}
                     >
@@ -1138,26 +1094,32 @@ export default function Home() {
                       ))}
                     </select>
                   </div>
-
-                  {/* Sıralama Seçimi */}
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-wider">↕️ Sıralama Ölçütü</label>
+                    <label className="block text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-wider">
+                      ↕️ Sıralama Ölçütü
+                    </label>
                     <select
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all cursor-pointer"
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-600 transition-all cursor-pointer"
                       value={sortType}
                       onChange={(e) => setSortType(e.target.value)}
                     >
                       <option value="En Yeni">✨ En Yeni İlanlar</option>
                       <option value="En Eski">🕰️ En Eski İlanlar</option>
-                      <option value="En Çok Beğeni">❤️ En Çok Beğenilenler</option>
-                      <option value="En Az Beğeni">💔 En Az Beğenilenler</option>
-                      <option value="Fiyat (Artan)">📉 Fiyat (Ucuzdan Pahalıya)</option>
-                      <option value="Fiyat (Azalan)">📈 Fiyat (Pahalıdan Ucuza)</option>
+                      <option value="En Çok Beğeni">
+                        ❤️ En Çok Beğenilenler
+                      </option>
+                      <option value="En Az Beğeni">
+                        💔 En Az Beğenilenler
+                      </option>
+                      <option value="Fiyat (Artan)">
+                        📉 Fiyat (Ucuzdan Pahalıya)
+                      </option>
+                      <option value="Fiyat (Azalan)">
+                        📈 Fiyat (Pahalıdan Ucuza)
+                      </option>
                     </select>
                   </div>
-
-                  {/* Tamamla Butonu */}
-                  <button 
+                  <button
                     onClick={() => setIsFilterMenuOpen(false)}
                     className="w-full mt-5 bg-slate-800 text-white font-bold py-2.5 rounded-xl hover:bg-black transition-colors shadow-sm"
                   >
@@ -1168,7 +1130,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ⏳ PROFESYONEL İSKELET YÜKLEME */}
           {isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mt-4">
               {[...Array(8)].map((_, i) => (
@@ -1301,7 +1262,6 @@ export default function Home() {
         }}
       />
 
-      {/* 📜 FOOTER BİLGİ POP-UP'I (MODAL) */}
       {infoModal.isOpen && (
         <div className="fixed inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
@@ -1331,7 +1291,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* 🌊 FOOTER */}
       <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-6 mt-10 rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2 text-center md:text-left">
@@ -1342,7 +1301,7 @@ export default function Home() {
             </div>
             <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
-              öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
+              öğrencilerine özel alışveriş deneyimi.
             </p>
           </div>
           <div className="text-center md:text-left">
@@ -1381,7 +1340,7 @@ export default function Home() {
                   onClick={() =>
                     openInfoModal(
                       "Kampüs Kuralları",
-                      "Bu platform tamamen öğrencilere aittir.\n\n• Saygılı bir iletişim dili kullanmak zorunludur.\n• Sadece yasal ve kampüs kurallarına uygun ürünler satılabilir (Ders notu, kitap, eşya vb.).\n• Kopya veya telif hakkı ihlali içeren materyallerin satışı yasaktır.",
+                      "Bu platform tamamen öğrencilere aittir.\n\n• Saygılı bir iletişim dili kullanmak zorunludur.\n• Sadece yasal ve kampüs kurallarına uygun ürünler satılabilir.\n• Kopya veya telif hakkı ihlali içeren materyallerin satışı yasaktır.",
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -1401,7 +1360,7 @@ export default function Home() {
                   onClick={() =>
                     openInfoModal(
                       "Destek Merkezi",
-                      "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin. Bütün taleplere 24 saat içinde geri dönüş sağlıyoruz.",
+                      "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin.",
                     )
                   }
                   className="hover:text-blue-600 transition-colors"

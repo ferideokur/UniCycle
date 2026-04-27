@@ -78,43 +78,33 @@ export default function ProfilePage() {
     email: string;
     university?: string;
   } | null>(null);
-
   const [newName, setNewName] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [bio, setBio] = useState("Hoş geldin! Burası senin kişisel vitrinin.");
-
   const [university, setUniversity] = useState("Üniversite Belirtilmemiş");
   const [customUniversity, setCustomUniversity] = useState("");
-
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [profileZoom, setProfileZoom] = useState(1);
   const [profileRotate, setProfileRotate] = useState(0);
   const [coverY, setCoverY] = useState(50);
-
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeModal, setActiveModal] = useState<
     "none" | "cover" | "profile" | "info"
   >("none");
   const [isSaving, setIsSaving] = useState(false);
   const [showToast, setShowToast] = useState(false);
-
   const [myListings, setMyListings] = useState<any[]>([]);
   const [isLoadingListings, setIsLoadingListings] = useState(true);
-
   const [searchTerm, setSearchTerm] = useState("");
   const [liveResults, setLiveResults] = useState<
     { type: "user" | "product"; item: any }[]
   >([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notificationsList, setNotificationsList] = useState<any[]>([]);
-
   const router = useRouter();
-  const profileInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
 
   const loadProfileData = () => {
     const storedUser = localStorage.getItem("user");
@@ -228,31 +218,23 @@ export default function ProfilePage() {
     setActiveModal("none");
     setPasswordConfirm("");
   };
-
   const handleLogout = () => {
     localStorage.removeItem("user");
     window.location.href = "/";
   };
 
-  // 🚨 HESAP SİLME FONKSİYONU
   const handleDeleteAccount = async () => {
     if (!user) return;
-
-    // Sadece tek bir net uyarı bırakıyoruz
     const confirmFirst = window.confirm(
       "⚠️ DİKKAT: Hesabını ve tüm ilanlarını kalıcı olarak silmek istediğine emin misin?",
     );
     if (!confirmFirst) return;
-
     try {
       setIsSaving(true);
       const response = await fetch(
         `https://unicycle-api.onrender.com/api/users/${user.id}`,
-        {
-          method: "DELETE",
-        },
+        { method: "DELETE" },
       );
-
       if (response.ok) {
         alert(
           "Hesabın ve tüm verilerin başarıyla silindi. Seni özleyeceğiz! 👋",
@@ -263,7 +245,6 @@ export default function ProfilePage() {
         alert("Hesap silinirken bir hata oluştu.");
       }
     } catch (error) {
-      console.error("Silme hatası:", error);
       alert("Sunucuya bağlanılamadı.");
     } finally {
       setIsSaving(false);
@@ -288,7 +269,6 @@ export default function ProfilePage() {
           ? searchTerm.substring(1).trim()
           : searchTerm.trim();
         if (!query) return;
-
         let combined: { type: "user" | "product"; item: any }[] = [];
         if (isUserSearch) {
           const userRes = await fetch(
@@ -323,47 +303,6 @@ export default function ProfilePage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const handleImageUpload = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    type: "profile" | "cover",
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new window.Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let width = img.width,
-          height = img.height;
-        const MAX_SIZE = 1200;
-        if (width > height && width > MAX_SIZE) {
-          height *= MAX_SIZE / width;
-          width = MAX_SIZE;
-        } else if (height > MAX_SIZE) {
-          width *= MAX_SIZE / height;
-          height = MAX_SIZE;
-        }
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d")?.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-        if (type === "profile") {
-          setProfileImage(dataUrl);
-          setProfileZoom(1);
-          setProfileRotate(0);
-        }
-        if (type === "cover") {
-          setCoverImage(dataUrl);
-          setCoverY(50);
-        }
-      };
-    };
-    reader.readAsDataURL(file);
-  };
-
   const saveAllData = async (isInfoUpdate = false) => {
     if (isInfoUpdate) {
       if (university === "Diğer..." && customUniversity.trim() === "") {
@@ -375,12 +314,10 @@ export default function ProfilePage() {
         return;
       }
     }
-
     try {
       setIsSaving(true);
       const finalUniversity =
         university === "Diğer..." ? customUniversity.trim() : university;
-
       if (isInfoUpdate && user?.id) {
         const response = await fetch(
           `https://unicycle-api.onrender.com/api/users/${user.id}/update-university`,
@@ -392,21 +329,13 @@ export default function ProfilePage() {
         );
         if (!response.ok) throw new Error("Veritabanı güncellenemedi!");
       }
-
-      if (isInfoUpdate && newName.trim() !== user?.fullName) {
-        const updatedUser = {
-          ...user,
-          fullName: newName.trim(),
-          university: finalUniversity,
-        } as any;
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        setUser(updatedUser);
-      } else {
-        const updatedUser = { ...user, university: finalUniversity } as any;
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        setUser(updatedUser);
-      }
-
+      const updatedUser = {
+        ...user,
+        fullName: newName.trim(),
+        university: finalUniversity,
+      } as any;
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
       localStorage.setItem(
         `profile_${user?.email}`,
         JSON.stringify({
@@ -419,15 +348,13 @@ export default function ProfilePage() {
           coverY,
         }),
       );
-
       setIsSaving(false);
       setActiveModal("none");
       setPasswordConfirm("");
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
     } catch (error) {
-      console.error(error);
-      alert("Hata oluştu! Lütfen Java sunucunuzun çalıştığından emin olun.");
+      alert("Hata oluştu! Sunucunun çalıştığından emin olun.");
       setIsSaving(false);
     }
   };
@@ -444,36 +371,38 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 🚀 NAVBAR */}
-      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16 sm:h-20 pt-1 sm:pt-0 gap-2">
+      {/* 🚀 NAVBAR (Premium Tasarım) */}
+      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
+        <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
             <div className="flex-shrink-0">
               <Link
                 href="/"
                 className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
               >
-                <div className="relative w-9 h-9 sm:w-12 sm:h-12 flex shrink-0">
-                  <Image
-                    src="/logo.jpeg"
-                    alt="UniCycle İkon"
-                    fill
-                    className="object-contain drop-shadow-sm transition-all rounded-md"
-                    priority
-                  />
-                </div>
-                <span className="text-xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
+                <Image
+                  src="/logo.jpeg"
+                  alt="UniCycle"
+                  width={44}
+                  height={44}
+                  className="object-contain bg-transparent mix-blend-multiply rounded-md sm:w-[52px] sm:h-[52px]"
+                  priority
+                />
+                <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
                   Uni<span className="text-[#20B2AA]">Cycle</span>
                 </span>
               </Link>
             </div>
 
-            <div className="hidden md:flex flex-1 max-w-3xl relative group z-50 px-8">
-              <form onSubmit={handleSearchSubmit} className="w-full relative">
+            {/* ✨ PREMIUM ARAMA ÇUBUĞU */}
+            <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
+              <form
+                onSubmit={handleSearchSubmit}
+                className="w-full relative flex items-center"
+              >
                 <input
                   type="text"
                   placeholder="Ürün, @üye veya ders notu ara..."
-                  className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-transparent font-medium"
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -481,16 +410,28 @@ export default function ProfilePage() {
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
                   onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+                  className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
                 />
-                <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors">
-                  🔍
-                </span>
+                <svg
+                  className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
                 <button type="submit" className="hidden">
                   Ara
                 </button>
               </form>
+
               {isDropdownOpen && liveResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+                <div className="absolute top-full left-6 right-10 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
                   {liveResults.slice(0, 5).map((result, idx) => (
                     <Link
                       href={
@@ -524,6 +465,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
+              {/* 🚀 DÜZELTİLEN İLAN VER BUTONU RENGİ */}
               <Link
                 href="/create-listing"
                 className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
@@ -539,13 +481,34 @@ export default function ProfilePage() {
 
               {user ? (
                 <div className="flex items-center gap-2 sm:gap-4 relative">
+                  <Link
+                    href="/favorites"
+                    className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                    title="Favorilerim"
+                  >
+                    <svg
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
+                    </svg>
+                  </Link>
+
                   <div className="relative shrink-0">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                      className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-colors rounded-full flex items-center justify-center border border-slate-200"
+                      className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                      title="Bildirimler"
                     >
                       <svg
-                        className="w-5 h-5 text-slate-600"
+                        className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
@@ -563,7 +526,6 @@ export default function ProfilePage() {
                         </span>
                       )}
                     </button>
-
                     {isNotificationOpen && (
                       <div className="absolute top-full right-[-20px] sm:right-0 mt-3 w-[300px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -591,10 +553,7 @@ export default function ProfilePage() {
                                 icon = "🌸";
                                 bg = "bg-pink-100";
                                 text = "text-pink-600";
-                              } else if (
-                                msgLower.includes("ilan") ||
-                                msgLower.includes("ekledi")
-                              ) {
+                              } else if (msgLower.includes("ilan")) {
                                 icon = "📦";
                                 bg = "bg-orange-100";
                                 text = "text-orange-600";
@@ -605,10 +564,6 @@ export default function ProfilePage() {
                                 icon = "❤️";
                                 bg = "bg-red-100";
                                 text = "text-red-600";
-                              } else if (msgLower.includes("yorum")) {
-                                icon = "💬";
-                                bg = "bg-green-100";
-                                text = "text-green-600";
                               }
                               return (
                                 <div
@@ -667,7 +622,7 @@ export default function ProfilePage() {
               ) : (
                 <Link
                   href="/login"
-                  className="bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-black transition-colors"
+                  className="bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold text-sm hover:bg-black transition-colors"
                 >
                   Giriş Yap
                 </Link>
@@ -676,13 +631,16 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* 📱 SADECE MOBİL İÇİN ARAMA ÇUBUĞU */}
+        {/* 📱 MOBİL ARAMA ÇUBUĞU */}
         <div className="md:hidden pb-3 pt-2 w-full relative z-40 px-4 bg-white border-t border-slate-50 shadow-sm">
-          <form onSubmit={handleSearchSubmit} className="w-full relative">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="w-full relative flex items-center"
+          >
             <input
               type="text"
-              placeholder="Ürün, @üye veya ders notu ara..."
-              className="w-full bg-[#F3F4F6] text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-[#20B2AA] transition-all border border-transparent font-medium text-sm"
+              placeholder="Ürün veya @üye ara..."
+              className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-[#20B2AA]/30 border border-transparent transition-all font-semibold text-sm shadow-inner"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -691,11 +649,23 @@ export default function ProfilePage() {
               onFocus={() => setIsDropdownOpen(true)}
               onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
             />
-            <span className="absolute left-7 top-2.5 text-slate-400 text-lg">
-              🔍
-            </span>
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <button type="submit" className="hidden">
+              Ara
+            </button>
           </form>
-
           {isDropdownOpen && liveResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
               {liveResults.slice(0, 4).map((result, idx) => (
@@ -729,7 +699,6 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      {/* 🔙 GERİ DÖN */}
       <div className="max-w-[800px] mx-auto w-full px-4 sm:px-0 mt-4 sm:mt-6 mb-6">
         <button
           onClick={() => router.back()}
@@ -799,17 +768,14 @@ export default function ProfilePage() {
               {user ? user.fullName : "Yükleniyor..."}{" "}
               <span className="text-blue-500">✓</span>
             </h1>
-
             {user && (
               <p className="text-sm font-bold text-slate-400 mt-0.5">
                 @{user.fullName.split(" ")[0].toLowerCase()}
               </p>
             )}
-
             <p className="text-xs sm:text-lg font-bold text-gray-600 mt-2">
               👩‍🎓 {displayUniversity}
             </p>
-
             <p className="text-xs sm:text-[15px] text-gray-700 mt-2 font-medium whitespace-pre-wrap max-w-2xl leading-relaxed">
               {bio}
             </p>
@@ -999,9 +965,7 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
-
             <div className="p-4 sm:p-6 bg-gray-50/50 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
-              {/* 🚨 HESABI SİL BUTONU */}
               <button
                 onClick={handleDeleteAccount}
                 disabled={isSaving}
@@ -1009,7 +973,6 @@ export default function ProfilePage() {
               >
                 🗑️ Hesabımı Kalıcı Olarak Sil
               </button>
-
               <div className="flex gap-2 sm:gap-3 w-full sm:w-auto order-1 sm:order-2 justify-end">
                 <button
                   onClick={handleCancel}
@@ -1041,7 +1004,7 @@ export default function ProfilePage() {
             </div>
             <p className="text-sm font-medium text-slate-500 max-w-sm">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
-              öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
+              öğrencilerine özel alışveriş deneyimi.
             </p>
           </div>
           <div>
@@ -1055,11 +1018,6 @@ export default function ProfilePage() {
               <li>
                 <button className="hover:text-blue-600 transition-colors">
                   Güvenlik İpuçları
-                </button>
-              </li>
-              <li>
-                <button className="hover:text-blue-600 transition-colors">
-                  Kampüs Kuralları
                 </button>
               </li>
             </ul>
@@ -1077,11 +1035,6 @@ export default function ProfilePage() {
                   Bize Ulaşın
                 </button>
               </li>
-              <li>
-                <button className="hover:text-blue-600 transition-colors">
-                  S.S.S.
-                </button>
-              </li>
             </ul>
           </div>
         </div>
@@ -1089,20 +1042,6 @@ export default function ProfilePage() {
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>
-
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
-        @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-        .desktop-search { display: none; }
-        .mobile-search { display: block; }
-        @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }
-      `,
-        }}
-      />
     </div>
   );
 }

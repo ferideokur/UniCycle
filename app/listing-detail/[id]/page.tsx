@@ -19,33 +19,25 @@ export default function ListingDetailPage() {
   const { id } = params;
   const router = useRouter();
 
-  // 📦 İlan ve UI Hafızası
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [toastMessage, setToastMessage] = useState("");
-
-  // 👤 Kullanıcı, Beğeni ve Bildirim Hafızası
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notificationsList, setNotificationsList] = useState<any[]>([]);
-
-  // 🔍 Arama Hafızası
   const [searchTerm, setSearchTerm] = useState("");
   const [liveResults, setLiveResults] = useState<
     { type: "user" | "product"; item: any }[]
   >([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  // 💬 Yorum Hafızası
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
-  // 🔔 Navbar sayacını güncelleyen fonksiyon
   const updateNotificationCount = (userId: number) => {
     fetch(
       `https://unicycle-api.onrender.com/api/interaction/notifications/${userId}`,
@@ -65,7 +57,6 @@ export default function ListingDetailPage() {
           const unreadNotifs = activeNotifs.filter(
             (n: any) => !seenNotifs.includes(n.id),
           );
-
           setNotificationsCount(unreadNotifs.length);
           setNotificationsList(activeNotifs);
         }
@@ -73,18 +64,15 @@ export default function ListingDetailPage() {
       .catch((err) => console.error("Bildirimler çekilemedi:", err));
   };
 
-  // 1. Sayfa Yüklendiğinde Verileri Çek
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setCurrentUser(parsedUser);
-
       const likes = JSON.parse(
         localStorage.getItem(`likes_${parsedUser.email}`) || "[]",
       );
       setIsLiked(likes.includes(Number(id)));
-
       updateNotificationCount(parsedUser.id);
       window.addEventListener("notificationsSeen", () =>
         setNotificationsCount(0),
@@ -111,7 +99,6 @@ export default function ListingDetailPage() {
       );
   }, [id]);
 
-  // 🚀 SQL: BEĞENİ SAYISINI ÇEKME MOTORU
   const fetchLikeCount = async () => {
     try {
       const res = await fetch(
@@ -126,7 +113,6 @@ export default function ListingDetailPage() {
     }
   };
 
-  // 🚀 CANLI ARAMA ETKİSİ
   useEffect(() => {
     const fetchLive = async () => {
       if (searchTerm.trim().length < 2) {
@@ -139,9 +125,7 @@ export default function ListingDetailPage() {
           ? searchTerm.substring(1).trim()
           : searchTerm.trim();
         if (!query) return;
-
         let combined: { type: "user" | "product"; item: any }[] = [];
-
         if (isUserSearch) {
           const userRes = await fetch(
             `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
@@ -171,7 +155,6 @@ export default function ListingDetailPage() {
         console.error("Canlı arama hatası:", error);
       }
     };
-
     const timer = setTimeout(() => fetchLive(), 300);
     return () => clearTimeout(timer);
   }, [searchTerm]);
@@ -206,10 +189,8 @@ export default function ListingDetailPage() {
     setTimeout(() => setToastMessage(""), 3000);
   };
 
-  // 🔥 TEMİZLENEN VE SADELEŞEN MESAJ BUTONU KODU
   const handleMessageClick = () => {
     if (!currentUser) return showToast("🔒 Mesaj atmak için giriş yapmalısın!");
-
     if (product && product.user) {
       window.dispatchEvent(
         new CustomEvent("openChatWithContext", {
@@ -223,7 +204,6 @@ export default function ListingDetailPage() {
     }
   };
 
-  // 🔗 PAYLAŞMA MOTORU
   const handleShare = async () => {
     if (!product) return;
     const shareData = {
@@ -231,12 +211,11 @@ export default function ListingDetailPage() {
       text: `UniCycle'da bu ilana göz at: ${product.title}`,
       url: window.location.href,
     };
-
     if (navigator.share) {
       try {
         await navigator.share(shareData);
       } catch (err) {
-        console.log("Paylaşım iptal edildi veya hata:", err);
+        console.log(err);
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
@@ -244,36 +223,28 @@ export default function ListingDetailPage() {
     }
   };
 
-  // ❤️ BEĞENME VE BİLDİRİM MOTORU
   const handleLikeToggle = async () => {
-    if (!currentUser) {
-      showToast("🔒 Beğenmek için giriş yapmalısın!");
-      return;
-    }
-
+    if (!currentUser) return showToast("🔒 Beğenmek için giriş yapmalısın!");
     const currentLikes = JSON.parse(
       localStorage.getItem(`likes_${currentUser.email}`) || "[]",
     );
     let newLikes;
-
     if (isLiked) {
       newLikes = currentLikes.filter((favId: number) => favId !== Number(id));
       setLikeCount((prev) => Math.max(0, prev - 1));
       showToast("💔 İlan favorilerden çıkarıldı!");
-
       try {
         await fetch(
           `https://unicycle-api.onrender.com/api/interaction/likes?userId=${currentUser.id}&productId=${id}`,
           { method: "DELETE" },
         );
       } catch (err) {
-        console.error("Beğeni veritabanından silinemedi:", err);
+        console.error(err);
       }
     } else {
       newLikes = [...currentLikes, Number(id)];
       setLikeCount((prev) => prev + 1);
       showToast("❤️ İlan favorilere eklendi!");
-
       try {
         await fetch("https://unicycle-api.onrender.com/api/interaction/likes", {
           method: "POST",
@@ -284,10 +255,9 @@ export default function ListingDetailPage() {
           }),
         });
       } catch (err) {
-        console.error("Beğeni veritabanına kaydedilemedi:", err);
+        console.error(err);
       }
-
-      if (product && product.user && product.user.id !== currentUser.id) {
+      if (product?.user?.id !== currentUser.id) {
         try {
           await fetch(
             "https://unicycle-api.onrender.com/api/interaction/notifications",
@@ -301,11 +271,10 @@ export default function ListingDetailPage() {
             },
           );
         } catch (err) {
-          console.error("Bildirim gönderilemedi:", err);
+          console.error(err);
         }
       }
     }
-
     localStorage.setItem(
       `likes_${currentUser.email}`,
       JSON.stringify(newLikes),
@@ -313,15 +282,12 @@ export default function ListingDetailPage() {
     setIsLiked(!isLiked);
   };
 
-  // 💬 YORUM EKLEME MOTORU
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser)
       return showToast("🔒 Yorum yapmak için giriş yapmalısın!");
     if (newComment.trim() === "") return;
-
     setIsSubmittingComment(true);
-
     try {
       const res = await fetch(
         "https://unicycle-api.onrender.com/api/comments",
@@ -335,13 +301,11 @@ export default function ListingDetailPage() {
           }),
         },
       );
-
       if (res.ok) {
         setNewComment("");
         fetchComments();
         showToast("✅ Yorum başarıyla eklendi!");
-
-        if (product && product.user && product.user.id !== currentUser.id) {
+        if (product?.user?.id !== currentUser.id) {
           try {
             await fetch(
               "https://unicycle-api.onrender.com/api/interaction/notifications",
@@ -355,12 +319,12 @@ export default function ListingDetailPage() {
               },
             );
           } catch (err) {
-            console.error("Bildirim gönderilemedi:", err);
+            console.error(err);
           }
         }
       }
     } catch (err) {
-      console.error("Yorum eklenemedi", err);
+      console.error(err);
     } finally {
       setIsSubmittingComment(false);
     }
@@ -368,7 +332,6 @@ export default function ListingDetailPage() {
 
   const handleDeleteComment = async (commentId: number) => {
     if (!window.confirm("Bu yorumu silmek istediğinize emin misiniz?")) return;
-
     try {
       const res = await fetch(
         `https://unicycle-api.onrender.com/api/comments/${commentId}`,
@@ -393,14 +356,12 @@ export default function ListingDetailPage() {
     );
   };
 
-  if (loading) {
+  if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
         <div className="animate-spin text-4xl sm:text-5xl">⏳</div>
       </div>
     );
-  }
-
   if (!product)
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
@@ -417,7 +378,7 @@ export default function ListingDetailPage() {
     );
 
   const photos =
-    product.photosBase64 && product.photosBase64.length > 0
+    product.photosBase64?.length > 0
       ? product.photosBase64
       : ["https://via.placeholder.com/800x600?text=Fotograf+Yok"];
   const sellerName = product.user?.fullName || "Bilinmeyen Satıcı";
@@ -428,44 +389,39 @@ export default function ListingDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans relative w-full overflow-x-hidden flex flex-col">
-      {/* 🌟 BİLDİRİM (TOAST) */}
       {toastMessage && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-slate-800 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-full shadow-2xl font-bold animate-in fade-in slide-in-from-top-5 text-xs sm:text-sm whitespace-nowrap">
           {toastMessage}
         </div>
       )}
 
-      {/* 🚀 ÜST MENÜ NAVBAR */}
+      {/* 🚀 NAVBAR (İKİZ İKONLU) */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
-            {/* ✨ LOGO */}
-            <div className="flex-shrink-0">
-              <Link
-                href="/"
-                className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
-              >
-                <Image
-                  src="/logo.jpeg"
-                  alt="UniCycle İkon"
-                  width={44}
-                  height={44}
-                  className="object-contain bg-transparent mix-blend-multiply transition-all sm:w-[52px] sm:h-[52px]"
-                  priority
-                />
-                <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
-                  Uni<span className="text-[#20B2AA]">Cycle</span>
-                </span>
-              </Link>
-            </div>
+            <Link
+              href="/"
+              className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer shrink-0"
+            >
+              <Image
+                src="/logo.jpeg"
+                alt="UniCycle"
+                width={44}
+                height={44}
+                className="object-contain rounded-md"
+                priority
+              />
+              <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
+                Uni<span className="text-[#20B2AA]">Cycle</span>
+              </span>
+            </Link>
 
-            {/* Desktop Arama */}
             <div className="hidden md:flex flex-1 max-w-3xl relative group z-50 px-8">
               <form onSubmit={handleSearchSubmit} className="w-full relative">
                 <input
                   type="text"
                   placeholder="Ürün, @üye veya ders notu ara..."
-                  className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all border border-transparent font-medium"
+                  className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-transparent font-medium"
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -474,14 +430,10 @@ export default function ListingDetailPage() {
                   onFocus={() => setIsDropdownOpen(true)}
                   onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
                 />
-                <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors">
                   🔍
                 </span>
-                <button type="submit" className="hidden">
-                  Ara
-                </button>
               </form>
-
               {isDropdownOpen && liveResults.length > 0 && (
                 <div className="absolute top-full left-8 right-8 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
                   {liveResults.slice(0, 5).map((result, idx) => (
@@ -499,26 +451,15 @@ export default function ListingDetailPage() {
                           ? result.item.fullName.charAt(0).toUpperCase()
                           : "📦"}
                       </div>
-                      <div>
-                        <div className="font-bold text-slate-800 text-sm">
-                          {result.item.fullName || result.item.title}
-                        </div>
+                      <div className="font-bold text-slate-800 text-sm">
+                        {result.item.fullName || result.item.title}
                       </div>
                     </Link>
                   ))}
-                  <div
-                    className="px-5 py-2.5 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
-                    onClick={handleSearchSubmit}
-                  >
-                    <span className="text-xs font-bold text-blue-600">
-                      Tüm sonuçları gör &rarr;
-                    </span>
-                  </div>
                 </div>
               )}
             </div>
 
-            {/* Sağ Butonlar */}
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
               <Link
                 href="/create-listing"
@@ -528,15 +469,37 @@ export default function ListingDetailPage() {
               </Link>
 
               {currentUser ? (
-                <div className="flex items-center gap-1 sm:gap-4 shrink-0">
+                <div className="flex items-center gap-2 sm:gap-4 relative">
+                  {/* ❤️ PREMIUM FAVORİLER BUTONU */}
+                  <Link
+                    href="/favorites"
+                    className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                    title="Favorilerim"
+                  >
+                    <svg
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
+                    </svg>
+                  </Link>
+
+                  {/* 🔔 PREMIUM BİLDİRİM ÇANI */}
                   <div className="relative shrink-0">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                      className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors"
+                      className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 border border-slate-200 shadow-sm group transition-all shrink-0"
                       title="Bildirimler"
                     >
                       <svg
-                        className="w-5 h-5 text-slate-600"
+                        className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
@@ -549,12 +512,11 @@ export default function ListingDetailPage() {
                         ></path>
                       </svg>
                       {notificationsCount > 0 && (
-                        <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
                           {notificationsCount}
                         </span>
                       )}
                     </button>
-
                     {isNotificationOpen && (
                       <div className="absolute top-full right-[-20px] sm:right-0 mt-3 w-[300px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -574,9 +536,9 @@ export default function ListingDetailPage() {
                             </div>
                           ) : (
                             notificationsList.slice(0, 5).map((notif: any) => {
-                              let icon = "🔔",
-                                bg = "bg-blue-100",
-                                text = "text-blue-600";
+                              let icon = "✨";
+                              let bg = "bg-blue-100";
+                              let text = "text-blue-600";
                               const msgLower =
                                 notif.message?.toLowerCase() || "";
                               if (
@@ -586,25 +548,10 @@ export default function ListingDetailPage() {
                                 icon = "❤️";
                                 bg = "bg-red-100";
                                 text = "text-red-600";
-                              } else if (
-                                msgLower.includes("mesaj") ||
-                                msgLower.includes("yorum") ||
-                                msgLower.includes("soru")
-                              ) {
+                              } else if (msgLower.includes("yorum")) {
                                 icon = "💬";
                                 bg = "bg-green-100";
                                 text = "text-green-600";
-                              } else if (msgLower.includes("takip")) {
-                                icon = "🌸";
-                                bg = "bg-pink-100";
-                                text = "text-pink-600";
-                              } else if (
-                                msgLower.includes("ilan") ||
-                                msgLower.includes("ekledi")
-                              ) {
-                                icon = "📦";
-                                bg = "bg-orange-100";
-                                text = "text-orange-600";
                               }
                               return (
                                 <div
@@ -670,58 +617,6 @@ export default function ListingDetailPage() {
               )}
             </div>
           </div>
-
-          {/* Mobil Arama */}
-          <div className="md:hidden pb-3 pt-1 w-full relative z-40">
-            <form onSubmit={handleSearchSubmit} className="w-full relative">
-              <input
-                type="text"
-                placeholder="Ürün, kategori veya ders notu ara..."
-                className="w-full bg-[#F3F4F6] text-slate-800 rounded-md py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all border border-transparent font-medium text-sm"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setIsDropdownOpen(true);
-                }}
-                onFocus={() => setIsDropdownOpen(true)}
-                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-              />
-              <span className="absolute left-3 top-2.5 text-slate-400 text-lg">
-                🔍
-              </span>
-            </form>
-
-            {isDropdownOpen && liveResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
-                {liveResults.slice(0, 4).map((result, idx) => (
-                  <Link
-                    href={
-                      result.type === "user"
-                        ? `/user/${result.item.id}`
-                        : `/listing-detail/${result.item.id}`
-                    }
-                    key={`mob-${idx}`}
-                    className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50"
-                  >
-                    <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
-                      {result.type === "user" ? (
-                        <span className="font-bold text-blue-600">
-                          {result.item.fullName.charAt(0).toUpperCase()}
-                        </span>
-                      ) : (
-                        <span className="text-xs">📦</span>
-                      )}
-                    </div>
-                    <div className="flex-1 truncate">
-                      <div className="font-bold text-slate-800 truncate text-xs">
-                        {result.item.fullName || result.item.title}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       </header>
 
@@ -772,24 +667,21 @@ export default function ListingDetailPage() {
                       <img
                         src={photo}
                         className="w-full h-full object-cover"
-                        alt={`Küçük foto ${index}`}
+                        alt={`Foto ${index}`}
                       />
                     </button>
                   ))}
                 </div>
               )}
             </div>
-
             <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
               <h3 className="text-lg sm:text-xl font-black text-slate-800 mb-3 sm:mb-4 border-b pb-3 sm:pb-4">
                 İlan Açıklaması
               </h3>
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed whitespace-pre-wrap font-medium">
-                {product.description ||
-                  "Satıcı bu ilan için henüz bir açıklama girmemiş."}
+                {product.description || "Satıcı henüz bir açıklama girmemiş."}
               </p>
             </div>
-
             <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
               <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b pb-3 sm:pb-4">
                 <MessageSquare className="text-blue-500 w-5 h-5 sm:w-6 sm:h-6" />
@@ -826,7 +718,6 @@ export default function ListingDetailPage() {
                   </button>
                 </div>
               </form>
-
               <div className="space-y-3 sm:space-y-4">
                 {comments.length === 0 ? (
                   <p className="text-center text-slate-400 font-medium py-3 sm:py-4 text-xs sm:text-sm">
@@ -839,7 +730,6 @@ export default function ListingDetailPage() {
                     const canDelete =
                       currentUser &&
                       (currentUser.id === comment.user?.id || isOwner);
-
                     return (
                       <div
                         key={comment.id}
@@ -851,7 +741,7 @@ export default function ListingDetailPage() {
                         <div className="flex-1 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl rounded-tl-none border border-slate-100">
                           <div className="flex justify-between items-center mb-1">
                             <div className="flex items-center gap-1.5 sm:gap-2 font-bold text-slate-800 text-xs sm:text-sm capitalize">
-                              {commentUser}
+                              {commentUser}{" "}
                               {comment.user?.id === product.user?.id && (
                                 <span className="bg-blue-100 text-blue-700 text-[8px] sm:text-[9px] px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider">
                                   Satıcı
@@ -870,7 +760,6 @@ export default function ListingDetailPage() {
                           <button
                             onClick={() => handleDeleteComment(comment.id)}
                             className="absolute top-1 sm:top-2 right-[-5px] sm:right-[-10px] opacity-100 lg:opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-all bg-white p-1 sm:p-1.5 rounded-md shadow-sm border border-slate-100 text-xs sm:text-base"
-                            title="Yorumu Sil"
                           >
                             🗑️
                           </button>
@@ -907,7 +796,6 @@ export default function ListingDetailPage() {
                   </div>
                 )}
               </div>
-
               <div className="space-y-3 sm:space-y-4 border-t border-slate-100 pt-4 sm:pt-6 mb-6 sm:mb-8">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
@@ -934,7 +822,6 @@ export default function ListingDetailPage() {
                   </span>
                 </div>
               </div>
-
               <div className="flex flex-row gap-2 sm:gap-3 mt-4">
                 <div
                   onClick={handleLikeToggle}
@@ -956,17 +843,15 @@ export default function ListingDetailPage() {
                     {likeCount}
                   </div>
                 </div>
-
                 <button
                   onClick={handleShare}
                   className="flex-[2] bg-white hover:bg-slate-50 text-slate-600 font-bold py-3 sm:py-3.5 rounded-xl flex items-center justify-center gap-2 text-xs sm:text-sm border border-slate-200 transition-all shadow-sm hover:shadow-md"
                 >
-                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />{" "}
+                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
                   <span className="whitespace-nowrap">Paylaş</span>
                 </button>
               </div>
             </div>
-
             <div className="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
               <Link
                 href={`/user/${product.user?.id}`}
@@ -988,10 +873,9 @@ export default function ListingDetailPage() {
                   </div>
                 </div>
               </Link>
-
               {isOwner ? (
                 <div className="w-full bg-green-50 text-green-700 font-black py-3 sm:py-4 rounded-xl border border-green-200 flex items-center justify-center gap-2 text-xs sm:text-sm shadow-sm">
-                  <span>✨</span> Bu senin ilanın
+                  ✨ Bu senin ilanın
                 </div>
               ) : (
                 <button
@@ -1001,8 +885,6 @@ export default function ListingDetailPage() {
                   Satıcıya Mesaj Gönder
                 </button>
               )}
-
-              {/* 🔥 YENİ DİNAMİK ÜNİVERSİTE ALANI */}
               <div className="mt-3 sm:mt-4 text-center text-[10px] sm:text-xs font-bold text-slate-400 flex items-center justify-center gap-1 sm:gap-2">
                 <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 {product.university ||
@@ -1014,7 +896,6 @@ export default function ListingDetailPage() {
         </div>
       </div>
 
-      {/* 🌊 FOOTER */}
       <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-6 mt-10 sm:mt-16 rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
           <div className="col-span-1 md:col-span-2 text-center md:text-left">
@@ -1025,7 +906,7 @@ export default function ListingDetailPage() {
             </div>
             <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
-              öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
+              öğrencilerine özel alışveriş deneyimi.
             </p>
           </div>
           <div className="text-center md:text-left">
@@ -1043,11 +924,6 @@ export default function ListingDetailPage() {
                   Güvenlik İpuçları
                 </button>
               </li>
-              <li>
-                <button className="hover:text-blue-600 transition-colors">
-                  Kampüs Kuralları
-                </button>
-              </li>
             </ul>
           </div>
           <div className="text-center md:text-left">
@@ -1055,11 +931,6 @@ export default function ListingDetailPage() {
               İletişim
             </h4>
             <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm font-medium text-slate-500">
-              <li>
-                <button className="hover:text-blue-600 transition-colors">
-                  Destek Merkezi
-                </button>
-              </li>
               <li>
                 <button className="hover:text-blue-600 transition-colors">
                   Bize Ulaşın

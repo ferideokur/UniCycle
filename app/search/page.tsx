@@ -160,14 +160,17 @@ function SearchContent() {
       // Bildirim Gönder
       if (productObject.user && productObject.user.id !== user.id) {
         try {
-          await fetch("https://unicycle-api.onrender.com/api/interaction/notifications", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              userId: productObject.user.id,
-              message: `${user.fullName}, "${productObject.title}" adlı ilanını beğendi.`,
-            }),
-          });
+          await fetch(
+            "https://unicycle-api.onrender.com/api/interaction/notifications",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId: productObject.user.id,
+                message: `${user.fullName}, "${productObject.title}" adlı ilanını beğendi.`,
+              }),
+            },
+          );
         } catch (err) {
           console.error("Bildirim gönderilemedi:", err);
         }
@@ -179,71 +182,77 @@ function SearchContent() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans">
-      {/* 🚀 ÜST MENÜ (Ana Sayfa İle Birebir Aynı) */}
-      <header className="bg-white sticky top-0 z-50 border-b border-gray-200 shadow-sm h-20 flex items-center">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 w-full flex justify-between items-center gap-6">
-          <div className="flex-shrink-0">
+      {/* 🚀 ÜST MENÜ NAVBAR (PREMIUM İKİZ İKONLU) */}
+      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
             <Link
               href="/"
-              className="inline-flex items-center gap-3 hover:scale-105 transition-transform group"
+              className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer shrink-0"
             >
               <Image
                 src="/logo.jpeg"
-                alt="UniCycle İkon"
-                width={48}
-                height={48}
-                className="rounded-md shadow-sm"
+                alt="UniCycle"
+                width={44}
+                height={44}
+                className="object-contain rounded-md"
                 priority
               />
-              <span className="text-2xl font-extrabold text-slate-800 hidden lg:block">
+              <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800 hidden lg:block">
                 Uni<span className="text-[#20B2AA]">Cycle</span>
               </span>
             </Link>
-          </div>
 
-          {/* AKTİF ARAMA ÇUBUĞU */}
-          <div className="flex-1 max-w-3xl relative">
-            <form onSubmit={handleNewSearch} className="w-full relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <span className="text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                  🔍
-                </span>
-              </div>
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full bg-slate-100 border border-transparent text-slate-800 rounded-full pl-12 pr-24 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:bg-white transition-all font-medium shadow-inner"
-                placeholder="Yeni bir kelime veya @kullanıcı ara..."
-              />
-              <button
-                type="submit"
-                className="absolute right-1.5 top-1.5 bottom-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 rounded-full text-sm transition-colors"
+            {/* ✨ PREMIUM ARAMA ÇUBUĞU (Arama Sayfası İçin) */}
+            <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
+              <form
+                onSubmit={handleNewSearch}
+                className="w-full relative flex items-center"
               >
-                Ara
-              </button>
-            </form>
-          </div>
+                <input
+                  type="text"
+                  placeholder="Ürün, @üye veya ders notu ara..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
+                />
+                <svg
+                  className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <button type="submit" className="hidden">
+                  Ara
+                </button>
+              </form>
+            </div>
 
-          <div className="flex items-center gap-4 flex-shrink-0">
-            <Link
-              href="/create-listing"
-              className="font-bold text-blue-600 hover:text-blue-700 transition-colors hidden md:block"
-            >
-              + İlan Ver
-            </Link>
+            <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
+              <Link
+                href="/create-listing"
+                className="hidden md:flex font-black text-[#20B2AA] hover:text-blue-800 items-center gap-1 transition-colors"
+              >
+                <span className="text-xl">+</span> İlan Ver
+              </Link>
 
-            {user ? (
-              <div className="flex items-center gap-3 relative">
-                {/* 🔔 BİLDİRİM ÇANI VE DROPDOWN */}
-                <div className="relative">
-                  <button
-                    onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                    className="relative w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors"
-                    title="Bildirimler"
+              {user ? (
+                <div className="flex items-center gap-2 sm:gap-4 relative">
+                  {/* ❤️ PREMIUM FAVORİLER BUTONU */}
+                  <Link
+                    href="/favorites"
+                    className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                    title="Favorilerim"
                   >
                     <svg
-                      className="w-5 h-5 text-slate-600"
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
@@ -252,63 +261,104 @@ function SearchContent() {
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                      ></path>
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
                     </svg>
-                    {notificationsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-pulse">
-                        {notificationsCount}
-                      </span>
-                    )}
-                  </button>
+                  </Link>
 
-                  {isNotificationOpen && (
-                    <div className="absolute top-full right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
-                      <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <span className="font-bold text-slate-800">
-                          Bildirimler
-                        </span>
-                        {notificationsCount > 0 && (
-                          <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                            {notificationsCount} Yeni
-                          </span>
-                        )}
-                      </div>
-                      <Link
-                        href="/notifications"
-                        onClick={() => setIsNotificationOpen(false)}
-                        className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors"
+                  {/* 🔔 PREMIUM BİLDİRİM ÇANI */}
+                  <div className="relative shrink-0">
+                    <button
+                      onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                      className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 border border-slate-200 shadow-sm group transition-all shrink-0"
+                      title="Bildirimler"
+                    >
+                      <svg
+                        className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
                       >
-                        Tüm Bildirimleri Gör &rarr;
-                      </Link>
-                    </div>
-                  )}
-                </div>
-
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all ml-2"
-                >
-                  <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">
-                    👤
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                        ></path>
+                      </svg>
+                      {notificationsCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
+                          {notificationsCount}
+                        </span>
+                      )}
+                    </button>
+                    {isNotificationOpen && (
+                      <div className="absolute top-full right-[-20px] sm:right-0 mt-3 w-[300px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                        <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                          <span className="font-bold text-slate-800">
+                            Bildirimler
+                          </span>
+                          {notificationsCount > 0 && (
+                            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                              {notificationsCount} Yeni
+                            </span>
+                          )}
+                        </div>
+                        <Link
+                          href="/notifications"
+                          onClick={() => setIsNotificationOpen(false)}
+                          className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors"
+                        >
+                          Tüm Bildirimleri Gör &rarr;
+                        </Link>
+                      </div>
+                    )}
                   </div>
-                  <span className="hidden sm:block">Hesabım</span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="text-slate-400 hover:text-red-500 font-bold transition-colors text-sm ml-2"
+
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm transition-all"
+                  >
+                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs shrink-0">
+                      👤
+                    </div>
+                    <span className="hidden sm:block text-sm">Hesabım</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm shrink-0 ml-2"
+                  >
+                    Çıkış
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center justify-center bg-slate-800 text-white px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
                 >
-                  Çıkış
-                </button>
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                className="flex items-center gap-2 bg-slate-800 text-white px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm"
-              >
-                Giriş Yap
-              </Link>
-            )}
+                  Giriş Yap
+                </Link>
+              )}
+            </div>
+          </div>
+
+          {/* MOBİL ARAMA (Sadece Mobilde Görünür) */}
+          <div className="md:hidden pb-3 pt-1 w-full relative z-40">
+            <form onSubmit={handleNewSearch} className="w-full relative">
+              <input
+                type="text"
+                placeholder="Ürün, @üye veya ders notu ara..."
+                className="w-full bg-[#F3F4F6] text-slate-800 rounded-md py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-[#20B2AA] transition-all border border-transparent font-medium text-sm"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+              <span className="absolute left-3 top-2.5 text-slate-400 text-lg">
+                🔍
+              </span>
+              <button type="submit" className="hidden">
+                Ara
+              </button>
+            </form>
           </div>
         </div>
       </header>
