@@ -12,7 +12,41 @@ import {
   ChevronRight,
   MessageSquare,
   Send,
+  Bell,
+  MessageCircle,
+  Package,
+  UserPlus,
+  UserCheck,
 } from "lucide-react";
+
+// 🇹🇷 Türkçe İyelik Eki Bulucu
+const getTurkishSuffix = (name: string) => {
+  if (!name) return "'in";
+  const vowels = "aıeiouöüAIIEİOUÖÜ";
+  const chars = name.toLowerCase().split("");
+  let lastVowel = "i";
+  for (let i = chars.length - 1; i >= 0; i--) {
+    if (vowels.includes(chars[i])) {
+      lastVowel = chars[i];
+      break;
+    }
+  }
+  const endsWithVowel = vowels.includes(chars[chars.length - 1]);
+  if (["a", "ı"].includes(lastVowel)) return endsWithVowel ? "'nın" : "'ın";
+  if (["e", "i"].includes(lastVowel)) return endsWithVowel ? "'nin" : "'in";
+  if (["o", "u"].includes(lastVowel)) return endsWithVowel ? "'nun" : "'un";
+  if (["ö", "ü"].includes(lastVowel)) return endsWithVowel ? "'nün" : "'ün";
+  return "'in";
+};
+
+// 🚀 İsimleri Javascript içinde her yerde büyük harfle başlatan formül
+const formatName = (name: string) => {
+  if (!name) return "";
+  return name
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
 
 export default function PublicProfilePage() {
   const { id } = useParams();
@@ -32,7 +66,10 @@ export default function PublicProfilePage() {
     { type: "user" | "product"; item: any }[]
   >([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   const [notificationsCount, setNotificationsCount] = useState(0);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notificationsList, setNotificationsList] = useState<any[]>([]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -42,13 +79,11 @@ export default function PublicProfilePage() {
         const parsedUser = JSON.parse(storedUser);
         setCurrentUser(parsedUser);
 
-        // Takip durumunu hafızadan kontrol et
         const followMemory = localStorage.getItem(
           `follows_${parsedUser.id}_${id}`,
         );
         if (followMemory === "true") setIsFollowing(true);
 
-        // Bildirimleri çek
         fetch(
           `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
         )
@@ -58,10 +93,17 @@ export default function PublicProfilePage() {
               const deletedNotifs = JSON.parse(
                 localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
               );
-              const activeNotifs = data.filter(
-                (n: any) => !deletedNotifs.includes(n.id),
+              const seenNotifs = JSON.parse(
+                localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
               );
-              setNotificationsCount(activeNotifs.length);
+              const activeNotifs = data
+                .filter((n: any) => !deletedNotifs.includes(n.id))
+                .reverse();
+              const unreadNotifs = activeNotifs.filter(
+                (n: any) => !seenNotifs.includes(n.id),
+              );
+              setNotificationsCount(unreadNotifs.length);
+              setNotificationsList(activeNotifs);
             }
           })
           .catch((err) => console.error("Bildirimler çekilemedi:", err));
@@ -72,22 +114,17 @@ export default function PublicProfilePage() {
 
     const fetchData = async () => {
       try {
-        // Kullanıcı bilgisini çek (Önbelleği kırarak her seferinde güncel veriyi alırız)
         const userRes = await fetch(
           `https://unicycle-api.onrender.com/api/users/${id}`,
-          {
-            cache: "no-store",
-          },
+          { cache: "no-store" },
         );
         if (!userRes.ok) throw new Error("Kullanıcı bulunamadı");
         const userData = await userRes.json();
         setUser(userData);
 
-        // Profil detaylarını çek (Kendi profili ise localStorage'dan resimleri alır)
         const savedProfile = localStorage.getItem(`profile_${userData.email}`);
         if (savedProfile) setProfileData(JSON.parse(savedProfile));
 
-        // Kullanıcının ilanlarını çek
         const prodRes = await fetch(
           "https://unicycle-api.onrender.com/api/products",
         );
@@ -108,6 +145,12 @@ export default function PublicProfilePage() {
     };
     fetchData();
   }, [id]);
+
+  useEffect(() => {
+    const clearNotifs = () => setNotificationsCount(0);
+    window.addEventListener("notificationsSeen", clearNotifs);
+    return () => window.removeEventListener("notificationsSeen", clearNotifs);
+  }, []);
 
   useEffect(() => {
     const fetchLive = async () => {
@@ -180,7 +223,6 @@ export default function PublicProfilePage() {
     setTimeout(() => setToastMessage(""), 4000);
   };
 
-  // 🚀 TAKİP ETME VE BİLDİRİM GÖNDERME MOTORU
   const handleFollowToggle = async () => {
     if (!currentUser) return showToast("🔒 Takip etmek için giriş yapmalısın!");
     if (Number(currentUser.id) === Number(id))
@@ -188,6 +230,9 @@ export default function PublicProfilePage() {
 
     const newFollowState = !isFollowing;
     setIsFollowing(newFollowState);
+
+    const formattedUserName = formatName(user?.fullName || "Kullanıcı");
+    const formattedCurrentUserName = formatName(currentUser.fullName);
 
     try {
       await fetch("https://unicycle-api.onrender.com/api/interaction/follow", {
@@ -205,8 +250,8 @@ export default function PublicProfilePage() {
       );
       showToast(
         newFollowState
-          ? `✨ ${user?.fullName || "Kullanıcı"} takip edildi!`
-          : "💔 Takipten çıkıldı.",
+          ? `${formattedUserName} takip edildi!`
+          : `${formattedUserName} takipten çıkıldı.`,
       );
 
       if (newFollowState) {
@@ -217,7 +262,7 @@ export default function PublicProfilePage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               userId: Number(id),
-              message: `${currentUser.fullName} seni takip etmeye başladı.`,
+              message: `${formattedCurrentUserName} seni takip etmeye başladı.`,
             }),
           },
         );
@@ -229,7 +274,6 @@ export default function PublicProfilePage() {
     }
   };
 
-  // 🔥 GLOBAL CHATBOX'A SİNYAL GÖNDERİYORUZ
   const handleMessageClick = () => {
     if (!currentUser) return showToast("🔒 Mesaj atmak için giriş yapmalısın!");
     if (user) {
@@ -238,7 +282,7 @@ export default function PublicProfilePage() {
           detail: {
             sellerId: user.id,
             sellerName: user.fullName,
-            productTitle: "", // Profil sayfasından gidildiği için ilan adı boş
+            productTitle: "",
           },
         }),
       );
@@ -268,10 +312,13 @@ export default function PublicProfilePage() {
     );
 
   const safeLiveResults = Array.isArray(liveResults) ? liveResults : [];
-  const safeFullName = user?.fullName || "Kullanıcı";
-  const defaultAvatar = `https://ui-avatars.com/api/?name=${safeFullName}&background=0D8ABC&color=fff&size=256`;
 
-  // 🎓 İŞTE BÜYÜK ÇÖZÜM BURASI: Önce Veritabanına Bak, Bulamazsan Belirtilmemiş Yaz!
+  // 🚀 TİP HATASINI ÇÖZEN KISIM (safeFullName geri geldi, formatted ile güçlendi)
+  const safeFullName = user?.fullName || "Kullanıcı";
+  const formattedSafeFullName = formatName(safeFullName);
+
+  const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(formattedSafeFullName)}&background=0D8ABC&color=fff&size=256`;
+
   const displayUniversity = user?.university || "Üniversite Belirtilmemiş";
   const displayBio = profileData?.bio || "Merhaba! UniCycle'da yeniyim.";
   const isOwner = currentUser && Number(currentUser.id) === Number(id);
@@ -287,164 +334,298 @@ export default function PublicProfilePage() {
 
       {/* 🚀 ÜST MENÜ NAVBAR */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
-        <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex justify-between items-center gap-2 sm:gap-6 pt-1 sm:pt-0">
-          <div className="flex-shrink-0">
-            <Link
-              href="/"
-              className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
-            >
-              <div className="relative w-9 h-9 sm:w-12 sm:h-12 flex shrink-0">
+        <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
+            <div className="flex-shrink-0">
+              <Link
+                href="/"
+                className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
+              >
                 <Image
                   src="/logo.jpeg"
-                  alt="UniCycle İkon"
-                  fill
-                  className="object-contain drop-shadow-sm transition-all rounded-md mix-blend-multiply"
+                  alt="UniCycle"
+                  width={44}
+                  height={44}
+                  className="object-contain bg-transparent mix-blend-multiply rounded-md sm:w-[52px] sm:h-[52px]"
                   priority
                 />
-              </div>
-              <span className="text-xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
-                Uni<span className="text-[#20B2AA]">Cycle</span>
-              </span>
-            </Link>
-          </div>
-
-          <div className="desktop-search flex-1 max-w-3xl relative group z-50 px-8">
-            <form onSubmit={handleSearchSubmit} className="w-full relative">
-              <input
-                type="text"
-                placeholder="Ürün, @üye veya ders notu ara..."
-                className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-transparent font-medium"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setIsDropdownOpen(true);
-                }}
-                onFocus={() => setIsDropdownOpen(true)}
-                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-              />
-              <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                🔍
-              </span>
-              <button type="submit" className="hidden">
-                Ara
-              </button>
-            </form>
-            {isDropdownOpen && safeLiveResults.length > 0 && (
-              <div className="absolute top-full left-8 right-8 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
-                {safeLiveResults.slice(0, 5).map((result, idx) => (
-                  <Link
-                    href={
-                      result.type === "user"
-                        ? `/user/${result.item.id}`
-                        : `/listing-detail/${result.item.id}`
-                    }
-                    key={idx}
-                    className="flex items-center gap-3 px-5 py-2 hover:bg-slate-50 transition-colors"
-                  >
-                    <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0 text-sm">
-                      {result.type === "user"
-                        ? (result.item.fullName || "U").charAt(0).toUpperCase()
-                        : "📦"}
-                    </div>
-                    <div className="font-bold text-slate-800 text-sm">
-                      {result.item.fullName || result.item.title}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-            <Link
-              href="/create-listing"
-              className="hidden md:flex font-black text-[#20B2AA] items-center gap-1 transition-colors hover:text-teal-700"
-            >
-              <span className="text-xl">+</span> İlan Ver
-            </Link>
-            <Link
-              href="/create-listing"
-              className="flex md:hidden font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors text-[11px] sm:text-base border border-[#20B2AA] px-2 py-1.5 rounded-lg"
-            >
-              <span className="text-sm">+</span> İlan
-            </Link>
-
-            {currentUser ? (
-              <div className="flex items-center gap-2 sm:gap-4">
-                <Link
-                  href="/notifications"
-                  className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-colors"
-                >
-                  <svg
-                    className="w-5 h-5 text-slate-600"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                    ></path>
-                  </svg>
-                  {notificationsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
-                      {notificationsCount}
-                    </span>
-                  )}
-                </Link>
-
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
-                >
-                  <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
-                    👤
-                  </div>
-                  <span className="hidden sm:block text-sm">Hesabım</span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm ml-2"
-                >
-                  Çıkış
-                </button>
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                className="bg-slate-800 text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-black transition-colors"
-              >
-                Giriş Yap
+                <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
+                  Uni<span className="text-[#20B2AA]">Cycle</span>
+                </span>
               </Link>
-            )}
+            </div>
+
+            <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
+              <form
+                onSubmit={handleSearchSubmit}
+                className="w-full relative flex items-center"
+              >
+                <input
+                  type="text"
+                  placeholder="Ürün, @üye veya ders notu ara..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setIsDropdownOpen(true);
+                  }}
+                  onFocus={() => setIsDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+                  className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
+                />
+                <svg
+                  className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <button type="submit" className="hidden">
+                  Ara
+                </button>
+              </form>
+
+              {isDropdownOpen && safeLiveResults.length > 0 && (
+                <div className="absolute top-full left-6 right-10 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+                  {safeLiveResults.slice(0, 5).map((result, idx) => (
+                    <Link
+                      href={
+                        result.type === "user"
+                          ? `/user/${result.item.id}`
+                          : `/listing-detail/${result.item.id}`
+                      }
+                      key={idx}
+                      className="flex items-center gap-3 px-5 py-2 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0 text-sm">
+                        {result.type === "user"
+                          ? (result.item.fullName || "U")
+                              .charAt(0)
+                              .toUpperCase()
+                          : "📦"}
+                      </div>
+                      <div className="font-bold text-slate-800 text-sm">
+                        {result.item.fullName || result.item.title}
+                      </div>
+                    </Link>
+                  ))}
+                  <div
+                    className="px-5 py-2.5 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={handleSearchSubmit}
+                  >
+                    <span className="text-xs font-bold text-blue-600">
+                      Tüm sonuçları gör &rarr;
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
+              <Link
+                href="/create-listing"
+                className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
+              >
+                <span className="text-xl">+</span> İlan Ver
+              </Link>
+
+              {currentUser ? (
+                <div className="flex items-center gap-2 sm:gap-4 relative">
+                  <Link
+                    href="/favorites"
+                    className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                    title="Favorilerim"
+                  >
+                    <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300" />
+                  </Link>
+
+                  <div className="relative shrink-0">
+                    <button
+                      onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                      className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                      title="Bildirimler"
+                    >
+                      <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300" />
+                      {notificationsCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
+                          {notificationsCount}
+                        </span>
+                      )}
+                    </button>
+                    {isNotificationOpen && (
+                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                        <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                          <span className="font-bold text-slate-800">
+                            Bildirimler
+                          </span>
+                          {notificationsCount > 0 && (
+                            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                              {notificationsCount} Yeni
+                            </span>
+                          )}
+                        </div>
+                        <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                          {notificationsList.length === 0 ? (
+                            <div className="px-4 py-8 text-center text-slate-500 text-sm font-medium">
+                              Şu an hiç bildirimin yok.
+                            </div>
+                          ) : (
+                            notificationsList.slice(0, 5).map((notif: any) => {
+                              let icon = <Bell className="w-5 h-5" />;
+                              let bg = "bg-blue-50";
+                              let text = "text-blue-500";
+                              const msgLower =
+                                notif.message?.toLowerCase() || "";
+                              if (
+                                msgLower.includes("beğen") ||
+                                msgLower.includes("favori")
+                              ) {
+                                icon = (
+                                  <Heart className="w-5 h-5 fill-current" />
+                                );
+                                bg = "bg-red-50";
+                                text = "text-red-500";
+                              } else if (
+                                msgLower.includes("mesaj") ||
+                                msgLower.includes("yorum") ||
+                                msgLower.includes("soru")
+                              ) {
+                                icon = <MessageCircle className="w-5 h-5" />;
+                                bg = "bg-green-50";
+                                text = "text-green-500";
+                              } else if (msgLower.includes("takip")) {
+                                icon = <UserPlus className="w-5 h-5" />;
+                                bg = "bg-pink-50";
+                                text = "text-pink-500";
+                              } else if (
+                                msgLower.includes("ilan") ||
+                                msgLower.includes("ekledi")
+                              ) {
+                                icon = <Package className="w-5 h-5" />;
+                                bg = "bg-orange-50";
+                                text = "text-orange-500";
+                              }
+                              return (
+                                <div
+                                  key={notif.id}
+                                  className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center group"
+                                >
+                                  <div
+                                    className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} shrink-0 transition-transform group-hover:scale-105`}
+                                  >
+                                    {icon}
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="text-sm text-slate-700 leading-snug font-semibold">
+                                      {notif.message}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                                      {notif.createdAt
+                                        ? new Date(
+                                            notif.createdAt,
+                                          ).toLocaleDateString("tr-TR")
+                                        : "Yeni"}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                        <Link
+                          href="/notifications"
+                          onClick={() => setIsNotificationOpen(false)}
+                          className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors"
+                        >
+                          Tüm Bildirimleri Gör &rarr;
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
+                  >
+                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+                      👤
+                    </div>
+                    <span className="hidden sm:block text-sm">Hesabım</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
+                    title="Çıkış Yap"
+                  >
+                    <span className="hidden sm:block font-bold text-sm">
+                      Çıkış
+                    </span>
+                    <svg
+                      className="w-[22px] h-[22px] sm:hidden group-hover:scale-110 transition-transform"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      ></path>
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center justify-center bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
+                >
+                  Giriş Yap
+                </Link>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* 🚀 MOBİL ARAMA ÇUBUĞU */}
-        <div className="mobile-search pb-3 pt-1 w-full relative z-40 px-4 bg-white border-b border-gray-100 shadow-sm">
+        {/* 📱 MOBİL ARAMA ÇUBUĞU */}
+        <div className="md:hidden pb-3 pt-2 w-full relative z-40 px-4 bg-white border-t border-slate-50 shadow-sm">
           <form
             onSubmit={handleSearchSubmit}
-            className="w-full relative flex gap-2"
+            className="w-full relative flex items-center"
           >
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="Ürün, @üye veya ders notu ara..."
-                className="w-full bg-[#F3F4F6] text-slate-800 rounded-lg py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-[#20B2AA] transition-all font-medium text-sm"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setIsDropdownOpen(true);
-                }}
-                onFocus={() => setIsDropdownOpen(true)}
-                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+            <input
+              type="text"
+              placeholder="Ürün veya @üye ara..."
+              className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-[#20B2AA]/30 border border-transparent transition-all font-semibold text-sm shadow-inner"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setIsDropdownOpen(true);
+              }}
+              onFocus={() => setIsDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+            />
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
-              <span className="absolute left-3 top-2.5 text-slate-400 text-lg">
-                🔍
-              </span>
-            </div>
+            </svg>
+            <button type="submit" className="hidden">
+              Ara
+            </button>
           </form>
           {isDropdownOpen && safeLiveResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
@@ -529,15 +710,22 @@ export default function PublicProfilePage() {
                     </button>
                     <button
                       onClick={handleFollowToggle}
-                      className={`font-bold py-1.5 px-4 sm:py-2 sm:px-6 rounded-full text-xs sm:text-sm transition-all shadow-sm flex items-center gap-1.5 ${isFollowing ? "bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200" : "bg-blue-600 text-white hover:bg-blue-700"}`}
+                      className={`font-bold py-1.5 px-4 sm:py-2 sm:px-6 rounded-full text-xs sm:text-sm transition-all shadow-sm flex items-center gap-1.5 ${
+                        isFollowing
+                          ? "bg-white text-slate-700 border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                          : "bg-blue-600 text-white border-2 border-blue-600 hover:bg-blue-700 hover:border-blue-700"
+                      }`}
                     >
                       {isFollowing ? (
                         <>
-                          <span className="text-green-500 font-black">✓</span>{" "}
-                          Takip Ediliyor
+                          <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500" />
+                          <span>Takip Ediliyor</span>
                         </>
                       ) : (
-                        "Takip Et"
+                        <>
+                          <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <span>Takip Et</span>
+                        </>
                       )}
                     </button>
                   </>
@@ -547,14 +735,13 @@ export default function PublicProfilePage() {
 
             <div className="text-left">
               <h1 className="text-2xl sm:text-3xl font-black text-gray-900 flex items-center gap-2">
-                {safeFullName}{" "}
+                {formattedSafeFullName}{" "}
                 <ShieldCheck className="text-blue-500 w-5 h-5 sm:w-7 sm:h-7" />
               </h1>
               <p className="text-sm font-bold text-slate-500 mt-0.5">
                 @{safeFullName.split(" ")[0].toLowerCase()}
               </p>
 
-              {/* 🎓 ÜNİVERSİTE ALANI */}
               <p className="text-xs sm:text-lg font-bold text-gray-600 mt-2">
                 👩‍🎓 {displayUniversity}
               </p>
@@ -569,7 +756,8 @@ export default function PublicProfilePage() {
         {/* 🛍️ VİTRİN */}
         <div className="mt-8 mb-8 bg-white rounded-3xl shadow-sm border border-gray-200 p-6 sm:p-8">
           <h2 className="text-lg sm:text-2xl font-black text-slate-800 mb-6 flex items-center gap-2">
-            🛍️ {safeFullName.split(" ")[0]}'in Vitrini{" "}
+            🛍️ <span>{formattedSafeFullName.split(" ")[0]}</span>
+            {getTurkishSuffix(formattedSafeFullName.split(" ")[0])} Vitrini{" "}
             <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-sm">
               {listings.length}
             </span>

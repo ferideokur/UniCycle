@@ -4,7 +4,15 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Bell, Heart, MessageCircle, Package, UserPlus } from "lucide-react";
+import {
+  Bell,
+  Heart,
+  MessageCircle,
+  Package,
+  UserPlus,
+  Camera,
+  UploadCloud,
+} from "lucide-react";
 
 // 🎓 Türkiye'deki Üniversiteler Listesi
 const UNIVERSITIES = [
@@ -113,6 +121,7 @@ export default function ProfilePage() {
     title: string;
     content: string;
   }>({ isOpen: false, title: "", content: "" });
+
   const openInfoModal = (title: string, content: string) => {
     setInfoModal({ isOpen: true, title, content });
   };
@@ -229,6 +238,7 @@ export default function ProfilePage() {
     setActiveModal("none");
     setPasswordConfirm("");
   };
+
   const handleLogout = () => {
     localStorage.removeItem("user");
     window.location.href = "/";
@@ -367,6 +377,21 @@ export default function ProfilePage() {
     } catch (error) {
       alert("Hata oluştu! Sunucunun çalıştığından emin olun.");
       setIsSaving(false);
+    }
+  };
+
+  // 🚀 YENİ: Galeriden seçilen fotoğrafı koda çeviren (Base64) sihirli fonksiyon
+  const handleImageUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setImageState: (val: string) => void,
+  ) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageState(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -548,7 +573,6 @@ export default function ProfilePage() {
                             </div>
                           ) : (
                             notificationsList.slice(0, 5).map((notif: any) => {
-                              // 🚀 DÜZELTME: Emojiler yerine Lucide SVG İkonları
                               let icon = <Bell className="w-5 h-5" />;
                               let bg = "bg-blue-50";
                               let text = "text-blue-500";
@@ -1059,6 +1083,143 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* 📸 PROFİL FOTOĞRAFI MODALI (Premium Dropzone) */}
+      {activeModal === "profile" && (
+        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white w-full max-w-md rounded-2xl sm:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-white">
+              <h2 className="text-lg sm:text-xl font-black text-slate-800">
+                Profil Fotoğrafı
+              </h2>
+              <button
+                onClick={() => setActiveModal("none")}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 sm:p-8 flex flex-col items-center">
+              <label className="relative group cursor-pointer flex flex-col items-center">
+                <div className="w-32 h-32 rounded-full border-2 border-dashed border-slate-300 group-hover:border-[#20B2AA] overflow-hidden bg-slate-50 flex items-center justify-center transition-colors shadow-sm relative">
+                  {profileImage ? (
+                    <img
+                      src={profileImage}
+                      className="w-full h-full object-cover group-hover:opacity-50 transition-opacity"
+                    />
+                  ) : (
+                    <Camera className="w-10 h-10 text-slate-300 group-hover:text-[#20B2AA] transition-colors" />
+                  )}
+                  {/* Hover Efekti (Fotoğraf Varsa) */}
+                  {profileImage && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="w-8 h-8 text-white drop-shadow-md" />
+                    </div>
+                  )}
+                </div>
+                <span className="mt-4 text-sm font-bold text-[#20B2AA] group-hover:text-teal-700 transition-colors">
+                  Fotoğraf Seç
+                </span>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  JPEG, PNG (Max 5MB)
+                </p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleImageUpload(e, setProfileImage)}
+                />
+              </label>
+            </div>
+            <div className="p-4 sm:p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50">
+              <button
+                onClick={() => setActiveModal("none")}
+                className="px-5 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-200 transition-colors"
+              >
+                İptal
+              </button>
+              <button
+                onClick={() => saveAllData()}
+                className="px-6 py-2.5 rounded-xl font-black text-white bg-[#20B2AA] hover:bg-teal-700 shadow-md transition-colors"
+              >
+                Kaydet
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 📸 KAPAK FOTOĞRAFI MODALI (Premium Dropzone) */}
+      {activeModal === "cover" && (
+        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white w-full max-w-md rounded-2xl sm:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-white">
+              <h2 className="text-lg sm:text-xl font-black text-slate-800">
+                Kapak Fotoğrafı
+              </h2>
+              <button
+                onClick={() => setActiveModal("none")}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 sm:p-8">
+              <label className="group cursor-pointer block">
+                <div
+                  className={`w-full h-40 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-colors overflow-hidden relative ${coverImage ? "border-transparent" : "border-slate-300 group-hover:border-[#20B2AA] bg-slate-50"}`}
+                >
+                  {coverImage ? (
+                    <>
+                      <img
+                        src={coverImage}
+                        className="w-full h-full object-cover group-hover:opacity-50 transition-opacity"
+                      />
+                      {/* Hover Efekti */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+                        <UploadCloud className="w-8 h-8 text-white drop-shadow-md mb-2" />
+                        <span className="text-sm font-bold text-white drop-shadow-md">
+                          Görseli Değiştir
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="w-10 h-10 text-slate-300 group-hover:text-[#20B2AA] transition-colors mb-3" />
+                      <span className="text-sm font-bold text-[#20B2AA] group-hover:text-teal-700 transition-colors">
+                        Cihazdan Görsel Seç
+                      </span>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Geniş açılı bir görsel (16:9) önerilir
+                      </p>
+                    </>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleImageUpload(e, setCoverImage)}
+                />
+              </label>
+            </div>
+            <div className="p-4 sm:p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50">
+              <button
+                onClick={() => setActiveModal("none")}
+                className="px-5 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-200 transition-colors"
+              >
+                İptal
+              </button>
+              <button
+                onClick={() => saveAllData()}
+                className="px-6 py-2.5 rounded-xl font-black text-white bg-[#20B2AA] hover:bg-teal-700 shadow-md transition-colors"
+              >
+                Kaydet
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 🌊 FOOTER */}
       <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-6 mt-10 rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -1170,6 +1331,11 @@ export default function ProfilePage() {
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `.custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; } @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }`,
+        }}
+      />
     </div>
   );
 }
