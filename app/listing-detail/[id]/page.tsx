@@ -12,6 +12,10 @@ import {
   ChevronRight,
   MessageSquare,
   Send,
+  Bell,
+  MessageCircle,
+  Package,
+  UserPlus,
 } from "lucide-react";
 
 export default function ListingDetailPage() {
@@ -563,53 +567,58 @@ export default function ListingDetailPage() {
                             </div>
                           ) : (
                             notificationsList.slice(0, 5).map((notif: any) => {
-                              let icon = "🔔",
-                                bg = "bg-blue-100",
-                                text = "text-blue-600";
+                              // 🚀 DÜZELTME: Emojiler yerine Lucide SVG İkonları
+                              let icon = <Bell className="w-5 h-5" />;
+                              let bg = "bg-blue-50";
+                              let text = "text-blue-500";
                               const msgLower =
                                 notif.message?.toLowerCase() || "";
+
                               if (
                                 msgLower.includes("beğen") ||
                                 msgLower.includes("favori")
                               ) {
-                                icon = "❤️";
-                                bg = "bg-red-100";
-                                text = "text-red-600";
+                                icon = (
+                                  <Heart className="w-5 h-5 fill-current" />
+                                );
+                                bg = "bg-red-50";
+                                text = "text-red-500";
                               } else if (
                                 msgLower.includes("mesaj") ||
                                 msgLower.includes("yorum") ||
                                 msgLower.includes("soru")
                               ) {
-                                icon = "💬";
-                                bg = "bg-green-100";
-                                text = "text-green-600";
+                                icon = <MessageCircle className="w-5 h-5" />;
+                                bg = "bg-green-50";
+                                text = "text-green-500";
                               } else if (msgLower.includes("takip")) {
-                                icon = "🌸";
-                                bg = "bg-pink-100";
-                                text = "text-pink-600";
+                                icon = <UserPlus className="w-5 h-5" />;
+                                bg = "bg-pink-50";
+                                text = "text-pink-500";
                               } else if (
                                 msgLower.includes("ilan") ||
                                 msgLower.includes("ekledi")
                               ) {
-                                icon = "📦";
-                                bg = "bg-orange-100";
-                                text = "text-orange-600";
+                                icon = <Package className="w-5 h-5" />;
+                                bg = "bg-orange-50";
+                                text = "text-orange-500";
                               }
+
                               return (
                                 <div
                                   key={notif.id}
-                                  className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center"
+                                  className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center group"
                                 >
                                   <div
-                                    className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} text-lg shrink-0`}
+                                    className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} shrink-0 transition-transform group-hover:scale-105`}
                                   >
                                     {icon}
                                   </div>
                                   <div className="flex-1">
-                                    <p className="text-sm text-slate-700">
+                                    <p className="text-sm text-slate-700 leading-snug font-semibold">
                                       {notif.message}
                                     </p>
-                                    <p className="text-[10px] text-slate-400 mt-0.5">
+                                    <p className="text-[10px] text-slate-400 mt-1 font-medium">
                                       {notif.createdAt
                                         ? new Date(
                                             notif.createdAt,
@@ -753,13 +762,21 @@ export default function ListingDetailPage() {
           <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm font-semibold text-slate-400 overflow-hidden whitespace-nowrap flex-1">
             <Link
               href="/"
-              className="hover:text-blue-600 transition-colors shrink-0"
+              className="hover:text-[#20B2AA] transition-colors shrink-0"
             >
               Ana Sayfa
             </Link>
-            <ChevronRight size={14} className="shrink-0" />
-            <span className="text-slate-600 shrink-0">{product.category}</span>
-            <ChevronRight size={14} className="shrink-0" />
+            <ChevronRight size={14} className="shrink-0 text-slate-300" />
+
+            {/* 🚀 DÜZELTİLEN: Kategori Artık Tıklanabilir Bir Link! */}
+            <Link
+              href={`/search?q=${encodeURIComponent(product.category)}`}
+              className="text-slate-600 hover:text-[#20B2AA] transition-colors shrink-0 cursor-pointer"
+            >
+              {product.category}
+            </Link>
+
+            <ChevronRight size={14} className="shrink-0 text-slate-300" />
             <span className="text-slate-800 truncate max-w-[120px] sm:max-w-[200px]">
               {product.title}
             </span>
@@ -886,9 +903,9 @@ export default function ListingDetailPage() {
                         {canDelete && (
                           <button
                             onClick={() => handleDeleteComment(comment.id)}
-                            className="absolute top-1 sm:top-2 right-[-5px] sm:right-[-10px] opacity-100 lg:opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-all bg-white p-1 sm:p-1.5 rounded-md shadow-sm border border-slate-100 text-xs sm:text-base"
+                            className="absolute top-1 sm:top-2 right-[-5px] sm:right-[-10px] opacity-100 lg:opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 bg-white px-2 py-1 rounded-md shadow-sm border border-red-100 text-[10px] sm:text-xs font-bold transition-all"
                           >
-                            🗑️
+                            Sil
                           </button>
                         )}
                       </div>
@@ -1002,7 +1019,7 @@ export default function ListingDetailPage() {
               </Link>
               {isOwner ? (
                 <div className="w-full bg-green-50 text-green-700 font-black py-3 sm:py-4 rounded-xl border border-green-200 flex items-center justify-center gap-2 text-xs sm:text-sm shadow-sm">
-                  ✨ Bu senin ilanın
+                  Bu senin ilanın
                 </div>
               ) : (
                 <button

@@ -267,7 +267,7 @@ export default function CreateListingPage() {
           </div>
           <div className="flex-1 text-center hidden sm:block shrink-0">
             <h1 className="text-lg sm:text-xl font-black text-slate-800">
-              Yeni İlan Oluştur 📦
+              Yeni İlan Oluştur
             </h1>
           </div>
           <div className="flex-1 flex justify-end shrink-0">
@@ -303,7 +303,7 @@ export default function CreateListingPage() {
             <div className="space-y-6 sm:space-y-10">
               {/* 🎓 YENİ: Kullanıcıya hangi okulda yayınlanacağını gösteren şık bir bilgi kutusu */}
               <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl sm:rounded-2xl flex items-center gap-3">
-                <span className="text-2xl">🎓</span>
+                <span className="text-2xl"></span>
                 <div>
                   <p className="text-xs sm:text-sm font-bold text-blue-800">
                     İlanınız şu üniversitenin vitrininde yayınlanacak:
@@ -540,7 +540,7 @@ export default function CreateListingPage() {
                       İlan Kaydediliyor...
                     </>
                   ) : (
-                    "İlanı Yayına Al 🚀"
+                    "İlanı Yayına Al "
                   )}
                 </button>
               </div>

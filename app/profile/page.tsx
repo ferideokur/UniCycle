@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { Bell, Heart, MessageCircle, Package, UserPlus } from "lucide-react";
 
 // 🎓 Türkiye'deki Üniversiteler Listesi
 const UNIVERSITIES = [
@@ -377,7 +378,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-[#F8FAFC] pb-20 relative font-sans w-full overflow-x-hidden flex flex-col">
       {showToast && (
         <div className="fixed top-28 right-8 z-[200] bg-green-500 text-white px-6 py-3 rounded-2xl shadow-2xl font-bold animate-in fade-in slide-in-from-top-5">
-          ✅ Değişiklikler Kaydedildi!
+          Değişiklikler Kaydedildi!
         </div>
       )}
 
@@ -547,53 +548,58 @@ export default function ProfilePage() {
                             </div>
                           ) : (
                             notificationsList.slice(0, 5).map((notif: any) => {
-                              let icon = "🔔",
-                                bg = "bg-blue-100",
-                                text = "text-blue-600";
+                              // 🚀 DÜZELTME: Emojiler yerine Lucide SVG İkonları
+                              let icon = <Bell className="w-5 h-5" />;
+                              let bg = "bg-blue-50";
+                              let text = "text-blue-500";
                               const msgLower =
                                 notif.message?.toLowerCase() || "";
+
                               if (
                                 msgLower.includes("beğen") ||
                                 msgLower.includes("favori")
                               ) {
-                                icon = "❤️";
-                                bg = "bg-red-100";
-                                text = "text-red-600";
+                                icon = (
+                                  <Heart className="w-5 h-5 fill-current" />
+                                );
+                                bg = "bg-red-50";
+                                text = "text-red-500";
                               } else if (
                                 msgLower.includes("mesaj") ||
                                 msgLower.includes("yorum") ||
                                 msgLower.includes("soru")
                               ) {
-                                icon = "💬";
-                                bg = "bg-green-100";
-                                text = "text-green-600";
+                                icon = <MessageCircle className="w-5 h-5" />;
+                                bg = "bg-green-50";
+                                text = "text-green-500";
                               } else if (msgLower.includes("takip")) {
-                                icon = "🌸";
-                                bg = "bg-pink-100";
-                                text = "text-pink-600";
+                                icon = <UserPlus className="w-5 h-5" />;
+                                bg = "bg-pink-50";
+                                text = "text-pink-500";
                               } else if (
                                 msgLower.includes("ilan") ||
                                 msgLower.includes("ekledi")
                               ) {
-                                icon = "📦";
-                                bg = "bg-orange-100";
-                                text = "text-orange-600";
+                                icon = <Package className="w-5 h-5" />;
+                                bg = "bg-orange-50";
+                                text = "text-orange-500";
                               }
+
                               return (
                                 <div
                                   key={notif.id}
-                                  className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center"
+                                  className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center group"
                                 >
                                   <div
-                                    className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} text-lg shrink-0`}
+                                    className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} shrink-0 transition-transform group-hover:scale-105`}
                                   >
                                     {icon}
                                   </div>
                                   <div className="flex-1">
-                                    <p className="text-sm text-slate-700">
+                                    <p className="text-sm text-slate-700 leading-snug font-semibold">
                                       {notif.message}
                                     </p>
-                                    <p className="text-[10px] text-slate-400 mt-0.5">
+                                    <p className="text-[10px] text-slate-400 mt-1 font-medium">
                                       {notif.createdAt
                                         ? new Date(
                                             notif.createdAt,
@@ -753,7 +759,7 @@ export default function ProfilePage() {
               onClick={() => setActiveModal("cover")}
               className="absolute top-4 right-4 bg-white/90 text-gray-800 font-bold py-2 px-5 rounded-full text-xs sm:text-base shadow-lg hover:bg-white transition-colors"
             >
-              📷 Kapağı Düzenle
+              Kapağı Düzenle
             </button>
           )}
         </div>
@@ -782,21 +788,21 @@ export default function ProfilePage() {
                   onClick={() => setActiveModal("info")}
                   className="bg-blue-50 text-blue-600 font-bold py-1.5 px-3 sm:py-2 sm:px-5 rounded-full text-xs sm:text-base hover:bg-blue-100 transition-colors shadow-sm"
                 >
-                  📝 Bilgiler
+                  Bilgiler
                 </button>
               )}
               <button
                 onClick={() => setIsEditMode(!isEditMode)}
                 className={`font-bold py-1.5 px-3 sm:py-2 sm:px-5 rounded-full text-xs sm:text-base border transition shadow-sm ${isEditMode ? "bg-green-500 text-white border-green-600" : "bg-white text-gray-700 hover:bg-gray-50"}`}
               >
-                {isEditMode ? "✅ Bitti" : "✏️ Düzenle"}
+                {isEditMode ? "Kaydet" : "Düzenle"}
               </button>
             </div>
           </div>
           <div className="mt-2">
             <h1 className="text-xl sm:text-3xl font-black flex items-center gap-2 capitalize">
               {user ? user.fullName : "Yükleniyor..."}{" "}
-              <span className="text-blue-500">✓</span>
+              <span className="text-blue-500"></span>
             </h1>
             {user && (
               <p className="text-sm font-bold text-slate-400 mt-0.5">
@@ -888,9 +894,9 @@ export default function ProfilePage() {
                   </Link>
                   <button
                     onClick={(e) => handleDeleteListing(listing.id, e)}
-                    className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white p-1.5 sm:p-2 rounded-full shadow-lg z-20 hover:scale-110"
+                    className="absolute top-2 right-2 bg-white/90 hover:bg-red-50 text-red-500 font-bold text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-sm border border-red-100 z-20 hover:scale-105 transition-all backdrop-blur-sm"
                   >
-                    🗑️
+                    Sil
                   </button>
                   <Link
                     href={`/listing-detail/${listing.id}`}
@@ -1001,7 +1007,7 @@ export default function ProfilePage() {
                 disabled={isSaving}
                 className="w-full sm:w-auto px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl font-bold text-red-500 hover:bg-red-50 border border-transparent hover:border-red-200 transition-all text-sm sm:text-base order-2 sm:order-1"
               >
-                🗑️ Hesabımı Kalıcı Olarak Sil
+                Hesabımı Sil
               </button>
               <div className="flex gap-2 sm:gap-3 w-full sm:w-auto order-1 sm:order-2 justify-end">
                 <button
