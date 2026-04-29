@@ -395,7 +395,7 @@ export default function ListingDetailPage() {
         </div>
       )}
 
-      {/* 🚀 NAVBAR (İKİZ İKONLU) */}
+      {/* 🚀 ÜST MENÜ NAVBAR (Ana Sayfa ile %100 Uyumlu) */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
@@ -416,12 +416,15 @@ export default function ListingDetailPage() {
               </span>
             </Link>
 
-            <div className="hidden md:flex flex-1 max-w-3xl relative group z-50 px-8">
-              <form onSubmit={handleSearchSubmit} className="w-full relative">
+            {/* ✨ PREMIUM ARAMA ÇUBUĞU */}
+            <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
+              <form
+                onSubmit={handleSearchSubmit}
+                className="w-full relative flex items-center"
+              >
                 <input
                   type="text"
                   placeholder="Ürün, @üye veya ders notu ara..."
-                  className="w-full bg-slate-100 text-slate-800 rounded-full py-3 px-6 pl-14 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] transition-all border border-transparent font-medium"
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -429,13 +432,28 @@ export default function ListingDetailPage() {
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
                   onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+                  className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
                 />
-                <span className="absolute left-5 top-3.5 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors">
-                  🔍
-                </span>
+                <svg
+                  className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <button type="submit" className="hidden">
+                  Ara
+                </button>
               </form>
+
               {isDropdownOpen && liveResults.length > 0 && (
-                <div className="absolute top-full left-8 right-8 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+                <div className="absolute top-full left-6 right-10 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
                   {liveResults.slice(0, 5).map((result, idx) => (
                     <Link
                       href={
@@ -456,21 +474,35 @@ export default function ListingDetailPage() {
                       </div>
                     </Link>
                   ))}
+                  <div
+                    className="px-5 py-2.5 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={handleSearchSubmit}
+                  >
+                    <span className="text-xs font-bold text-blue-600">
+                      Tüm sonuçları gör &rarr;
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
+              {/* 🚀 DÜZELTİLEN İLAN VER BUTONU (Ana Sayfa İle Aynı Renk ve Hover) */}
               <Link
                 href="/create-listing"
-                className="hidden md:flex font-black text-[#20B2AA] hover:text-blue-800 items-center gap-1 transition-colors"
+                className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
               >
                 <span className="text-xl">+</span> İlan Ver
+              </Link>
+              <Link
+                href="/create-listing"
+                className="flex md:hidden font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors text-[11px] sm:text-base border border-[#20B2AA] px-2 py-1.5 rounded-lg"
+              >
+                <span className="text-sm">+</span> İlan
               </Link>
 
               {currentUser ? (
                 <div className="flex items-center gap-2 sm:gap-4 relative">
-                  {/* ❤️ PREMIUM FAVORİLER BUTONU */}
                   <Link
                     href="/favorites"
                     className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
@@ -491,7 +523,6 @@ export default function ListingDetailPage() {
                     </svg>
                   </Link>
 
-                  {/* 🔔 PREMIUM BİLDİRİM ÇANI */}
                   <div className="relative shrink-0">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
@@ -602,7 +633,7 @@ export default function ListingDetailPage() {
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm shrink-0"
+                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm shrink-0 ml-2"
                   >
                     Çıkış
                   </button>
@@ -610,13 +641,80 @@ export default function ListingDetailPage() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center justify-center bg-orange-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-orange-600 transition-colors text-xs shrink-0"
+                  className="flex items-center justify-center bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
                 >
                   Giriş Yap
                 </Link>
               )}
             </div>
           </div>
+        </div>
+
+        {/* 📱 MOBİL ARAMA ÇUBUĞU */}
+        <div className="md:hidden pb-3 pt-2 w-full relative z-40 px-4 bg-white border-t border-slate-50 shadow-sm">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="w-full relative flex items-center"
+          >
+            <input
+              type="text"
+              placeholder="Ürün veya @üye ara..."
+              className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-[#20B2AA]/30 border border-transparent transition-all font-semibold text-sm shadow-inner"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setIsDropdownOpen(true);
+              }}
+              onFocus={() => setIsDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+            />
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <button type="submit" className="hidden">
+              Ara
+            </button>
+          </form>
+          {isDropdownOpen && liveResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+              {liveResults.slice(0, 4).map((result, idx) => (
+                <Link
+                  href={
+                    result.type === "user"
+                      ? `/user/${result.item.id}`
+                      : `/listing-detail/${result.item.id}`
+                  }
+                  key={`mob-${idx}`}
+                  className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50"
+                >
+                  <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
+                    {result.type === "user" ? (
+                      <span className="font-bold text-blue-600">
+                        {result.item.fullName.charAt(0).toUpperCase()}
+                      </span>
+                    ) : (
+                      <span className="text-xs">📦</span>
+                    )}
+                  </div>
+                  <div className="flex-1 truncate">
+                    <div className="font-bold text-slate-800 truncate text-xs">
+                      {result.item.fullName || result.item.title}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
