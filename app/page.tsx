@@ -526,7 +526,7 @@ export default function Home() {
   });
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] pb-20 font-sans w-full overflow-x-hidden flex flex-col">
+    <main className="min-h-screen bg-[#F8FAFC] pb-20 font-sans w-full overflow-x-hidden flex flex-col relative">
       {/* 🚀 ÜST MENÜ */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
         <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -627,18 +627,12 @@ export default function Home() {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
+              {/* 🚀 DÜZELTİLEN: Mobilde üst menüdeki sıkışıklığı önlemek için "+ İlan" butonu navbar'dan kaldırıldı (Sadece masaüstünde var) */}
               <Link
                 href="/create-listing"
                 className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
               >
                 <span className="text-xl">+</span> İlan Ver
-              </Link>
-
-              <Link
-                href="/create-listing"
-                className="flex md:hidden font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors text-[11px] sm:text-base border border-[#20B2AA] px-2 py-1.5 rounded-lg"
-              >
-                <span className="text-sm">+</span> İlan
               </Link>
 
               {user ? (
@@ -786,11 +780,29 @@ export default function Home() {
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
                   </Link>
+                  {/* 🚀 DÜZELTİLEN: Çıkış Butonu (Masaüstünde Yazı, Mobilde Şık İkon) */}
                   <button
                     onClick={handleLogout}
-                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm shrink-0"
+                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-2 sm:ml-3 flex items-center justify-center group"
+                    title="Çıkış Yap"
                   >
-                    Çıkış
+                    <span className="hidden sm:block font-bold text-sm">
+                      Çıkış
+                    </span>
+                    {/* Sadece Mobilde Görünecek Çıkış İkonu */}
+                    <svg
+                      className="w-[22px] h-[22px] sm:hidden group-hover:scale-110 transition-transform"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      ></path>
+                    </svg>
                   </button>
                 </div>
               ) : (
@@ -873,6 +885,17 @@ export default function Home() {
         </div>
       </header>
 
+      {/* 📱 YENİ: MOBİL İÇİN YÜZEN İLAN VER BUTONU (Ortalanmış FAB) */}
+      {/* Sağ alttaki mesajlaşma ikonunu engellememek için ekranın alt ortasına yerleştirildi. (Dolap/Letgo tarzı) */}
+      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
+        <Link
+          href="/create-listing"
+          className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20"
+        >
+          <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
+        </Link>
+      </div>
+
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8 flex gap-8 items-start w-full">
         <aside className="w-72 hidden lg:block sticky top-28 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
           <h3 className="font-black text-lg text-slate-800 mb-5 pl-2">
@@ -954,8 +977,9 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="block lg:hidden mb-6">
-            <div className="flex overflow-x-auto custom-scrollbar gap-2 pb-2 -mx-4 px-4">
+          {/* 🚀 DÜZELTİLEN: Mobil kategorilerin alt boşluğu (margin-bottom ve padding-bottom) artırıldı, mavi banner'a yapışması engellendi. */}
+          <div className="block lg:hidden mb-8">
+            <div className="flex overflow-x-auto custom-scrollbar gap-2 pb-4 -mx-4 px-4">
               <button
                 onClick={() => {
                   setExpandedGroup(null);
@@ -1401,11 +1425,6 @@ export default function Home() {
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `.custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; } @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }`,
-        }}
-      />
     </main>
   );
 }

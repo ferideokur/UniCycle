@@ -395,28 +395,30 @@ export default function ListingDetailPage() {
         </div>
       )}
 
-      {/* 🚀 ÜST MENÜ NAVBAR (Ana Sayfa ile %100 Uyumlu) */}
-      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+      {/* 🚀 ÜST MENÜ NAVBAR (Premium İkiz İkonlar ve Temiz Mobil) */}
+      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
+        <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
-            <Link
-              href="/"
-              className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer shrink-0"
-            >
-              <Image
-                src="/logo.jpeg"
-                alt="UniCycle"
-                width={44}
-                height={44}
-                className="object-contain rounded-md"
-                priority
-              />
-              <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
-                Uni<span className="text-[#20B2AA]">Cycle</span>
-              </span>
-            </Link>
+            <div className="flex-shrink-0">
+              <Link
+                href="/"
+                className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
+              >
+                <Image
+                  src="/logo.jpeg"
+                  alt="UniCycle"
+                  width={44}
+                  height={44}
+                  className="object-contain bg-transparent mix-blend-multiply rounded-md sm:w-[52px] sm:h-[52px]"
+                  priority
+                />
+                <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
+                  Uni<span className="text-[#20B2AA]">Cycle</span>
+                </span>
+              </Link>
+            </div>
 
-            {/* ✨ PREMIUM ARAMA ÇUBUĞU */}
+            {/* ✨ PREMIUM ARAMA ÇUBUĞU (Masaüstü) */}
             <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
               <form
                 onSubmit={handleSearchSubmit}
@@ -487,18 +489,12 @@ export default function ListingDetailPage() {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              {/* 🚀 DÜZELTİLEN İLAN VER BUTONU (Ana Sayfa İle Aynı Renk ve Hover) */}
+              {/* 🚀 Masaüstü "İlan Ver", Mobilde Gizli */}
               <Link
                 href="/create-listing"
                 className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
               >
                 <span className="text-xl">+</span> İlan Ver
-              </Link>
-              <Link
-                href="/create-listing"
-                className="flex md:hidden font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors text-[11px] sm:text-base border border-[#20B2AA] px-2 py-1.5 rounded-lg"
-              >
-                <span className="text-sm">+</span> İlan
               </Link>
 
               {currentUser ? (
@@ -526,7 +522,7 @@ export default function ListingDetailPage() {
                   <div className="relative shrink-0">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                      className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 border border-slate-200 shadow-sm group transition-all shrink-0"
+                      className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                       title="Bildirimler"
                     >
                       <svg
@@ -549,7 +545,7 @@ export default function ListingDetailPage() {
                       )}
                     </button>
                     {isNotificationOpen && (
-                      <div className="absolute top-full right-[-20px] sm:right-0 mt-3 w-[300px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                           <span className="font-bold text-slate-800">
                             Bildirimler
@@ -567,9 +563,9 @@ export default function ListingDetailPage() {
                             </div>
                           ) : (
                             notificationsList.slice(0, 5).map((notif: any) => {
-                              let icon = "✨";
-                              let bg = "bg-blue-100";
-                              let text = "text-blue-600";
+                              let icon = "🔔",
+                                bg = "bg-blue-100",
+                                text = "text-blue-600";
                               const msgLower =
                                 notif.message?.toLowerCase() || "";
                               if (
@@ -579,10 +575,25 @@ export default function ListingDetailPage() {
                                 icon = "❤️";
                                 bg = "bg-red-100";
                                 text = "text-red-600";
-                              } else if (msgLower.includes("yorum")) {
+                              } else if (
+                                msgLower.includes("mesaj") ||
+                                msgLower.includes("yorum") ||
+                                msgLower.includes("soru")
+                              ) {
                                 icon = "💬";
                                 bg = "bg-green-100";
                                 text = "text-green-600";
+                              } else if (msgLower.includes("takip")) {
+                                icon = "🌸";
+                                bg = "bg-pink-100";
+                                text = "text-pink-600";
+                              } else if (
+                                msgLower.includes("ilan") ||
+                                msgLower.includes("ekledi")
+                              ) {
+                                icon = "📦";
+                                bg = "bg-orange-100";
+                                text = "text-orange-600";
                               }
                               return (
                                 <div
@@ -590,15 +601,15 @@ export default function ListingDetailPage() {
                                   className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center"
                                 >
                                   <div
-                                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full ${bg} flex items-center justify-center ${text} text-base sm:text-lg shrink-0`}
+                                    className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} text-lg shrink-0`}
                                   >
                                     {icon}
                                   </div>
                                   <div className="flex-1">
-                                    <p className="text-xs sm:text-sm text-slate-700">
+                                    <p className="text-sm text-slate-700">
                                       {notif.message}
                                     </p>
-                                    <p className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5">
+                                    <p className="text-[10px] text-slate-400 mt-0.5">
                                       {notif.createdAt
                                         ? new Date(
                                             notif.createdAt,
@@ -624,18 +635,36 @@ export default function ListingDetailPage() {
 
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm transition-all"
+                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
                   >
-                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs shrink-0">
+                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
                       👤
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
                   </Link>
+
+                  {/* 🚀 YENİ: Mobilde Çıkış İkonu, Masaüstünde Yazı */}
                   <button
                     onClick={handleLogout}
-                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm shrink-0 ml-2"
+                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
+                    title="Çıkış Yap"
                   >
-                    Çıkış
+                    <span className="hidden sm:block font-bold text-sm">
+                      Çıkış
+                    </span>
+                    <svg
+                      className="w-[22px] h-[22px] sm:hidden group-hover:scale-110 transition-transform"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      ></path>
+                    </svg>
                   </button>
                 </div>
               ) : (
@@ -737,7 +766,7 @@ export default function ListingDetailPage() {
           </div>
           <button
             onClick={() => router.back()}
-            className="font-bold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1 text-[11px] sm:text-sm shrink-0 pl-2"
+            className="font-bold text-slate-500 hover:text-[#20B2AA] transition-colors flex items-center gap-1 text-[11px] sm:text-sm shrink-0 pl-2"
           >
             <span>&larr;</span> Geri Dön
           </button>
@@ -794,7 +823,7 @@ export default function ListingDetailPage() {
                 onSubmit={handleAddComment}
                 className="mb-6 sm:mb-8 flex gap-2 sm:gap-3"
               >
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-black shrink-0 text-sm sm:text-base">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-black shrink-0 text-base sm:text-lg">
                   {currentUser
                     ? currentUser.fullName.charAt(0).toUpperCase()
                     : "U"}
@@ -805,12 +834,12 @@ export default function ListingDetailPage() {
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Satıcıya bir soru sor..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl py-2.5 sm:py-3 pl-3 sm:pl-4 pr-10 sm:pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-medium text-xs sm:text-sm text-slate-700"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-full py-2.5 sm:py-3.5 pl-4 sm:pl-5 pr-12 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] font-medium text-sm text-slate-700 shadow-inner"
                   />
                   <button
                     type="submit"
                     disabled={isSubmittingComment || !newComment.trim()}
-                    className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 text-blue-500 hover:text-blue-700 disabled:text-slate-300 transition-colors"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[#20B2AA] hover:text-teal-700 disabled:text-slate-300 transition-colors"
                   >
                     <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
@@ -841,7 +870,7 @@ export default function ListingDetailPage() {
                             <div className="flex items-center gap-1.5 sm:gap-2 font-bold text-slate-800 text-xs sm:text-sm capitalize">
                               {commentUser}{" "}
                               {comment.user?.id === product.user?.id && (
-                                <span className="bg-blue-100 text-blue-700 text-[8px] sm:text-[9px] px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                <span className="bg-[#20B2AA]/10 text-[#20B2AA] text-[8px] sm:text-[9px] px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider">
                                   Satıcı
                                 </span>
                               )}
@@ -959,13 +988,13 @@ export default function ListingDetailPage() {
                   {sellerName.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-base sm:text-lg font-extrabold text-slate-800 capitalize group-hover:text-blue-600 transition-colors line-clamp-1">
+                  <h3 className="text-base sm:text-lg font-extrabold text-slate-800 capitalize group-hover:text-[#20B2AA] transition-colors line-clamp-1">
                     {sellerName}
                   </h3>
                   <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-slate-400 mt-0.5 sm:mt-1">
                     <ShieldCheck
                       size={14}
-                      className="text-green-500 sm:w-4 sm:h-4"
+                      className="text-[#20B2AA] sm:w-4 sm:h-4"
                     />{" "}
                     Kampüs Onaylı
                   </div>

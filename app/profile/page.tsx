@@ -106,6 +106,16 @@ export default function ProfilePage() {
   const [notificationsList, setNotificationsList] = useState<any[]>([]);
   const router = useRouter();
 
+  // 🚀 EKSİK OLAN MODAL MEKANİZMASI EKLENDİ
+  const [infoModal, setInfoModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    content: string;
+  }>({ isOpen: false, title: "", content: "" });
+  const openInfoModal = (title: string, content: string) => {
+    setInfoModal({ isOpen: true, title, content });
+  };
+
   const loadProfileData = () => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -371,7 +381,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 🚀 NAVBAR (Premium Tasarım) */}
+      {/* 🚀 NAVBAR */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
         <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
@@ -394,7 +404,6 @@ export default function ProfilePage() {
               </Link>
             </div>
 
-            {/* ✨ PREMIUM ARAMA ÇUBUĞU */}
             <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
               <form
                 onSubmit={handleSearchSubmit}
@@ -465,18 +474,11 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              {/* 🚀 DÜZELTİLEN İLAN VER BUTONU RENGİ */}
               <Link
                 href="/create-listing"
                 className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
               >
                 <span className="text-xl">+</span> İlan Ver
-              </Link>
-              <Link
-                href="/create-listing"
-                className="flex md:hidden font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors text-[11px] sm:text-base border border-[#20B2AA] px-2 py-1.5 rounded-lg"
-              >
-                <span className="text-sm">+</span> İlan
               </Link>
 
               {user ? (
@@ -527,7 +529,7 @@ export default function ProfilePage() {
                       )}
                     </button>
                     {isNotificationOpen && (
-                      <div className="absolute top-full right-[-20px] sm:right-0 mt-3 w-[300px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                           <span className="font-bold text-slate-800">
                             Bildirimler
@@ -545,25 +547,37 @@ export default function ProfilePage() {
                             </div>
                           ) : (
                             notificationsList.slice(0, 5).map((notif: any) => {
-                              let icon = "✨";
-                              let bg = "bg-blue-100";
-                              let text = "text-blue-600";
-                              const msgLower = notif.message.toLowerCase();
-                              if (msgLower.includes("takip")) {
-                                icon = "🌸";
-                                bg = "bg-pink-100";
-                                text = "text-pink-600";
-                              } else if (msgLower.includes("ilan")) {
-                                icon = "📦";
-                                bg = "bg-orange-100";
-                                text = "text-orange-600";
-                              } else if (
+                              let icon = "🔔",
+                                bg = "bg-blue-100",
+                                text = "text-blue-600";
+                              const msgLower =
+                                notif.message?.toLowerCase() || "";
+                              if (
                                 msgLower.includes("beğen") ||
                                 msgLower.includes("favori")
                               ) {
                                 icon = "❤️";
                                 bg = "bg-red-100";
                                 text = "text-red-600";
+                              } else if (
+                                msgLower.includes("mesaj") ||
+                                msgLower.includes("yorum") ||
+                                msgLower.includes("soru")
+                              ) {
+                                icon = "💬";
+                                bg = "bg-green-100";
+                                text = "text-green-600";
+                              } else if (msgLower.includes("takip")) {
+                                icon = "🌸";
+                                bg = "bg-pink-100";
+                                text = "text-pink-600";
+                              } else if (
+                                msgLower.includes("ilan") ||
+                                msgLower.includes("ekledi")
+                              ) {
+                                icon = "📦";
+                                bg = "bg-orange-100";
+                                text = "text-orange-600";
                               }
                               return (
                                 <div
@@ -607,22 +621,38 @@ export default function ProfilePage() {
                     href="/profile"
                     className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
                   >
-                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
                       👤
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm ml-2"
+                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
+                    title="Çıkış Yap"
                   >
-                    Çıkış
+                    <span className="hidden sm:block font-bold text-sm">
+                      Çıkış
+                    </span>
+                    <svg
+                      className="w-[22px] h-[22px] sm:hidden group-hover:scale-110 transition-transform"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      ></path>
+                    </svg>
                   </button>
                 </div>
               ) : (
                 <Link
                   href="/login"
-                  className="bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold text-sm hover:bg-black transition-colors"
+                  className="flex items-center justify-center bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
                 >
                   Giriş Yap
                 </Link>
@@ -887,7 +917,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* 📸 MODALLAR */}
+      {/* 📸 MODAL (Bilgi Düzenleme) */}
       {activeModal === "info" && (
         <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-2xl rounded-2xl sm:rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
@@ -993,52 +1023,144 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* 📜 FOOTER BİLGİ POP-UP'I (MODAL) */}
+      {infoModal.isOpen && (
+        <div className="fixed inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h2 className="text-lg sm:text-xl font-black text-slate-800">
+                {infoModal.title}
+              </h2>
+              <button
+                onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 sm:p-8 text-sm sm:text-base text-slate-600 font-medium whitespace-pre-wrap leading-relaxed max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {infoModal.content}
+            </div>
+            <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base"
+              >
+                Anladım
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 🌊 FOOTER */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full">
+      <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-6 mt-10 rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-2">
-            <div className="mb-4">
-              <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
+          <div className="col-span-1 md:col-span-2 text-center md:text-left">
+            <div className="mb-3 sm:mb-4">
+              <span className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">
                 Uni<span className="text-[#20B2AA]">Cycle</span>
               </span>
             </div>
-            <p className="text-sm font-medium text-slate-500 max-w-sm">
+            <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
               öğrencilerine özel alışveriş deneyimi.
             </p>
           </div>
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
-            <ul className="space-y-2 text-sm font-medium text-slate-500">
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-sm sm:text-base">
+              Platform
+            </h4>
+            <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm font-medium text-slate-500">
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Nasıl Çalışır?",
+                      "UniCycle'da alışveriş yapmak çok kolay!\n\n1. Kendi üniversitenin e-postasıyla kayıt ol.\n2. İhtiyacın olmayan eşyalarını ilan olarak ekle.\n3. Kampüsündeki diğer öğrencilerle mesajlaşarak güvenle alışveriş yap!",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Nasıl Çalışır?
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Güvenlik İpuçları",
+                      "Alışverişlerinde güvenliğin için şu kurallara dikkat et:\n\n• Sadece kampüs içindeki güvenli ve kalabalık alanlarda (kütüphane, kafeterya vb.) buluşun.\n• Kimseye önceden para veya kapora göndermeyin.\n• Şüpheli durumlarda ilanları bize şikayet edin.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Güvenlik İpuçları
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Kampüs Kuralları",
+                      "Bu platform tamamen öğrencilere aittir.\n\n• Saygılı bir iletişim dili kullanmak zorunludur.\n• Sadece yasal ve kampüs kurallarına uygun ürünler satılabilir.\n• Kopya veya telif hakkı ihlali içeren materyallerin satışı yasaktır.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
+                  Kampüs Kuralları
                 </button>
               </li>
             </ul>
           </div>
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
-            <ul className="space-y-2 text-sm font-medium text-slate-500">
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-sm sm:text-base">
+              İletişim
+            </h4>
+            <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm font-medium text-slate-500">
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Destek Merkezi",
+                      "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Destek Merkezi
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Bize Ulaşın",
+                      "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Bize Ulaşın
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Sıkça Sorulan Sorular",
+                      "S: Üye olmak ücretli mi?\nC: Hayır, UniCycle üniversite öğrencileri için tamamen ücretsizdir.\n\nS: Kargo ile ürün gönderebilir miyim?\nC: Platformumuz kampüs içi elden teslim odaklıdır ancak satıcı ile anlaşırsanız kargo da yapabilirsiniz.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
+                  S.S.S.
                 </button>
               </li>
             </ul>
           </div>
         </div>
-        <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
+        <div className="max-w-[1400px] mx-auto mt-6 sm:mt-12 pt-4 sm:pt-8 border-t border-slate-100 text-center text-[10px] sm:text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>
