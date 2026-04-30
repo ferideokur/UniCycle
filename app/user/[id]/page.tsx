@@ -17,6 +17,7 @@ import {
   Package,
   UserPlus,
   UserCheck,
+  Search,
 } from "lucide-react";
 
 // 🇹🇷 Türkçe İyelik Eki Bulucu
@@ -70,6 +71,15 @@ export default function PublicProfilePage() {
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notificationsList, setNotificationsList] = useState<any[]>([]);
+
+  // 📜 Footer Bilgi Modalı State'leri
+  const [infoModal, setInfoModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    content: string;
+  }>({ isOpen: false, title: "", content: "" });
+  const openInfoModal = (title: string, content: string) =>
+    setInfoModal({ isOpen: true, title, content });
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -192,7 +202,7 @@ export default function PublicProfilePage() {
           }
         }
 
-        // 🚀 İŞTE SİHİRLİ FİLTRE: Açılır menüdeki klonları her sayfada yok eder!
+        // 🚀 İŞTE SİHİRLİ FİLTRE
         const uniqueLive = combined.filter(
           (v: any, i: number, a: any[]) =>
             a.findIndex((v2: any) => {
@@ -274,8 +284,8 @@ export default function PublicProfilePage() {
       );
       showToast(
         newFollowState
-          ? `${formattedUserName} takip edildi!`
-          : `${formattedUserName} takipten çıkıldı.`,
+          ? `✨ ${formattedUserName} takip edildi!`
+          : `💔 ${formattedUserName} takipten çıkıldı.`,
       );
 
       if (newFollowState) {
@@ -335,9 +345,6 @@ export default function PublicProfilePage() {
       </div>
     );
 
-  const safeLiveResults = Array.isArray(liveResults) ? liveResults : [];
-
-  // 🚀 TİP HATASINI ÇÖZEN KISIM (safeFullName geri geldi, formatted ile güçlendi)
   const safeFullName = user?.fullName || "Kullanıcı";
   const formattedSafeFullName = formatName(safeFullName);
 
@@ -396,27 +403,15 @@ export default function PublicProfilePage() {
                   onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
                   className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
                 />
-                <svg
-                  className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none" />
                 <button type="submit" className="hidden">
                   Ara
                 </button>
               </form>
 
-              {isDropdownOpen && safeLiveResults.length > 0 && (
+              {isDropdownOpen && liveResults.length > 0 && (
                 <div className="absolute top-full left-6 right-10 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
-                  {safeLiveResults.slice(0, 5).map((result, idx) => (
+                  {liveResults.slice(0, 5).map((result, idx) => (
                     <Link
                       href={
                         result.type === "user"
@@ -433,7 +428,7 @@ export default function PublicProfilePage() {
                               .toUpperCase()
                           : "📦"}
                       </div>
-                      <div className="font-bold text-slate-800 text-sm">
+                      <div className="font-bold text-slate-800 text-sm capitalize">
                         {result.item.fullName || result.item.title}
                       </div>
                     </Link>
@@ -460,21 +455,47 @@ export default function PublicProfilePage() {
 
               {currentUser ? (
                 <div className="flex items-center gap-2 sm:gap-4 relative">
+                  {/* 🚀 ORİJİNAL İNCE KALP İKONU */}
                   <Link
                     href="/favorites"
                     className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                     title="Favorilerim"
                   >
-                    <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300" />
+                    <svg
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
+                    </svg>
                   </Link>
 
                   <div className="relative shrink-0">
+                    {/* 🚀 ORİJİNAL İNCE ZİL İKONU */}
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                       className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                       title="Bildirimler"
                     >
-                      <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300" />
+                      <svg
+                        className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                        ></path>
+                      </svg>
                       {notificationsCount > 0 && (
                         <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
                           {notificationsCount}
@@ -500,9 +521,9 @@ export default function PublicProfilePage() {
                             </div>
                           ) : (
                             notificationsList.slice(0, 5).map((notif: any) => {
-                              let icon = <Bell className="w-5 h-5" />;
-                              let bg = "bg-blue-50";
-                              let text = "text-blue-500";
+                              let icon = <MessageCircle className="w-5 h-5" />;
+                              let bg = "bg-green-50";
+                              let text = "text-green-500";
                               const msgLower =
                                 notif.message?.toLowerCase() || "";
                               if (
@@ -514,14 +535,6 @@ export default function PublicProfilePage() {
                                 );
                                 bg = "bg-red-50";
                                 text = "text-red-500";
-                              } else if (
-                                msgLower.includes("mesaj") ||
-                                msgLower.includes("yorum") ||
-                                msgLower.includes("soru")
-                              ) {
-                                icon = <MessageCircle className="w-5 h-5" />;
-                                bg = "bg-green-50";
-                                text = "text-green-500";
                               } else if (msgLower.includes("takip")) {
                                 icon = <UserPlus className="w-5 h-5" />;
                                 bg = "bg-pink-50";
@@ -534,6 +547,14 @@ export default function PublicProfilePage() {
                                 bg = "bg-orange-50";
                                 text = "text-orange-500";
                               }
+
+                              // 🚀 YENİ: BİLDİRİMDEKİ İSİMLERİ BÜYÜT
+                              const parts = notif.message.split(",");
+                              const formattedMessage =
+                                parts.length > 1
+                                  ? `${formatName(parts[0])},${parts.slice(1).join(",")}`
+                                  : formatName(notif.message);
+
                               return (
                                 <div
                                   key={notif.id}
@@ -546,7 +567,7 @@ export default function PublicProfilePage() {
                                   </div>
                                   <div className="flex-1">
                                     <p className="text-sm text-slate-700 leading-snug font-semibold">
-                                      {notif.message}
+                                      {formattedMessage}
                                     </p>
                                     <p className="text-[10px] text-slate-400 mt-1 font-medium">
                                       {notif.createdAt
@@ -581,6 +602,7 @@ export default function PublicProfilePage() {
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
                   </Link>
+
                   <button
                     onClick={handleLogout}
                     className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
@@ -634,26 +656,14 @@ export default function PublicProfilePage() {
               onFocus={() => setIsDropdownOpen(true)}
               onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
             />
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <button type="submit" className="hidden">
               Ara
             </button>
           </form>
-          {isDropdownOpen && safeLiveResults.length > 0 && (
+          {isDropdownOpen && liveResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
-              {safeLiveResults.slice(0, 4).map((result, idx) => (
+              {liveResults.slice(0, 4).map((result, idx) => (
                 <Link
                   href={
                     result.type === "user"
@@ -673,7 +683,7 @@ export default function PublicProfilePage() {
                     )}
                   </div>
                   <div className="flex-1 truncate">
-                    <div className="font-bold text-slate-800 truncate text-xs">
+                    <div className="font-bold text-slate-800 truncate text-xs capitalize">
                       {result.item.fullName || result.item.title}
                     </div>
                   </div>
@@ -848,7 +858,37 @@ export default function PublicProfilePage() {
         </div>
       </div>
 
-      {/* 🌊 FOOTER */}
+      {/* 📜 FOOTER BİLGİ POP-UP'I (MODAL) */}
+      {infoModal.isOpen && (
+        <div className="fixed inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h2 className="text-lg sm:text-xl font-black text-slate-800">
+                {infoModal.title}
+              </h2>
+              <button
+                onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 sm:p-8 text-sm sm:text-base text-slate-600 font-medium whitespace-pre-wrap leading-relaxed max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {infoModal.content}
+            </div>
+            <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base"
+              >
+                Anladım
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🌊 FOOTER (PREMIUM) */}
       <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
@@ -866,17 +906,41 @@ export default function PublicProfilePage() {
             <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Nasıl Çalışır?",
+                      "UniCycle'da alışveriş yapmak çok kolay!\n\n1. Kendi üniversitenin e-postasıyla kayıt ol.\n2. İhtiyacın olmayan eşyalarını ilan olarak ekle.\n3. Kampüsündeki diğer öğrencilerle mesajlaşarak güvenle alışveriş yap!",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Nasıl Çalışır?
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Güvenlik İpuçları",
+                      "Alışverişlerinde güvenliğin için şu kurallara dikkat et:\n\n• Sadece kampüs içindeki güvenli ve kalabalık alanlarda (kütüphane, kafeterya vb.) buluşun.\n• Kimseye önceden para veya kapora göndermeyin.\n• Şüpheli durumlarda ilanları bize şikayet edin.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Güvenlik İpuçları
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Kampüs Kuralları",
+                      "Bu platform tamamen öğrencilere aittir.\n\n• Saygılı bir iletişim dili kullanmak zorunludur.\n• Sadece yasal ve kampüs kurallarına uygun ürünler satılabilir.\n• Kopya veya telif hakkı ihlali içeren materyallerin satışı yasaktır.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Kampüs Kuralları
                 </button>
               </li>
@@ -886,17 +950,41 @@ export default function PublicProfilePage() {
             <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Destek Merkezi",
+                      "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Destek Merkezi
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Bize Ulaşın",
+                      "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Bize Ulaşın
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Sıkça Sorulan Sorular",
+                      "S: Üye olmak ücretli mi?\nC: Hayır, UniCycle üniversite öğrencileri için tamamen ücretsizdir.\n\nS: Kargo ile ürün gönderebilir miyim?\nC: Platformumuz kampüs içi elden teslim odaklıdır ancak satıcı ile anlaşırsanız kargo da yapabilirsiniz.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   S.S.S.
                 </button>
               </li>

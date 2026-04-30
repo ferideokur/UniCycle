@@ -4,375 +4,235 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Bell, Heart, MessageCircle, Package, UserPlus } from "lucide-react";
+import {
+  Bell,
+  Heart,
+  MessageCircle,
+  Package,
+  UserPlus,
+  Search,
+} from "lucide-react"; // 🚀 YENİ: Search İkonu Eklendi
 
 // 🎓 ÜNİVERSİTE LİSTESİ
-
 const UNIVERSITIES = [
   "Tüm Üniversiteler",
-
   "Acıbadem Üniversitesi",
-
   "Akdeniz Üniversitesi",
-
   "Anadolu Üniversitesi",
-
   "Ankara Üniversitesi",
-
   "Atatürk Üniversitesi",
-
   "Bahçeşehir Üniversitesi",
-
   "Başkent Üniversitesi",
-
   "Bilkent Üniversitesi",
-
   "Boğaziçi Üniversitesi",
-
   "Bursa Uludağ Üniversitesi",
-
   "Celal Bayar Üniversitesi",
-
   "Çanakkale Onsekiz Mart Üniversitesi",
-
   "Çukurova Üniversitesi",
-
   "Dicle Üniversitesi",
-
   "Dokuz Eylül Üniversitesi",
-
   "Ege Üniversitesi",
-
   "Erciyes Üniversitesi",
-
   "Eskişehir Osmangazi Üniversitesi",
-
   "Fırat Üniversitesi",
-
   "Galatasaray Üniversitesi",
-
   "Gazi Üniversitesi",
-
   "Gaziantep Üniversitesi",
-
   "Gebze Teknik Üniversitesi",
-
   "Hacettepe Üniversitesi",
-
   "Hasan Kalyoncu Üniversitesi",
-
   "Isparta Süleyman Demirel Üniversitesi",
-
   "İbn Haldun Üniversitesi",
-
   "İstanbul Aydın Üniversitesi",
-
   "İstanbul Bilgi Üniversitesi",
-
   "İstanbul Kültür Üniversitesi",
-
   "İstanbul Medipol Üniversitesi",
-
   "İstanbul Okan Üniversitesi",
-
   "İstanbul Sabahattin Zaim Üniversitesi",
-
   "İstanbul Teknik Üniversitesi (İTÜ)",
-
   "İstanbul Ticaret Üniversitesi",
-
   "İstanbul Üniversitesi",
-
   "İzmir Ekonomi Üniversitesi",
-
   "İzmir Katip Çelebi Üniversitesi",
-
   "İzmir Yüksek Teknoloji Enstitüsü (İYTE)",
-
   "Kadir Has Üniversitesi",
-
   "Karadeniz Teknik Üniversitesi (KTÜ)",
-
   "Kırıkkale Üniversitesi",
-
   "Kocaeli Üniversitesi",
-
   "Koç Üniversitesi",
-
   "Marmara Üniversitesi",
-
   "Mef Üniversitesi",
-
   "Mimar Sinan Güzel Sanatlar Üniversitesi",
-
   "Muğla Sıtkı Koçman Üniversitesi",
-
   "Ondokuz Mayıs Üniversitesi",
-
   "Orta Doğu Teknik Üniversitesi (ODTÜ)",
-
   "Özyeğin Üniversitesi",
-
   "Pamukkale Üniversitesi",
-
   "Piri Reis Üniversitesi",
-
   "Sabancı Üniversitesi",
-
   "Sakarya Üniversitesi",
-
   "Selçuk Üniversitesi",
-
   "TOBB Ekonomi ve Teknoloji Üniversitesi",
-
   "Trakya Üniversitesi",
-
   "Türk-Alman Üniversitesi",
-
   "Yeditepe Üniversitesi",
-
   "Yıldız Teknik Üniversitesi (YTÜ)",
-
   "Diğer...",
 ];
 
 // 📦 SİHİRLİ KATEGORİ HARİTASI
-
 const CATEGORY_MAP: Record<string, string[]> = {
   "📚 Akademik & Okul": [
     "Ders Notları & Özetler",
-
     "Çıkmış Sorular",
-
     "Ders & Sınav Kitapları",
-
     "Yabancı Dil (YDS/TOEFL vb.)",
-
     "Kırtasiye & Çizim Malzemeleri",
-
     "Laboratuvar & Mimarlık Malzemeleri",
   ],
-
   "👗 Kadın": [
     "Kadın Üst Giyim",
-
     "Kadın Alt Giyim",
-
     "Kadın Dış Giyim",
-
     "Kadın Ayakkabı",
-
     "Kadın Çanta",
-
     "Kadın Aksesuar & Takı",
-
     "Abiye & Mezuniyet Elbisesi",
   ],
-
   "👔 Erkek": [
     "Erkek Üst Giyim",
-
     "Erkek Alt Giyim",
-
     "Erkek Dış Giyim",
-
     "Erkek Ayakkabı",
-
     "Erkek Çanta & Cüzdan",
-
     "Erkek Aksesuar & Saat",
-
     "Takım Elbise",
   ],
-
   "💄 Kozmetik & Bakım": [
     "Makyaj Ürünleri",
-
     "Parfüm & Deodorant",
-
     "Cilt & Yüz Bakımı",
-
     "Saç Bakımı & Şekillendirici",
-
     "Unisex Bakım",
   ],
-
   "📱 Elektronik & Teknoloji": [
     "Cep Telefonu",
-
     "Telefon Aksesuar & Kılıf",
-
     "Bilgisayar & Laptop",
-
     "Tablet",
-
     "Kulaklık & Ses Sistemleri",
-
     "Akıllı Saat & Bileklik",
-
     "Oyun Bilgisayarı & Ekipman",
-
     "Kamera & Fotoğraf Makinesi",
   ],
-
   "🏠 Yaşam, Ev & Yurt": [
     "Öğrenci Evi Mobilyası",
-
     "Yurt Eşyaları",
-
     "Küçük Ev Aletleri",
-
     "Mutfak Gereçleri",
-
     "Kupa & Termos",
-
     "Nevresim & Yatak Örtüsü",
-
     "Ev Dekorasyon",
   ],
-
   "🎸 Hobi, Oyun & Spor": [
     "Roman & Okuma Kitabı",
-
     "Kutu Oyunları",
-
     "PlayStation / Konsol Oyunları",
-
     "Spor & Kamp Malzemeleri",
-
     "Müzik Aletleri",
-
     "Bisiklet & Scooter",
-
     "Etkinlik & Konser Bileti",
   ],
-
   "🎒 Kampüs İçi Hizmet": [
     "Özel Ders Verenler",
-
     "Çeviri & Ödev Yardımı",
-
     "Ev Arkadaşı Arayanlar",
-
     "Eşya Kiralama",
-
     "Kayıp Eşya",
-
     "Diğer Her Şey",
   ],
 };
 
 // 🌟 TRENDYOL TARZI YUVARLAK HIZLI ERİŞİM BUTONLARI
-
 const QUICK_LINKS = [
   {
     title: "Ders Notu",
-
     icon: "📝",
-
     filter: "Ders Notları & Özetler",
-
     color: "bg-blue-50 text-blue-600 border-blue-100",
   },
-
   {
     title: "Telefon",
-
     icon: "📱",
-
     filter: "Cep Telefonu",
-
     color: "bg-slate-100 text-slate-700 border-slate-200",
   },
-
   {
     title: "Laptop",
-
     icon: "💻",
-
     filter: "Bilgisayar & Laptop",
-
     color: "bg-indigo-50 text-indigo-600 border-indigo-100",
   },
-
   {
     title: "Kitaplar",
-
     icon: "📚",
-
     filter: "Ders & Sınav Kitapları",
-
     color: "bg-cyan-50 text-cyan-600 border-cyan-100",
   },
-
   {
     title: "Ev Eşyası",
-
     icon: "🏠",
-
     filter: "Öğrenci Evi Mobilyası",
-
     color: "bg-sky-50 text-sky-600 border-sky-100",
   },
-
   {
     title: "Kozmetik",
-
     icon: "💄",
-
     filter: "Makyaj Ürünleri",
-
     color: "bg-slate-100 text-slate-600 border-slate-200",
   },
 ];
 
+// 🚀 İsimleri her yerde büyük harfle başlatan formül
+const formatName = (name: string) => {
+  if (!name) return "";
+  return name
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
 export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
-
   const [searchTerm, setSearchTerm] = useState("");
-
   const [isLoading, setIsLoading] = useState(true);
-
   const router = useRouter();
 
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
-
   const [activeFilter, setActiveFilter] = useState("TÜMÜ");
-
   const [selectedUniversity, setSelectedUniversity] =
     useState("Tüm Üniversiteler");
-
   const [sortType, setSortType] = useState("En Yeni");
-
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
 
   const [user, setUser] = useState<{
     id: number;
-
     fullName: string;
-
     email: string;
   } | null>(null);
 
   const [likedProducts, setLikedProducts] = useState<number[]>([]);
-
   const [liveResults, setLiveResults] = useState<
     { type: "user" | "product"; item: any }[]
   >([]);
-
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
   const [notificationsCount, setNotificationsCount] = useState(0);
-
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-
   const [notificationsList, setNotificationsList] = useState<any[]>([]);
 
   const [infoModal, setInfoModal] = useState<{
     isOpen: boolean;
-
     title: string;
-
     content: string;
   }>({ isOpen: false, title: "", content: "" });
 
@@ -382,21 +242,16 @@ export default function Home() {
 
   const fetchAllListings = async () => {
     setIsLoading(true);
-
     try {
       let url = "https://unicycle-api.onrender.com/api/products";
-
       if (selectedUniversity !== "Tüm Üniversiteler")
         url += `?university=${encodeURIComponent(selectedUniversity)}`;
 
       const response = await fetch(url);
-
       if (response.ok) {
         const data = await response.json();
-
         if (Array.isArray(data)) {
           data.sort((a: any, b: any) => b.id - a.id);
-
           setProducts(data);
         }
       }
@@ -409,50 +264,39 @@ export default function Home() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-
         setUser(parsedUser);
 
         const likes = JSON.parse(
           localStorage.getItem(`likes_${parsedUser.email}`) || "[]",
         );
-
         setLikedProducts(likes);
 
         fetch(
           `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
         )
           .then((res) => res.json())
-
           .then((data) => {
             if (Array.isArray(data)) {
               const deletedNotifs = JSON.parse(
                 localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
               );
-
               const seenNotifs = JSON.parse(
                 localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
               );
-
               const activeNotifs = data
-
                 .filter((n: any) => !deletedNotifs.includes(n.id))
-
                 .reverse();
-
               const unreadNotifs = activeNotifs.filter(
                 (n: any) => !seenNotifs.includes(n.id),
               );
 
               setNotificationsCount(unreadNotifs.length);
-
               setNotificationsList(activeNotifs);
             }
           })
-
           .catch((err) => console.error("Bildirim hatası:", err));
 
         window.addEventListener("notificationsSeen", () =>
@@ -513,7 +357,6 @@ export default function Home() {
           }
         }
 
-        // 🚀 İŞTE SİHİRLİ FİLTRE: Açılır menüdeki klonları her sayfada yok eder!
         const uniqueLive = combined.filter(
           (v: any, i: number, a: any[]) =>
             a.findIndex((v2: any) => {
@@ -541,17 +384,13 @@ export default function Home() {
 
   const handleLogout = () => {
     localStorage.removeItem("user");
-
     setUser(null);
-
     setLikedProducts([]);
-
     window.location.href = "/";
   };
 
   const toggleLike = async (e: React.MouseEvent, productObject: any) => {
     e.stopPropagation();
-
     e.preventDefault();
 
     if (!user) return alert("Beğenmek için giriş yapmalısın!");
@@ -560,11 +399,9 @@ export default function Home() {
 
     if (newLikes.includes(productObject.id)) {
       newLikes = newLikes.filter((id) => id !== productObject.id);
-
       try {
         await fetch(
           `https://unicycle-api.onrender.com/api/interaction/likes?userId=${user.id}&productId=${productObject.id}`,
-
           { method: "DELETE" },
         );
       } catch (err) {
@@ -572,16 +409,12 @@ export default function Home() {
       }
     } else {
       newLikes.push(productObject.id);
-
       try {
         await fetch("https://unicycle-api.onrender.com/api/interaction/likes", {
           method: "POST",
-
           headers: { "Content-Type": "application/json" },
-
           body: JSON.stringify({
             userId: user.id,
-
             productId: productObject.id,
           }),
         });
@@ -593,15 +426,11 @@ export default function Home() {
         try {
           await fetch(
             "https://unicycle-api.onrender.com/api/interaction/notifications",
-
             {
               method: "POST",
-
               headers: { "Content-Type": "application/json" },
-
               body: JSON.stringify({
                 userId: productObject.user.id,
-
                 message: `${user.fullName}, "${productObject.title}" adlı ilanını beğendi.`,
               }),
             },
@@ -613,152 +442,104 @@ export default function Home() {
     }
 
     setLikedProducts(newLikes);
-
     localStorage.setItem(`likes_${user.email}`, JSON.stringify(newLikes));
   };
 
   const handleMainCategoryClick = (mainCat: string) => {
     if (expandedGroup === mainCat) {
       setExpandedGroup(null);
-
       setActiveFilter("TÜMÜ");
     } else {
       setExpandedGroup(mainCat);
-
       setActiveFilter(mainCat);
     }
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (searchTerm.trim() !== "") {
       setIsDropdownOpen(false);
-
       router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
     }
   };
 
   const getBannerContent = () => {
     const today = new Date();
-
     const month = today.getMonth() + 1;
-
     const year = today.getFullYear();
 
     if (year === 2025 && (month === 9 || month === 10))
       return {
         tag: "YENİ DÖNEM",
-
         title: "Güz Dönemi Başladı!",
-
         desc: "Kampüse hoş geldin! Ders notları, kitaplar ve eşyalar UniCycle'da seni bekliyor.",
-
         btn: "İlanları Keşfet",
-
         filterGroup: null,
-
         filterItem: "TÜMÜ",
-
         icon: "🎒",
       };
 
     if (year === 2025 && month === 11)
       return {
         tag: "SINAV HAFTASI",
-
         title: "Güz Vizeleri Geldi Çattı!",
-
         desc: "Sınav stresi yapma! Üst dönemlerin ders notları ve özetleriyle hemen çalışmaya başla.",
-
         btn: "Ders Notlarını İncele",
-
         filterGroup: "📚 Akademik & Okul",
-
         filterItem: "Ders Notları & Özetler",
-
         icon: "📝",
       };
 
     if ((year === 2025 && month === 12) || (year === 2026 && month === 1))
       return {
         tag: "FİNAL DÖNEMİ",
-
         title: "Finaller Kapıda!",
-
         desc: "Dönemi kurtaran o son çıkmış sorular burada! Hemen incele, finalleri rahat geç.",
-
         btn: "Çıkmış Sorulara Bak",
-
         filterGroup: "📚 Akademik & Okul",
-
         filterItem: "Çıkmış Sorular",
-
         icon: "🎓",
       };
 
     if (year === 2026 && (month === 2 || month === 3))
       return {
         tag: "BAHAR DÖNEMİ",
-
         title: "Bahar Dönemi Başladı!",
-
         desc: "Eksik kitaplarını ve laboratuvar malzemelerini kampüsten uygun fiyata temin et.",
-
         btn: "Kitapları Keşfet",
-
         filterGroup: "📚 Akademik & Okul",
-
         filterItem: "Ders & Sınav Kitapları",
-
         icon: "📚",
       };
 
     if (year === 2026 && month === 4)
       return {
         tag: "VİZE HAFTASI",
-
         title: "Bahar Vizeleri Başlıyor!",
-
         desc: "Vizelere az kaldı! Piri Reis'in en güncel ders notları ve özetleriyle sınavlara bomba gibi hazırlan.",
-
         btn: "Notları İncele",
-
         filterGroup: "📚 Akademik & Okul",
-
         filterItem: "Ders Notları & Özetler",
-
         icon: "✍️",
       };
 
     if (year === 2026 && (month === 5 || month === 6))
       return {
         tag: "FİNAL DÖNEMİ",
-
         title: "Final Haftası Yaklaşıyor!",
-
         desc: "Yaz tatiline çıkmadan önceki son viraj! Çıkmış sorularla son tekrarlarını yap.",
-
         btn: "Çıkmış Sorular",
-
         filterGroup: "📚 Akademik & Okul",
-
         filterItem: "Çıkmış Sorular",
-
         icon: "🎯",
       };
 
     return {
       tag: "YAZ TATİLİ",
-
       title: "Kampüste Yaz Geldi!",
-
       desc: "Kullanmadığın ders kitaplarını ve eşyalarını satarak tatil harçlığını çıkarmanın tam zamanı.",
-
       btn: "Hemen İlan Ver",
-
       link: "/create-listing",
-
       icon: "🏖️",
     };
   };
@@ -769,16 +550,13 @@ export default function Home() {
     if (bannerData.link) router.push(bannerData.link);
     else {
       setExpandedGroup(bannerData.filterGroup || null);
-
       setActiveFilter(bannerData.filterItem || "TÜMÜ");
     }
   };
 
   const filteredProducts = products.filter((p: any) => {
     const matchesSearch = p.title
-
       ?.toLowerCase()
-
       .includes(searchTerm.toLowerCase());
 
     let matchesCategory = false;
@@ -795,21 +573,15 @@ export default function Home() {
     switch (sortType) {
       case "En Eski":
         return a.id - b.id;
-
       case "En Çok Beğeni":
         return (b.likeCount || 0) - (a.likeCount || 0);
-
       case "En Az Beğeni":
         return (a.likeCount || 0) - (b.likeCount || 0);
-
       case "Fiyat (Artan)":
         return Number(a.price || 0) - Number(b.price || 0);
-
       case "Fiyat (Azalan)":
         return Number(b.price || 0) - Number(a.price || 0);
-
       case "En Yeni":
-
       default:
         return b.id - a.id;
     }
@@ -817,8 +589,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#F8FAFC] pb-20 font-sans w-full overflow-x-hidden flex flex-col relative">
-      {/* 🚀 ÜST MENÜ */}
-
+      {/* 🚀 ÜST MENÜ NAVBAR (Premium İkiz) */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
         <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
@@ -827,11 +598,8 @@ export default function Home() {
                 href="/"
                 onClick={() => {
                   setActiveFilter("TÜMÜ");
-
                   setExpandedGroup(null);
-
                   setSearchTerm("");
-
                   setSelectedUniversity("Tüm Üniversiteler");
                 }}
                 className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
@@ -844,15 +612,13 @@ export default function Home() {
                   className="object-contain bg-transparent mix-blend-multiply rounded-md sm:w-[52px] sm:h-[52px]"
                   priority
                 />
-
                 <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
                   Uni<span className="text-[#20B2AA]">Cycle</span>
                 </span>
               </Link>
             </div>
 
-            {/* ✨ PREMIUM ARAMA ÇUBUĞU (Ana Sayfa İçin) */}
-
+            {/* ✨ PREMIUM ARAMA ÇUBUĞU (Masaüstü) */}
             <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
               <form
                 onSubmit={handleSearchSubmit}
@@ -864,28 +630,13 @@ export default function Home() {
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
-
                     setIsDropdownOpen(true);
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
                   onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
                   className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
                 />
-
-                <svg
-                  className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-
+                <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none" />
                 <button type="submit" className="hidden">
                   Ara
                 </button>
@@ -905,18 +656,14 @@ export default function Home() {
                     >
                       <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0 text-sm">
                         {result.type === "user"
-                          ? result.item.fullName.charAt(0).toUpperCase()
+                          ? formatName(result.item.fullName || "U").charAt(0)
                           : "📦"}
                       </div>
-
-                      <div className="font-bold text-slate-800 text-sm">
-                        <div className="font-bold text-slate-800 text-sm capitalize">
-                          {result.item.fullName || result.item.title}
-                        </div>
+                      <div className="font-bold text-slate-800 text-sm capitalize">
+                        {formatName(result.item.fullName) || result.item.title}
                       </div>
                     </Link>
                   ))}
-
                   <div
                     className="px-5 py-2.5 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
                     onClick={handleSearchSubmit}
@@ -930,8 +677,6 @@ export default function Home() {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              {/* 🚀 DÜZELTİLEN: Mobilde üst menüdeki sıkışıklığı önlemek için "+ İlan" butonu navbar'dan kaldırıldı (Sadece masaüstünde var) */}
-
               <Link
                 href="/create-listing"
                 className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
@@ -980,28 +725,24 @@ export default function Home() {
                           d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                         ></path>
                       </svg>
-
                       {notificationsCount > 0 && (
                         <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
                           {notificationsCount}
                         </span>
                       )}
                     </button>
-
                     {isNotificationOpen && (
                       <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                           <span className="font-bold text-slate-800">
                             Bildirimler
                           </span>
-
                           {notificationsCount > 0 && (
                             <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
                               {notificationsCount} Yeni
                             </span>
                           )}
                         </div>
-
                         <div className="max-h-80 overflow-y-auto custom-scrollbar">
                           {notificationsList.length === 0 ? (
                             <div className="px-4 py-8 text-center text-slate-500 text-sm font-medium">
@@ -1009,13 +750,11 @@ export default function Home() {
                             </div>
                           ) : (
                             notificationsList.slice(0, 5).map((notif: any) => {
-                              // 🚀 DÜZELTME: Emojiler yerine Lucide SVG İkonları
                               let icon = <Bell className="w-5 h-5" />;
                               let bg = "bg-blue-50";
                               let text = "text-blue-500";
                               const msgLower =
                                 notif.message?.toLowerCase() || "";
-
                               if (
                                 msgLower.includes("beğen") ||
                                 msgLower.includes("favori")
@@ -1046,6 +785,13 @@ export default function Home() {
                                 text = "text-orange-500";
                               }
 
+                              // 🚀 YENİ: Bildirim metnindeki ismi her zaman Büyük Harfle başlat (Ana Sayfa İçin)
+                              const parts = notif.message.split(",");
+                              const formattedMessage =
+                                parts.length > 1
+                                  ? `${formatName(parts[0])},${parts.slice(1).join(",")}`
+                                  : formatName(notif.message);
+
                               return (
                                 <div
                                   key={notif.id}
@@ -1058,7 +804,7 @@ export default function Home() {
                                   </div>
                                   <div className="flex-1">
                                     <p className="text-sm text-slate-700 leading-snug font-semibold">
-                                      {notif.message}
+                                      {formattedMessage}
                                     </p>
                                     <p className="text-[10px] text-slate-400 mt-1 font-medium">
                                       {notif.createdAt
@@ -1073,7 +819,6 @@ export default function Home() {
                             })
                           )}
                         </div>
-
                         <Link
                           href="/notifications"
                           onClick={() => setIsNotificationOpen(false)}
@@ -1092,23 +837,17 @@ export default function Home() {
                     <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs shrink-0">
                       👤
                     </div>
-
                     <span className="hidden sm:block text-sm">Hesabım</span>
                   </Link>
 
-                  {/* 🚀 DÜZELTİLEN: Çıkış Butonu (Masaüstünde Yazı, Mobilde Şık İkon) */}
-
                   <button
                     onClick={handleLogout}
-                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-2 sm:ml-3 flex items-center justify-center group"
+                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
                     title="Çıkış Yap"
                   >
                     <span className="hidden sm:block font-bold text-sm">
                       Çıkış
                     </span>
-
-                    {/* Sadece Mobilde Görünecek Çıkış İkonu */}
-
                     <svg
                       className="w-[22px] h-[22px] sm:hidden group-hover:scale-110 transition-transform"
                       fill="none"
@@ -1137,7 +876,6 @@ export default function Home() {
         </div>
 
         {/* 📱 MOBİL ARAMA ÇUBUĞU */}
-
         <div className="md:hidden pb-3 pt-2 w-full relative z-40 px-4 bg-white border-t border-slate-50 shadow-sm">
           <form
             onSubmit={handleSearchSubmit}
@@ -1150,32 +888,16 @@ export default function Home() {
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
-
                 setIsDropdownOpen(true);
               }}
               onFocus={() => setIsDropdownOpen(true)}
               onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
             />
-
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <button type="submit" className="hidden">
               Ara
             </button>
           </form>
-
           {isDropdownOpen && liveResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
               {liveResults.slice(0, 4).map((result, idx) => (
@@ -1191,18 +913,15 @@ export default function Home() {
                   <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
                     {result.type === "user" ? (
                       <span className="font-bold text-blue-600">
-                        {result.item.fullName.charAt(0).toUpperCase()}
+                        {formatName(result.item.fullName || "U").charAt(0)}
                       </span>
                     ) : (
                       <span className="text-xs">📦</span>
                     )}
                   </div>
-
                   <div className="flex-1 truncate">
-                    <div className="font-bold text-slate-800 truncate text-xs">
-                      <div className="font-bold text-slate-800 truncate text-xs capitalize">
-                        {result.item.fullName || result.item.title}
-                      </div>
+                    <div className="font-bold text-slate-800 truncate text-xs capitalize">
+                      {formatName(result.item.fullName) || result.item.title}
                     </div>
                   </div>
                 </Link>
@@ -1213,9 +932,6 @@ export default function Home() {
       </header>
 
       {/* 📱 YENİ: MOBİL İÇİN YÜZEN İLAN VER BUTONU (Ortalanmış FAB) */}
-
-      {/* Sağ alttaki mesajlaşma ikonunu engellememek için ekranın alt ortasına yerleştirildi. (Dolap/Letgo tarzı) */}
-
       <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
         <Link
           href="/create-listing"
@@ -1236,7 +952,6 @@ export default function Home() {
               <button
                 onClick={() => {
                   setExpandedGroup(null);
-
                   setActiveFilter("TÜMÜ");
                 }}
                 className={`w-full text-left px-4 py-3 rounded-xl font-bold transition-all mb-2 ${activeFilter === "TÜMÜ" ? "bg-blue-600 text-white shadow-md" : "text-slate-600 hover:bg-slate-50"}`}
@@ -1247,7 +962,6 @@ export default function Home() {
 
             {Object.entries(CATEGORY_MAP).map(([mainCat, subCats]) => {
               const isExpanded = expandedGroup === mainCat;
-
               const isMainActive = activeFilter === mainCat;
 
               return (
@@ -1297,7 +1011,6 @@ export default function Home() {
                   key={idx}
                   onClick={() => {
                     setActiveFilter(link.filter);
-
                     setExpandedGroup(null);
                   }}
                   className="flex flex-col items-center gap-2 cursor-pointer shrink-0"
@@ -1316,14 +1029,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 🚀 DÜZELTİLEN: Mobil kategorilerin alt boşluğu (margin-bottom ve padding-bottom) artırıldı, mavi banner'a yapışması engellendi. */}
-
           <div className="block lg:hidden mb-8">
             <div className="flex overflow-x-auto custom-scrollbar gap-2 pb-4 -mx-4 px-4">
               <button
                 onClick={() => {
                   setExpandedGroup(null);
-
                   setActiveFilter("TÜMÜ");
                 }}
                 className={`whitespace-nowrap px-5 py-2.5 rounded-full font-bold text-sm ${activeFilter === "TÜMÜ" ? "bg-blue-600 text-white shadow-sm" : "bg-white text-slate-600 border border-slate-200"}`}
@@ -1333,7 +1043,6 @@ export default function Home() {
 
               {Object.keys(CATEGORY_MAP).map((cat) => {
                 let shortName = cat.split(" ")[1] || cat.split(" ")[0];
-
                 shortName = shortName.replace(/,/g, "");
 
                 return (
@@ -1434,15 +1143,10 @@ export default function Home() {
                   strokeLinejoin="round"
                 >
                   <circle cx="8" cy="8" r="2.5"></circle>
-
                   <line x1="2" y1="8" x2="5.5" y2="8"></line>
-
                   <line x1="10.5" y1="8" x2="22" y2="8"></line>
-
                   <circle cx="16" cy="16" r="2.5"></circle>
-
                   <line x1="2" y1="16" x2="13.5" y2="16"></line>
-
                   <line x1="18.5" y1="16" x2="22" y2="16"></line>
                 </svg>
 
@@ -1493,17 +1197,12 @@ export default function Home() {
                       onChange={(e) => setSortType(e.target.value)}
                     >
                       <option value="En Yeni">En Yeni İlanlar</option>
-
                       <option value="En Eski">En Eski İlanlar</option>
-
                       <option value="En Çok Beğeni">En Çok Beğenilenler</option>
-
                       <option value="En Az Beğeni">En Az Beğenilenler</option>
-
                       <option value="Fiyat (Artan)">
                         Fiyat (Ucuzdan Pahalıya)
                       </option>
-
                       <option value="Fiyat (Azalan)">
                         Fiyat (Pahalıdan Ucuza)
                       </option>
@@ -1533,19 +1232,16 @@ export default function Home() {
                   <div className="p-3 sm:p-4 flex-1 flex flex-col gap-3 sm:gap-4">
                     <div className="flex justify-between items-center mt-1">
                       <div className="h-2 sm:h-2.5 bg-slate-200 rounded-full w-1/3"></div>
-
                       <div className="h-4 sm:h-5 bg-slate-100 rounded-md w-1/4"></div>
                     </div>
 
                     <div className="space-y-2 mt-1 sm:mt-2">
                       <div className="h-3 sm:h-3.5 bg-slate-200 rounded-full w-5/6"></div>
-
                       <div className="h-3 sm:h-3.5 bg-slate-200 rounded-full w-4/6"></div>
                     </div>
 
                     <div className="mt-auto flex items-end justify-between pt-4 sm:pt-6">
                       <div className="h-4 sm:h-5 bg-slate-300 rounded-full w-1/3"></div>
-
                       <div className="h-3 sm:h-4 bg-slate-100 rounded-md w-1/4 border border-slate-200"></div>
                     </div>
                   </div>
@@ -1631,11 +1327,11 @@ export default function Home() {
                           {p.category}
                         </span>
 
-                        <span className="text-[10px] sm:text-xs font-bold text-blue-600 bg-blue-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md shrink-0">
+                        <span className="text-[10px] sm:text-xs font-bold text-blue-600 bg-blue-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md shrink-0 capitalize">
                           @
                           {p.user && p.user.fullName
-                            ? p.user.fullName.split(" ")[0]
-                            : "Öğrenci"}
+                            ? p.user.fullName.split(" ")[0].toLowerCase()
+                            : "öğrenci"}
                         </span>
                       </div>
 
@@ -1703,33 +1399,33 @@ export default function Home() {
         </div>
       )}
 
-      <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-6 mt-10 rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full">
+      {/* 🌊 FOOTER (PREMIUM) */}
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2 text-center md:text-left">
-            <div className="mb-3 sm:mb-4">
-              <span className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">
+            <div className="mb-4">
+              <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
                 Uni<span className="text-[#20B2AA]">Cycle</span>
               </span>
             </div>
 
-            <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
+            <p className="text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
-              öğrencilerine özel alışveriş deneyimi.
+              öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
             </p>
           </div>
 
           <div className="text-center md:text-left">
-            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-sm sm:text-base">
+            <h4 className="text-slate-800 font-bold mb-4 text-base">
               Platform
             </h4>
 
-            <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm font-medium text-slate-500">
+            <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
                   onClick={() =>
                     openInfoModal(
                       "Nasıl Çalışır?",
-
                       "UniCycle'da alışveriş yapmak çok kolay!\n\n1. Kendi üniversitenin e-postasıyla kayıt ol.\n2. İhtiyacın olmayan eşyalarını ilan olarak ekle.\n3. Kampüsündeki diğer öğrencilerle mesajlaşarak güvenle alışveriş yap!",
                     )
                   }
@@ -1744,7 +1440,6 @@ export default function Home() {
                   onClick={() =>
                     openInfoModal(
                       "Güvenlik İpuçları",
-
                       "Alışverişlerinde güvenliğin için şu kurallara dikkat et:\n\n• Sadece kampüs içindeki güvenli ve kalabalık alanlarda (kütüphane, kafeterya vb.) buluşun.\n• Kimseye önceden para veya kapora göndermeyin.\n• Şüpheli durumlarda ilanları bize şikayet edin.",
                     )
                   }
@@ -1759,7 +1454,6 @@ export default function Home() {
                   onClick={() =>
                     openInfoModal(
                       "Kampüs Kuralları",
-
                       "Bu platform tamamen öğrencilere aittir.\n\n• Saygılı bir iletişim dili kullanmak zorunludur.\n• Sadece yasal ve kampüs kurallarına uygun ürünler satılabilir.\n• Kopya veya telif hakkı ihlali içeren materyallerin satışı yasaktır.",
                     )
                   }
@@ -1772,17 +1466,16 @@ export default function Home() {
           </div>
 
           <div className="text-center md:text-left">
-            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-sm sm:text-base">
+            <h4 className="text-slate-800 font-bold mb-4 text-base">
               İletişim
             </h4>
 
-            <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm font-medium text-slate-500">
+            <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
                   onClick={() =>
                     openInfoModal(
                       "Destek Merkezi",
-
                       "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin.",
                     )
                   }
@@ -1797,7 +1490,6 @@ export default function Home() {
                   onClick={() =>
                     openInfoModal(
                       "Bize Ulaşın",
-
                       "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67",
                     )
                   }
@@ -1812,7 +1504,6 @@ export default function Home() {
                   onClick={() =>
                     openInfoModal(
                       "Sıkça Sorulan Sorular",
-
                       "S: Üye olmak ücretli mi?\nC: Hayır, UniCycle üniversite öğrencileri için tamamen ücretsizdir.\n\nS: Kargo ile ürün gönderebilir miyim?\nC: Platformumuz kampüs içi elden teslim odaklıdır ancak satıcı ile anlaşırsanız kargo da yapabilirsiniz.",
                     )
                   }
@@ -1825,7 +1516,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="max-w-[1400px] mx-auto mt-6 sm:mt-12 pt-4 sm:pt-8 border-t border-slate-100 text-center text-[10px] sm:text-xs font-medium text-slate-400">
+        <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>

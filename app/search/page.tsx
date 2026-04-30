@@ -45,6 +45,17 @@ function SearchContent() {
   const [mainResults, setMainResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // 📜 YENİ: Footer Bilgi Modalı State'leri
+  const [infoModal, setInfoModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    content: string;
+  }>({ isOpen: false, title: "", content: "" });
+
+  const openInfoModal = (title: string, content: string) => {
+    setInfoModal({ isOpen: true, title, content });
+  };
+
   // Kullanıcı ve Bildirimleri Yükle
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -103,7 +114,6 @@ function SearchContent() {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) {
-            // 🚀 DÜZELTME: Hem ID'ye hem de İSME göre filtrele! (Veritabanındaki klonları yok eder)
             const uniqueData = data.filter(
               (v: any, i: number, a: any[]) =>
                 a.findIndex((v2: any) => {
@@ -170,7 +180,6 @@ function SearchContent() {
           }
         }
 
-        // 🚀 DÜZELTME: Açılır menüdeki klonları da yok eder
         const uniqueLive = combined.filter(
           (v: any, i: number, a: any[]) =>
             a.findIndex((v2: any) => {
@@ -186,6 +195,7 @@ function SearchContent() {
               return v2.type === v.type && v2.item.id === v.item.id;
             }) === i,
         );
+
         setLiveResults(uniqueLive);
       } catch (err) {
         console.error(err);
@@ -285,7 +295,7 @@ function SearchContent() {
                           ? formatName(result.item.fullName || "U").charAt(0)
                           : "📦"}
                       </div>
-                      <div className="font-bold text-slate-800 text-sm">
+                      <div className="font-bold text-slate-800 text-sm capitalize">
                         {formatName(result.item.fullName) || result.item.title}
                       </div>
                     </Link>
@@ -513,7 +523,7 @@ function SearchContent() {
                     )}
                   </div>
                   <div className="flex-1 truncate">
-                    <div className="font-bold text-slate-800 truncate text-xs">
+                    <div className="font-bold text-slate-800 truncate text-xs capitalize">
                       {formatName(result.item.fullName) || result.item.title}
                     </div>
                   </div>
@@ -644,6 +654,36 @@ function SearchContent() {
         )}
       </main>
 
+      {/* 📜 FOOTER BİLGİ POP-UP'I (MODAL) */}
+      {infoModal.isOpen && (
+        <div className="fixed inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h2 className="text-lg sm:text-xl font-black text-slate-800">
+                {infoModal.title}
+              </h2>
+              <button
+                onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 sm:p-8 text-sm sm:text-base text-slate-600 font-medium whitespace-pre-wrap leading-relaxed max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {infoModal.content}
+            </div>
+            <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base"
+              >
+                Anladım
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 🌊 FOOTER */}
       <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -662,17 +702,41 @@ function SearchContent() {
             <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Nasıl Çalışır?",
+                      "UniCycle'da alışveriş yapmak çok kolay!\n\n1. Kendi üniversitenin e-postasıyla kayıt ol.\n2. İhtiyacın olmayan eşyalarını ilan olarak ekle.\n3. Kampüsündeki diğer öğrencilerle mesajlaşarak güvenle alışveriş yap!",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Nasıl Çalışır?
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Güvenlik İpuçları",
+                      "Alışverişlerinde güvenliğin için şu kurallara dikkat et:\n\n• Sadece kampüs içindeki güvenli ve kalabalık alanlarda (kütüphane, kafeterya vb.) buluşun.\n• Kimseye önceden para veya kapora göndermeyin.\n• Şüpheli durumlarda ilanları bize şikayet edin.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Güvenlik İpuçları
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Kampüs Kuralları",
+                      "Bu platform tamamen öğrencilere aittir.\n\n• Saygılı bir iletişim dili kullanmak zorunludur.\n• Sadece yasal ve kampüs kurallarına uygun ürünler satılabilir.\n• Kopya veya telif hakkı ihlali içeren materyallerin satışı yasaktır.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Kampüs Kuralları
                 </button>
               </li>
@@ -682,17 +746,41 @@ function SearchContent() {
             <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Destek Merkezi",
+                      "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Destek Merkezi
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Bize Ulaşın",
+                      "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Bize Ulaşın
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Sıkça Sorulan Sorular",
+                      "S: Üye olmak ücretli mi?\nC: Hayır, UniCycle üniversite öğrencileri için tamamen ücretsizdir.\n\nS: Kargo ile ürün gönderebilir miyim?\nC: Platformumuz kampüs içi elden teslim odaklıdır ancak satıcı ile anlaşırsanız kargo da yapabilirsiniz.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   S.S.S.
                 </button>
               </li>
@@ -713,7 +801,6 @@ function SearchContent() {
   );
 }
 
-// 🚀 Next.js 13+ zorunluluğu: useSearchParams içeren componentler Suspense içine alınmalı
 export default function SearchPage() {
   return (
     <Suspense

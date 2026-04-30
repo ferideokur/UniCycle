@@ -42,6 +42,17 @@ export default function ListingDetailPage() {
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
+  // 📜 YENİ: Footer Bilgi Modalı State'leri
+  const [infoModal, setInfoModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    content: string;
+  }>({ isOpen: false, title: "", content: "" });
+
+  const openInfoModal = (title: string, content: string) => {
+    setInfoModal({ isOpen: true, title, content });
+  };
+
   const updateNotificationCount = (userId: number) => {
     fetch(
       `https://unicycle-api.onrender.com/api/interaction/notifications/${userId}`,
@@ -157,7 +168,6 @@ export default function ListingDetailPage() {
           }
         }
 
-        // 🚀 İŞTE SİHİRLİ FİLTRE: Açılır menüdeki klonları her sayfada yok eder!
         const uniqueLive = combined.filter(
           (v: any, i: number, a: any[]) =>
             a.findIndex((v2: any) => {
@@ -419,7 +429,7 @@ export default function ListingDetailPage() {
         </div>
       )}
 
-      {/* 🚀 ÜST MENÜ NAVBAR (Premium İkiz İkonlar ve Temiz Mobil) */}
+      {/* 🚀 ÜST MENÜ NAVBAR */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
         <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
@@ -515,7 +525,6 @@ export default function ListingDetailPage() {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              {/* 🚀 Masaüstü "İlan Ver", Mobilde Gizli */}
               <Link
                 href="/create-listing"
                 className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
@@ -589,7 +598,6 @@ export default function ListingDetailPage() {
                             </div>
                           ) : (
                             notificationsList.slice(0, 5).map((notif: any) => {
-                              // 🚀 DÜZELTME: Emojiler yerine Lucide SVG İkonları
                               let icon = <Bell className="w-5 h-5" />;
                               let bg = "bg-blue-50";
                               let text = "text-blue-500";
@@ -781,7 +789,7 @@ export default function ListingDetailPage() {
       </header>
 
       {/* 🖥️ ANA DÜZEN */}
-      <div className="max-w-[1200px] mx-auto mt-4 sm:mt-8 px-4 sm:px-6 w-full">
+      <div className="max-w-[1200px] mx-auto mt-4 sm:mt-8 px-4 sm:px-6 w-full flex-1">
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm font-semibold text-slate-400 overflow-hidden whitespace-nowrap flex-1">
             <Link
@@ -1064,58 +1072,144 @@ export default function ListingDetailPage() {
         </div>
       </div>
 
-      <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-6 mt-10 sm:mt-16 rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
-          <div className="col-span-1 md:col-span-2 text-center md:text-left">
-            <div className="mb-2 sm:mb-4">
-              <span className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">
+      {/* 📜 FOOTER BİLGİ POP-UP'I (MODAL) */}
+      {infoModal.isOpen && (
+        <div className="fixed inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h2 className="text-lg sm:text-xl font-black text-slate-800">
+                {infoModal.title}
+              </h2>
+              <button
+                onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 sm:p-8 text-sm sm:text-base text-slate-600 font-medium whitespace-pre-wrap leading-relaxed max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {infoModal.content}
+            </div>
+            <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base"
+              >
+                Anladım
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🌊 FOOTER (PREMIUM) */}
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 sm:mt-16 rounded-t-[3rem] shadow-sm w-full">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="col-span-1 md:col-span-2">
+            <div className="mb-4">
+              <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
                 Uni<span className="text-[#20B2AA]">Cycle</span>
               </span>
             </div>
-            <p className="text-xs sm:text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
+            <p className="text-sm font-medium text-slate-500 max-w-sm">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
-              öğrencilerine özel alışveriş deneyimi.
+              öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
             </p>
           </div>
-          <div className="text-center md:text-left">
-            <h4 className="text-slate-800 font-bold mb-2 sm:mb-4 text-sm sm:text-base">
-              Platform
-            </h4>
-            <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm font-medium text-slate-500">
+          <div>
+            <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
+            <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Nasıl Çalışır?",
+                      "UniCycle'da alışveriş yapmak çok kolay!\n\n1. Kendi üniversitenin e-postasıyla kayıt ol.\n2. İhtiyacın olmayan eşyalarını ilan olarak ekle.\n3. Kampüsündeki diğer öğrencilerle mesajlaşarak güvenle alışveriş yap!",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Nasıl Çalışır?
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Güvenlik İpuçları",
+                      "Alışverişlerinde güvenliğin için şu kurallara dikkat et:\n\n• Sadece kampüs içindeki güvenli ve kalabalık alanlarda (kütüphane, kafeterya vb.) buluşun.\n• Kimseye önceden para veya kapora göndermeyin.\n• Şüpheli durumlarda ilanları bize şikayet edin.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Güvenlik İpuçları
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Kampüs Kuralları",
+                      "Bu platform tamamen öğrencilere aittir.\n\n• Saygılı bir iletişim dili kullanmak zorunludur.\n• Sadece yasal ve kampüs kurallarına uygun ürünler satılabilir.\n• Kopya veya telif hakkı ihlali içeren materyallerin satışı yasaktır.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
+                  Kampüs Kuralları
                 </button>
               </li>
             </ul>
           </div>
-          <div className="text-center md:text-left">
-            <h4 className="text-slate-800 font-bold mb-2 sm:mb-4 text-sm sm:text-base">
-              İletişim
-            </h4>
-            <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm font-medium text-slate-500">
+          <div>
+            <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
+            <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Destek Merkezi",
+                      "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
+                  Destek Merkezi
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Bize Ulaşın",
+                      "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   Bize Ulaşın
                 </button>
               </li>
               <li>
-                <button className="hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    openInfoModal(
+                      "Sıkça Sorulan Sorular",
+                      "S: Üye olmak ücretli mi?\nC: Hayır, UniCycle üniversite öğrencileri için tamamen ücretsizdir.\n\nS: Kargo ile ürün gönderebilir miyim?\nC: Platformumuz kampüs içi elden teslim odaklıdır ancak satıcı ile anlaşırsanız kargo da yapabilirsiniz.",
+                    )
+                  }
+                  className="hover:text-blue-600 transition-colors"
+                >
                   S.S.S.
                 </button>
               </li>
             </ul>
           </div>
         </div>
-        <div className="max-w-[1400px] mx-auto mt-6 sm:mt-12 pt-4 sm:pt-8 border-t border-slate-100 text-center text-[10px] sm:text-xs font-medium text-slate-400">
+        <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>
+
       <style
         dangerouslySetInnerHTML={{
           __html: `.custom-scrollbar::-webkit-scrollbar { height: 6px; } @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; } } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }`,
