@@ -95,7 +95,6 @@ export default function CreateListingPage() {
   // 🧠 KULLANICI KİMLİĞİ
   const [userId, setUserId] = useState<number | null>(null);
   const [userEmail, setUserEmail] = useState("");
-  // 🔥 YENİ: Kullanıcının üniversite bilgisini hafızada tutacağız
   const [userUniversity, setUserUniversity] = useState<string>(
     "Üniversite Belirtilmemiş",
   );
@@ -126,7 +125,6 @@ export default function CreateListingPage() {
       setUserId(parsedUser.id);
       setUserEmail(parsedUser.email);
 
-      // 🔥 YENİ: Üniversite bilgisini Profil'den veya Kayıt verisinden çekiyoruz
       const userProfileKey = `profile_${parsedUser.email}`;
       const savedProfile = localStorage.getItem(userProfileKey);
 
@@ -185,7 +183,6 @@ export default function CreateListingPage() {
     setPhotos(photos.filter((_, index) => index !== indexToRemove));
   };
 
-  // 🚀 GERÇEK JAVA BACKEND'E İSTEK (POST) ATAN KISIM
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (photos.length === 0) {
@@ -201,7 +198,6 @@ export default function CreateListingPage() {
 
     const finalPrice = priceType === "fiyat" ? price : "0";
 
-    // 🌟 YENİ: Java DTO'suna "university" alanını da ekliyoruz
     const listingPayload = {
       userId: userId,
       title: title,
@@ -211,7 +207,7 @@ export default function CreateListingPage() {
       price: parseFloat(finalPrice),
       description: description,
       photosBase64: photos,
-      university: userUniversity, // 🎓 Filtreleme için en kritik kod burası!
+      university: userUniversity,
     };
 
     try {
@@ -301,7 +297,6 @@ export default function CreateListingPage() {
             className="bg-white rounded-2xl sm:rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden p-5 sm:p-10"
           >
             <div className="space-y-6 sm:space-y-10">
-              {/* 🎓 YENİ: Kullanıcıya hangi okulda yayınlanacağını gösteren şık bir bilgi kutusu */}
               <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl sm:rounded-2xl flex items-center gap-3">
                 <span className="text-2xl"></span>
                 <div>

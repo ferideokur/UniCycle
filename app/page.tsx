@@ -202,6 +202,28 @@ const formatName = (name: string) => {
     .join(" ");
 };
 
+// 🧹 BİLDİRİM TEMİZLEYİCİ
+const cleanNotification = (msg: string) => {
+  if (!msg) return "";
+  let text = msg
+    .replace(/[💭💬🗨️]/g, "")
+    .replace(/\[.*?\]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (text.includes(",")) {
+    const parts = text.split(",");
+    return `${formatName(parts[0].trim())}, ${parts.slice(1).join(",").trim()}`;
+  }
+
+  if (text.toLowerCase().includes("sana bir mesaj gönderdi")) {
+    const namePart = text.replace(/sana bir mesaj gönderdi\.?/i, "").trim();
+    return `${formatName(namePart)} sana bir mesaj gönderdi.`;
+  }
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
+
 export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -749,7 +771,7 @@ export default function Home() {
                               Şu an hiç bildirimin yok.
                             </div>
                           ) : (
-                            notificationsList.slice(0, 5).map((notif: any) => {
+                            notificationsList.map((notif: any) => {
                               let icon = <Bell className="w-5 h-5" />;
                               let bg = "bg-blue-50";
                               let text = "text-blue-500";
@@ -785,12 +807,9 @@ export default function Home() {
                                 text = "text-orange-500";
                               }
 
-                              // 🚀 YENİ: Bildirim metnindeki ismi her zaman Büyük Harfle başlat (Ana Sayfa İçin)
-                              const parts = notif.message.split(",");
-                              const formattedMessage =
-                                parts.length > 1
-                                  ? `${formatName(parts[0])},${parts.slice(1).join(",")}`
-                                  : formatName(notif.message);
+                              const formattedMessage = cleanNotification(
+                                notif.message,
+                              );
 
                               return (
                                 <div
@@ -824,7 +843,7 @@ export default function Home() {
                           onClick={() => setIsNotificationOpen(false)}
                           className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors"
                         >
-                          Tüm Bildirimleri Gör &rarr;
+                          Tüm Bildirimleri Gör
                         </Link>
                       </div>
                     )}
@@ -1363,7 +1382,16 @@ export default function Home() {
 
       <style
         dangerouslySetInnerHTML={{
-          __html: `.custom-scrollbar::-webkit-scrollbar { height: 0px; }`,
+          __html: `
+            /* Yatay menüler için alt kaydırma çubuğunu gizler */
+            .custom-scrollbar::-webkit-scrollbar { height: 0px; width: 6px; } 
+            @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { width: 8px; } } 
+            
+            /* Bildirimler gibi dikey alanlar için şık kaydırma çubuğu tasarımı */
+            .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; } 
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+          `,
         }}
       />
 

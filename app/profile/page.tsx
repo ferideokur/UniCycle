@@ -23,6 +23,28 @@ const formatName = (name: string) => {
     .join(" ");
 };
 
+// 🧹 BİLDİRİM TEMİZLEYİCİ
+const cleanNotification = (msg: string) => {
+  if (!msg) return "";
+  let text = msg
+    .replace(/[💭💬🗨️]/g, "")
+    .replace(/\[.*?\]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (text.includes(",")) {
+    const parts = text.split(",");
+    return `${formatName(parts[0].trim())}, ${parts.slice(1).join(",").trim()}`;
+  }
+
+  if (text.toLowerCase().includes("sana bir mesaj gönderdi")) {
+    const namePart = text.replace(/sana bir mesaj gönderdi\.?/i, "").trim();
+    return `${formatName(namePart)} sana bir mesaj gönderdi.`;
+  }
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
+
 export default function UserProfilePage() {
   const [user, setUser] = useState<{
     id: number;
@@ -426,7 +448,7 @@ export default function UserProfilePage() {
                             Şu an hiç bildirimin yok.
                           </div>
                         ) : (
-                          notificationsList.slice(0, 5).map((notif: any) => {
+                          notificationsList.map((notif: any) => {
                             let icon = <MessageCircle className="w-5 h-5" />;
                             let bg = "bg-green-50";
                             let text = "text-green-500";
@@ -451,11 +473,9 @@ export default function UserProfilePage() {
                               text = "text-orange-500";
                             }
 
-                            const parts = notif.message.split(",");
-                            const formattedMessage =
-                              parts.length > 1
-                                ? `${formatName(parts[0])},${parts.slice(1).join(",")}`
-                                : formatName(notif.message);
+                            const formattedMessage = cleanNotification(
+                              notif.message,
+                            );
 
                             return (
                               <div
@@ -489,7 +509,7 @@ export default function UserProfilePage() {
                         onClick={() => setIsNotificationOpen(false)}
                         className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors"
                       >
-                        Tüm Bildirimleri Gör &rarr;
+                        Tüm Bildirimleri Gör
                       </Link>
                     </div>
                   )}

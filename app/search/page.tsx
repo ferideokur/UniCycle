@@ -11,6 +11,7 @@ import {
   UserPlus,
   Bell,
   Search,
+  ArrowLeft,
 } from "lucide-react";
 
 // 🚀 İsimleri her yerde büyük harfle başlatan formül
@@ -20,6 +21,28 @@ const formatName = (name: string) => {
     .split(" ")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
+};
+
+// 🧹 BİLDİRİM TEMİZLEYİCİ
+const cleanNotification = (msg: string) => {
+  if (!msg) return "";
+  let text = msg
+    .replace(/[💭💬🗨️]/g, "")
+    .replace(/\[.*?\]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (text.includes(",")) {
+    const parts = text.split(",");
+    return `${formatName(parts[0].trim())}, ${parts.slice(1).join(",").trim()}`;
+  }
+
+  if (text.toLowerCase().includes("sana bir mesaj gönderdi")) {
+    const namePart = text.replace(/sana bir mesaj gönderdi\.?/i, "").trim();
+    return `${formatName(namePart)} sana bir mesaj gönderdi.`;
+  }
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
 };
 
 function SearchContent() {
@@ -254,7 +277,7 @@ function SearchContent() {
               </Link>
             </div>
 
-            {/* ✨ PREMIUM ARAMA ÇUBUĞU */}
+            {/* ✨ PREMIUM ARAMA ÇUBUĞU (Masaüstü) */}
             <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
               <form
                 onSubmit={handleSearchSubmit}
@@ -327,7 +350,19 @@ function SearchContent() {
                     className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                     title="Favorilerim"
                   >
-                    <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300" />
+                    <svg
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
+                    </svg>
                   </Link>
 
                   <div className="relative shrink-0">
@@ -336,7 +371,19 @@ function SearchContent() {
                       className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                       title="Bildirimler"
                     >
-                      <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300" />
+                      <svg
+                        className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                        ></path>
+                      </svg>
                       {notificationsCount > 0 && (
                         <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
                           {notificationsCount}
@@ -361,12 +408,13 @@ function SearchContent() {
                               Şu an hiç bildirimin yok.
                             </div>
                           ) : (
-                            notificationsList.slice(0, 5).map((notif: any) => {
+                            notificationsList.map((notif: any) => {
                               let icon = <Bell className="w-5 h-5" />;
                               let bg = "bg-blue-50";
                               let text = "text-blue-500";
                               const msgLower =
                                 notif.message?.toLowerCase() || "";
+
                               if (
                                 msgLower.includes("beğen") ||
                                 msgLower.includes("favori")
@@ -396,6 +444,11 @@ function SearchContent() {
                                 bg = "bg-orange-50";
                                 text = "text-orange-500";
                               }
+
+                              const formattedMessage = cleanNotification(
+                                notif.message,
+                              );
+
                               return (
                                 <div
                                   key={notif.id}
@@ -408,7 +461,7 @@ function SearchContent() {
                                   </div>
                                   <div className="flex-1">
                                     <p className="text-sm text-slate-700 leading-snug font-semibold">
-                                      {notif.message}
+                                      {formattedMessage}
                                     </p>
                                     <p className="text-[10px] text-slate-400 mt-1 font-medium">
                                       {notif.createdAt
@@ -428,7 +481,7 @@ function SearchContent() {
                           onClick={() => setIsNotificationOpen(false)}
                           className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors"
                         >
-                          Tüm Bildirimleri Gör &rarr;
+                          Tüm Bildirimleri Gör
                         </Link>
                       </div>
                     )}
@@ -443,6 +496,7 @@ function SearchContent() {
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
                   </Link>
+
                   <button
                     onClick={handleLogout}
                     className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
@@ -536,22 +590,27 @@ function SearchContent() {
 
       {/* 🔍 ARAMA SONUÇLARI İÇERİĞİ */}
       <main className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
-        <div className="flex justify-between items-end mb-6 sm:mb-8 border-b border-slate-200 pb-4">
-          <div>
-            <h1 className="text-2xl sm:text-4xl font-black text-slate-800 tracking-tight mb-1 sm:mb-2">
-              Arama Sonuçları
-            </h1>
-            <p className="text-sm sm:text-base font-medium text-slate-500">
-              <span className="text-blue-600 font-bold">"{q}"</span> araması
-              için {mainResults.length} sonuç bulundu.
-            </p>
+        {/* 🔙 ZARİF GERİ DÖN VE BAŞLIK YAPISI (Kutular Kaldırıldı) */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 border-b border-slate-200 pb-4 gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+            <button
+              onClick={() => router.push("/")}
+              className="font-bold text-slate-500 hover:text-[#20B2AA] transition-colors flex items-center gap-1 text-[11px] sm:text-sm shrink-0 group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              Ana Sayfa
+            </button>
+            <div className="hidden sm:block w-px h-10 bg-slate-200"></div>
+            <div>
+              <h1 className="text-2xl sm:text-4xl font-black text-slate-800 tracking-tight mb-1 sm:mb-2">
+                Arama Sonuçları
+              </h1>
+              <p className="text-sm sm:text-base font-medium text-slate-500">
+                <span className="text-blue-600 font-bold">"{q}"</span> araması
+                için {mainResults.length} sonuç bulundu.
+              </p>
+            </div>
           </div>
-          <button
-            onClick={() => router.push("/")}
-            className="hidden sm:block text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors"
-          >
-            &larr; Ana Sayfaya Dön
-          </button>
         </div>
 
         {isLoading ? (
@@ -684,8 +743,8 @@ function SearchContent() {
         </div>
       )}
 
-      {/* 🌊 FOOTER */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full">
+      {/* 🌊 FOOTER (PREMIUM) */}
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 sm:mt-16 rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="mb-4">
@@ -794,7 +853,7 @@ function SearchContent() {
 
       <style
         dangerouslySetInnerHTML={{
-          __html: `.custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; } @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }`,
+          __html: `.custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; } @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; } .desktop-search { display: none; } .mobile-search { display: block; } @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }`,
         }}
       />
     </div>

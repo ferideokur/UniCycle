@@ -16,7 +16,40 @@ import {
   MessageCircle,
   Package,
   UserPlus,
+  ArrowLeft,
+  Search,
 } from "lucide-react";
+
+// 🚀 İsimleri Javascript içinde her yerde büyük harfle başlatan formül
+const formatName = (name: string) => {
+  if (!name) return "";
+  return name
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
+// 🧹 BİLDİRİM TEMİZLEYİCİ
+const cleanNotification = (msg: string) => {
+  if (!msg) return "";
+  let text = msg
+    .replace(/[💭💬🗨️]/g, "")
+    .replace(/\[.*?\]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (text.includes(",")) {
+    const parts = text.split(",");
+    return `${formatName(parts[0].trim())}, ${parts.slice(1).join(",").trim()}`;
+  }
+
+  if (text.toLowerCase().includes("sana bir mesaj gönderdi")) {
+    const namePart = text.replace(/sana bir mesaj gönderdi\.?/i, "").trim();
+    return `${formatName(namePart)} sana bir mesaj gönderdi.`;
+  }
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
 
 export default function ListingDetailPage() {
   const params = useParams();
@@ -42,7 +75,7 @@ export default function ListingDetailPage() {
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
-  // 📜 YENİ: Footer Bilgi Modalı State'leri
+  // 📜 Footer Bilgi Modalı State'leri
   const [infoModal, setInfoModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -415,7 +448,7 @@ export default function ListingDetailPage() {
     product.photosBase64?.length > 0
       ? product.photosBase64
       : ["https://via.placeholder.com/800x600?text=Fotograf+Yok"];
-  const sellerName = product.user?.fullName || "Bilinmeyen Satıcı";
+  const sellerName = formatName(product.user?.fullName || "Bilinmeyen Satıcı");
   const isOwner =
     currentUser &&
     product.user &&
@@ -452,7 +485,6 @@ export default function ListingDetailPage() {
               </Link>
             </div>
 
-            {/* ✨ PREMIUM ARAMA ÇUBUĞU (Masaüstü) */}
             <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
               <form
                 onSubmit={handleSearchSubmit}
@@ -470,19 +502,7 @@ export default function ListingDetailPage() {
                   onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
                   className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
                 />
-                <svg
-                  className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none" />
                 <button type="submit" className="hidden">
                   Ara
                 </button>
@@ -502,13 +522,13 @@ export default function ListingDetailPage() {
                     >
                       <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0 text-sm">
                         {result.type === "user"
-                          ? result.item.fullName.charAt(0).toUpperCase()
+                          ? (result.item.fullName || "U")
+                              .charAt(0)
+                              .toUpperCase()
                           : "📦"}
                       </div>
-                      <div className="font-bold text-slate-800 text-sm">
-                        <div className="font-bold text-slate-800 text-sm capitalize">
-                          {result.item.fullName || result.item.title}
-                        </div>
+                      <div className="font-bold text-slate-800 text-sm capitalize">
+                        {formatName(result.item.fullName) || result.item.title}
                       </div>
                     </Link>
                   ))}
@@ -597,10 +617,10 @@ export default function ListingDetailPage() {
                               Şu an hiç bildirimin yok.
                             </div>
                           ) : (
-                            notificationsList.slice(0, 5).map((notif: any) => {
-                              let icon = <Bell className="w-5 h-5" />;
-                              let bg = "bg-blue-50";
-                              let text = "text-blue-500";
+                            notificationsList.map((notif: any) => {
+                              let icon = <MessageCircle className="w-5 h-5" />;
+                              let bg = "bg-green-50";
+                              let text = "text-green-500";
                               const msgLower =
                                 notif.message?.toLowerCase() || "";
 
@@ -613,14 +633,6 @@ export default function ListingDetailPage() {
                                 );
                                 bg = "bg-red-50";
                                 text = "text-red-500";
-                              } else if (
-                                msgLower.includes("mesaj") ||
-                                msgLower.includes("yorum") ||
-                                msgLower.includes("soru")
-                              ) {
-                                icon = <MessageCircle className="w-5 h-5" />;
-                                bg = "bg-green-50";
-                                text = "text-green-500";
                               } else if (msgLower.includes("takip")) {
                                 icon = <UserPlus className="w-5 h-5" />;
                                 bg = "bg-pink-50";
@@ -634,6 +646,10 @@ export default function ListingDetailPage() {
                                 text = "text-orange-500";
                               }
 
+                              const formattedMessage = cleanNotification(
+                                notif.message,
+                              );
+
                               return (
                                 <div
                                   key={notif.id}
@@ -646,7 +662,7 @@ export default function ListingDetailPage() {
                                   </div>
                                   <div className="flex-1">
                                     <p className="text-sm text-slate-700 leading-snug font-semibold">
-                                      {notif.message}
+                                      {formattedMessage}
                                     </p>
                                     <p className="text-[10px] text-slate-400 mt-1 font-medium">
                                       {notif.createdAt
@@ -666,7 +682,7 @@ export default function ListingDetailPage() {
                           onClick={() => setIsNotificationOpen(false)}
                           className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors"
                         >
-                          Tüm Bildirimleri Gör &rarr;
+                          Tüm Bildirimleri Gör
                         </Link>
                       </div>
                     )}
@@ -681,8 +697,6 @@ export default function ListingDetailPage() {
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
                   </Link>
-
-                  {/* 🚀 YENİ: Mobilde Çıkış İkonu, Masaüstünde Yazı */}
                   <button
                     onClick={handleLogout}
                     className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
@@ -736,19 +750,7 @@ export default function ListingDetailPage() {
               onFocus={() => setIsDropdownOpen(true)}
               onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
             />
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <button type="submit" className="hidden">
               Ara
             </button>
@@ -768,17 +770,15 @@ export default function ListingDetailPage() {
                   <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
                     {result.type === "user" ? (
                       <span className="font-bold text-blue-600">
-                        {result.item.fullName.charAt(0).toUpperCase()}
+                        {formatName(result.item.fullName || "U").charAt(0)}
                       </span>
                     ) : (
                       <span className="text-xs">📦</span>
                     )}
                   </div>
                   <div className="flex-1 truncate">
-                    <div className="font-bold text-slate-800 truncate text-xs">
-                      <div className="font-bold text-slate-800 truncate text-xs capitalize">
-                        {result.item.fullName || result.item.title}
-                      </div>
+                    <div className="font-bold text-slate-800 truncate text-xs capitalize">
+                      {formatName(result.item.fullName) || result.item.title}
                     </div>
                   </div>
                 </Link>
@@ -790,6 +790,7 @@ export default function ListingDetailPage() {
 
       {/* 🖥️ ANA DÜZEN */}
       <div className="max-w-[1200px] mx-auto mt-4 sm:mt-8 px-4 sm:px-6 w-full flex-1">
+        {/* 🔙 ZARİF BREADCRUMB VE GERİ DÖN YAPISI (Kutular Kaldırıldı) */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm font-semibold text-slate-400 overflow-hidden whitespace-nowrap flex-1">
             <Link
@@ -799,15 +800,12 @@ export default function ListingDetailPage() {
               Ana Sayfa
             </Link>
             <ChevronRight size={14} className="shrink-0 text-slate-300" />
-
-            {/* 🚀 DÜZELTİLEN: Kategori Artık Tıklanabilir Bir Link! */}
             <Link
               href={`/search?q=${encodeURIComponent(product.category)}`}
               className="text-slate-600 hover:text-[#20B2AA] transition-colors shrink-0 cursor-pointer"
             >
               {product.category}
             </Link>
-
             <ChevronRight size={14} className="shrink-0 text-slate-300" />
             <span className="text-slate-800 truncate max-w-[120px] sm:max-w-[200px]">
               {product.title}
@@ -815,9 +813,10 @@ export default function ListingDetailPage() {
           </div>
           <button
             onClick={() => router.back()}
-            className="font-bold text-slate-500 hover:text-[#20B2AA] transition-colors flex items-center gap-1 text-[11px] sm:text-sm shrink-0 pl-2"
+            className="font-bold text-slate-500 hover:text-[#20B2AA] transition-colors flex items-center gap-1 text-[11px] sm:text-sm shrink-0 pl-2 group"
           >
-            <span>&larr;</span> Geri Dön
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />{" "}
+            Geri Dön
           </button>
         </div>
 
@@ -838,7 +837,11 @@ export default function ListingDetailPage() {
                     <button
                       key={index}
                       onClick={() => setActiveImageIndex(index)}
-                      className={`relative w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 shrink-0 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all ${activeImageIndex === index ? "border-blue-600 shadow-md scale-105" : "border-transparent hover:border-blue-300 opacity-70 hover:opacity-100"}`}
+                      className={`relative w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 shrink-0 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all ${
+                        activeImageIndex === index
+                          ? "border-blue-600 shadow-md scale-105"
+                          : "border-transparent hover:border-blue-300 opacity-70 hover:opacity-100"
+                      }`}
                     >
                       <img
                         src={photo}
@@ -874,7 +877,7 @@ export default function ListingDetailPage() {
               >
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-black shrink-0 text-base sm:text-lg">
                   {currentUser
-                    ? currentUser.fullName.charAt(0).toUpperCase()
+                    ? formatName(currentUser.fullName).charAt(0)
                     : "U"}
                 </div>
                 <div className="flex-1 relative">
@@ -901,8 +904,9 @@ export default function ListingDetailPage() {
                   </p>
                 ) : (
                   comments.map((comment) => {
-                    const commentUser =
-                      comment.user?.fullName || "Bilinmeyen Kullanıcı";
+                    const commentUser = formatName(
+                      comment.user?.fullName || "Bilinmeyen Kullanıcı",
+                    );
                     const canDelete =
                       currentUser &&
                       (currentUser.id === comment.user?.id || isOwner);
@@ -912,7 +916,7 @@ export default function ListingDetailPage() {
                         className="flex gap-2 sm:gap-4 group relative"
                       >
                         <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center font-bold shrink-0 mt-0.5 sm:mt-1 text-xs sm:text-base">
-                          {commentUser.charAt(0).toUpperCase()}
+                          {commentUser.charAt(0)}
                         </div>
                         <div className="flex-1 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl rounded-tl-none border border-slate-100">
                           <div className="flex justify-between items-center mb-1">
@@ -1001,20 +1005,36 @@ export default function ListingDetailPage() {
               <div className="flex flex-row gap-2 sm:gap-3 mt-4">
                 <div
                   onClick={handleLikeToggle}
-                  className={`flex-[3] flex rounded-xl overflow-hidden border transition-all duration-300 shadow-sm cursor-pointer hover:shadow-md group ${isLiked ? "border-red-200" : "border-slate-200 hover:border-red-300"}`}
+                  className={`flex-[3] flex rounded-xl overflow-hidden border transition-all duration-300 shadow-sm cursor-pointer hover:shadow-md group ${
+                    isLiked
+                      ? "border-red-200"
+                      : "border-slate-200 hover:border-red-300"
+                  }`}
                 >
                   <div
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 sm:py-3.5 text-xs sm:text-sm font-bold transition-colors ${isLiked ? "bg-red-50 text-red-600 border-r border-red-200" : "bg-white text-slate-600 border-r border-slate-100 group-hover:bg-red-50"}`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 sm:py-3.5 text-xs sm:text-sm font-bold transition-colors ${
+                      isLiked
+                        ? "bg-red-50 text-red-600 border-r border-red-200"
+                        : "bg-white text-slate-600 border-r border-slate-100 group-hover:bg-red-50"
+                    }`}
                   >
                     <Heart
-                      className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:scale-110 ${isLiked ? "fill-current text-red-500" : "text-slate-400 group-hover:text-red-400"}`}
+                      className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:scale-110 ${
+                        isLiked
+                          ? "fill-current text-red-500"
+                          : "text-slate-400 group-hover:text-red-400"
+                      }`}
                     />
                     <span className="tracking-wide whitespace-nowrap">
                       {isLiked ? "Favorilerde" : "Favoriye Al"}
                     </span>
                   </div>
                   <div
-                    className={`flex items-center justify-center px-3 sm:px-5 font-black text-xs sm:text-sm tabular-nums transition-colors ${isLiked ? "bg-red-500 text-white" : "bg-slate-50 text-slate-500"}`}
+                    className={`flex items-center justify-center px-3 sm:px-5 font-black text-xs sm:text-sm tabular-nums transition-colors ${
+                      isLiked
+                        ? "bg-red-500 text-white"
+                        : "bg-slate-50 text-slate-500"
+                    }`}
                   >
                     {likeCount}
                   </div>
@@ -1034,7 +1054,7 @@ export default function ListingDetailPage() {
                 className="flex items-center gap-3 sm:gap-4 group border-b border-slate-100 pb-4 sm:pb-6 mb-4 sm:mb-6 hover:bg-slate-50 p-2 sm:p-3 -mx-2 sm:-mx-3 rounded-2xl transition-all cursor-pointer"
               >
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl sm:text-2xl font-black shadow-inner group-hover:scale-105 transition-transform shrink-0">
-                  {sellerName.charAt(0).toUpperCase()}
+                  {sellerName.charAt(0)}
                 </div>
                 <div className="flex-1">
                   <h3 className="text-base sm:text-lg font-extrabold text-slate-800 capitalize group-hover:text-[#20B2AA] transition-colors line-clamp-1">
@@ -1212,7 +1232,15 @@ export default function ListingDetailPage() {
 
       <style
         dangerouslySetInnerHTML={{
-          __html: `.custom-scrollbar::-webkit-scrollbar { height: 6px; } @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; } } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }`,
+          __html: `
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        .desktop-search { display: none; }
+        .mobile-search { display: block; }
+        @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }
+      `,
         }}
       />
     </div>

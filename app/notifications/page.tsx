@@ -23,6 +23,34 @@ const formatName = (name: string) => {
     .join(" ");
 };
 
+// 🧹 BİLDİRİM TEMİZLEYİCİ: Backend'den gelen ID'leri ve emojileri tamamen uçurur.
+const cleanNotification = (msg: string) => {
+  if (!msg) return "";
+
+  // 1. Emojileri ve köşeli parantez içindeki HER ŞEYİ (örn: [id:3], [id: 3]) acımadan sil
+  let text = msg
+    .replace(/[💭💬🗨️]/g, "")
+    .replace(/\[.*?\]/g, "") // Hileli kodları uçuran kısım!
+    .replace(/\s+/g, " ") // Fazla boşlukları teke düşürür
+    .trim();
+
+  // 2. Virgül varsa (örn: "Feride Okur, ilanını beğendi")
+  if (text.includes(",")) {
+    const parts = text.split(",");
+    // Sadece ismin olduğu ilk kısmı büyüt, geri kalanını olduğu gibi bırak
+    return `${formatName(parts[0].trim())}, ${parts.slice(1).join(",").trim()}`;
+  }
+
+  // 3. Virgül yoksa ve mesaj bildirimi ise
+  if (text.toLowerCase().includes("sana bir mesaj gönderdi")) {
+    const namePart = text.replace(/sana bir mesaj gönderdi\.?/i, "").trim();
+    return `${formatName(namePart)} sana bir mesaj gönderdi.`;
+  }
+
+  // 4. Varsayılan (Her ihtimale karşı ilk harfi büyüt)
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
+
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
@@ -395,12 +423,13 @@ export default function NotificationsPage() {
                               Şu an hiç bildirimin yok.
                             </div>
                           ) : (
-                            notificationsList.slice(0, 5).map((notif: any) => {
+                            notificationsList.map((notif: any) => {
                               let icon = <Bell className="w-5 h-5" />;
                               let bg = "bg-blue-50";
                               let text = "text-blue-500";
                               const msgLower =
                                 notif.message?.toLowerCase() || "";
+
                               if (
                                 msgLower.includes("beğen") ||
                                 msgLower.includes("favori")
@@ -431,12 +460,9 @@ export default function NotificationsPage() {
                                 text = "text-orange-500";
                               }
 
-                              // 🚀 YENİ: BİLDİRİM AÇILIR MENÜSÜ İÇİNDEKİ İSİMLER DE BÜYÜDÜ
-                              const parts = notif.message.split(",");
-                              const formattedMessage =
-                                parts.length > 1
-                                  ? `${formatName(parts[0])},${parts.slice(1).join(",")}`
-                                  : formatName(notif.message);
+                              const formattedMessage = cleanNotification(
+                                notif.message,
+                              );
 
                               return (
                                 <div
@@ -470,7 +496,7 @@ export default function NotificationsPage() {
                           onClick={() => setIsNotificationOpen(false)}
                           className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors"
                         >
-                          Tüm Bildirimleri Gör &rarr;
+                          Tüm Bildirimleri Gör
                         </Link>
                       </div>
                     )}
@@ -485,6 +511,7 @@ export default function NotificationsPage() {
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
                   </Link>
+
                   <button
                     onClick={handleLogout}
                     className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
@@ -558,7 +585,7 @@ export default function NotificationsPage() {
                   <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
                     {result.type === "user" ? (
                       <span className="font-bold text-blue-600">
-                        {formatName(result.item.fullName || "U").charAt(0)}
+                        {formatName(result.item.fullName).charAt(0)}
                       </span>
                     ) : (
                       <span className="text-xs">📦</span>
@@ -577,7 +604,7 @@ export default function NotificationsPage() {
       </header>
 
       {/* 📜 BİLDİRİM İÇERİĞİ */}
-      <main className="max-w-[800px] mx-auto px-4 sm:px-6 py-8 sm:py-12 flex-1 w-full">
+      <main className="max-w-[800px] mx-auto px-4 sm:px-6 py-6 sm:py-8 flex-1 w-full mt-4">
         <div className="flex justify-between items-end mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-4xl font-black text-slate-800 tracking-tight">
             Bildirimler
@@ -640,13 +667,8 @@ export default function NotificationsPage() {
                   text = "text-orange-500";
                 }
 
-                // 🚀 YENİ: BİLDİRİM SAYFASINDAKİ İSİMLER DE BÜYÜDÜ
-                // Virgül varsa ilk kelimeyi büyük harf yap
-                const parts = notif.message.split(",");
-                const formattedMessage =
-                  parts.length > 1
-                    ? `${formatName(parts[0])},${parts.slice(1).join(",")}`
-                    : formatName(notif.message);
+                // 🚀 YENİ: BİLDİRİMLER BURADA DA TEMİZLENİYOR
+                const formattedMessage = cleanNotification(notif.message);
 
                 return (
                   <div
@@ -727,7 +749,7 @@ export default function NotificationsPage() {
       )}
 
       {/* 🌊 FOOTER (PREMIUM) */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 sm:mt-16 rounded-t-[3rem] shadow-sm w-full">
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="mb-4">
@@ -836,7 +858,20 @@ export default function NotificationsPage() {
 
       <style
         dangerouslySetInnerHTML={{
-          __html: `.custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; } @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; } .desktop-search { display: none; } .mobile-search { display: block; } @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }`,
+          __html: `
+            /* Yatay menüler için alt kaydırma çubuğunu gizler */
+            .custom-scrollbar::-webkit-scrollbar { height: 0px; width: 6px; } 
+            @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { width: 8px; } } 
+            
+            /* Bildirimler gibi dikey alanlar için şık kaydırma çubuğu tasarımı */
+            .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; } 
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+            
+            .desktop-search { display: none; }
+            .mobile-search { display: block; }
+            @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }
+          `,
         }}
       />
     </div>

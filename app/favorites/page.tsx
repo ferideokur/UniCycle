@@ -22,6 +22,29 @@ const formatName = (name: string) => {
     .join(" ");
 };
 
+// 🧹 BİLDİRİM TEMİZLEYİCİ: Backend'den gelen ID'leri ve emojileri tamamen uçurur.
+const cleanNotification = (msg: string) => {
+  if (!msg) return "";
+
+  let text = msg
+    .replace(/[💭💬🗨️]/g, "")
+    .replace(/\[.*?\]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (text.includes(",")) {
+    const parts = text.split(",");
+    return `${formatName(parts[0].trim())}, ${parts.slice(1).join(",").trim()}`;
+  }
+
+  if (text.toLowerCase().includes("sana bir mesaj gönderdi")) {
+    const namePart = text.replace(/sana bir mesaj gönderdi\.?/i, "").trim();
+    return `${formatName(namePart)} sana bir mesaj gönderdi.`;
+  }
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
+
 export default function FavoritesPage() {
   const [user, setUser] = useState<{
     id: number;
@@ -376,12 +399,13 @@ export default function FavoritesPage() {
                               Şu an hiç bildirimin yok.
                             </div>
                           ) : (
-                            notificationsList.slice(0, 5).map((notif: any) => {
+                            notificationsList.map((notif: any) => {
                               let icon = <Bell className="w-5 h-5" />;
                               let bg = "bg-blue-50";
                               let text = "text-blue-500";
                               const msgLower =
                                 notif.message?.toLowerCase() || "";
+
                               if (
                                 msgLower.includes("beğen") ||
                                 msgLower.includes("favori")
@@ -412,11 +436,10 @@ export default function FavoritesPage() {
                                 text = "text-orange-500";
                               }
 
-                              const parts = notif.message.split(",");
-                              const formattedMessage =
-                                parts.length > 1
-                                  ? `${formatName(parts[0])},${parts.slice(1).join(",")}`
-                                  : formatName(notif.message);
+                              // 🚀 YENİ: AÇILIR MENÜ BİLDİRİMLERİ BURADA TEMİZLENİYOR
+                              const formattedMessage = cleanNotification(
+                                notif.message,
+                              );
 
                               return (
                                 <div
@@ -450,7 +473,7 @@ export default function FavoritesPage() {
                           onClick={() => setIsNotificationOpen(false)}
                           className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors"
                         >
-                          Tüm Bildirimleri Gör &rarr;
+                          Tüm Bildirimleri Gör
                         </Link>
                       </div>
                     )}
@@ -465,6 +488,7 @@ export default function FavoritesPage() {
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
                   </Link>
+
                   <button
                     onClick={handleLogout}
                     className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
@@ -556,16 +580,9 @@ export default function FavoritesPage() {
         </div>
       </header>
 
-      {/* 📜 FAVORİLER İÇERİĞİ */}
       <div className="max-w-[1200px] mx-auto w-full px-4 sm:px-6 lg:px-8 mt-8 sm:mt-12 flex-1">
         <div className="relative overflow-hidden bg-white rounded-[2rem] p-6 sm:p-8 mb-8 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="relative z-10 w-full">
-            <button
-              onClick={() => router.back()}
-              className="font-bold text-slate-400 hover:text-blue-600 flex items-center gap-2 text-xs mb-3 transition-colors"
-            >
-              &larr; Geri Dön
-            </button>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
@@ -738,7 +755,7 @@ export default function FavoritesPage() {
       )}
 
       {/* 🌊 FOOTER (PREMIUM) */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 sm:mt-16 rounded-t-[3rem] shadow-sm w-full">
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="mb-4">
@@ -847,7 +864,20 @@ export default function FavoritesPage() {
 
       <style
         dangerouslySetInnerHTML={{
-          __html: `.custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; } @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; } .desktop-search { display: none; } .mobile-search { display: block; } @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }`,
+          __html: `
+            /* Yatay menüler için alt kaydırma çubuğunu gizler */
+            .custom-scrollbar::-webkit-scrollbar { height: 0px; width: 6px; } 
+            @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { width: 8px; } } 
+            
+            /* Bildirimler gibi dikey alanlar için şık kaydırma çubuğu tasarımı */
+            .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; } 
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+            
+            .desktop-search { display: none; }
+            .mobile-search { display: block; }
+            @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }
+          `,
         }}
       />
     </main>
