@@ -4,8 +4,18 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  Mail,
+  Lock,
+  User,
+  Building2,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 
-// 🎓 Türkiye'deki Üniversiteler Listesi
+// Türkiye'deki Üniversiteler Listesi
 const UNIVERSITIES = [
   "Acıbadem Üniversitesi",
   "Akdeniz Üniversitesi",
@@ -71,32 +81,63 @@ const UNIVERSITIES = [
   "Diğer...",
 ];
 
+// 🚀 YENİ: ARKA PLANDAN GELEN İNGİLİZCE MESAJLARI TÜRKÇEYE ÇEVİREN AKILLI FONKSİYON (GÜNCELLENDİ)
+const translateBackendMessage = (msg: string) => {
+  if (!msg) return "Bir hata oluştu, lütfen tekrar deneyin.";
+  const lowerMsg = msg.toLowerCase();
+
+  if (lowerMsg.includes("already exist") || lowerMsg.includes("taken"))
+    return "Bu e-posta adresi zaten kullanımda.";
+  // 🚀 "login failed" ibaresi sözlüğe eklendi!
+  if (
+    lowerMsg.includes("bad credentials") ||
+    lowerMsg.includes("wrong password") ||
+    lowerMsg.includes("invalid") ||
+    lowerMsg.includes("login failed")
+  )
+    return "E-posta adresiniz veya şifreniz hatalı.";
+  if (lowerMsg.includes("not found") || lowerMsg.includes("does not exist"))
+    return "Bu e-posta adresine ait bir hesap bulunamadı.";
+  if (lowerMsg.includes("login successful"))
+    return "Giriş başarılı! Yönlendiriliyorsun...";
+  if (lowerMsg.includes("register successful") || lowerMsg.includes("created"))
+    return "Başarıyla kayıt oldun! Lütfen giriş yap.";
+
+  // Eğer benim öngörmediğim başka bir İngilizce kelime gelirse:
+  return "İşlem başarısız oldu. Lütfen bilgilerinizi kontrol edin.";
+};
+
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const router = useRouter();
 
-  // 🧠 HAFIZALAR (STATE)
+  // HAFIZALAR (STATE)
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // 🚀 OKUL HAFIZALARI
+  // OKUL HAFIZALARI
   const [university, setUniversity] = useState(UNIVERSITIES[0]);
   const [customUniversity, setCustomUniversity] = useState("");
 
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<
+    "success" | "error" | "info" | ""
+  >("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    setMessage("⏳ İşlem yapılıyor, lütfen bekleyin...");
+    setMessageType("info");
+    setMessage("İşlem yapılıyor, lütfen bekleyin...");
 
     if (!isLogin) {
       const nameParts = fullName.trim().split(/\s+/);
       if (nameParts.length < 2) {
+        setMessageType("error");
         setMessage(
-          "❌ Lütfen adınızı ve soyadınızı aralarında boşluk bırakarak tam yazın (Örn: Feride Okur).",
+          "Lütfen adınızı ve soyadınızı aralarında boşluk bırakarak tam yazın (Örn: Feride Okur).",
         );
         setIsLoading(false);
         return;
@@ -105,7 +146,8 @@ export default function AuthPage() {
       let finalUniversity = university;
       if (university === "Diğer...") {
         if (customUniversity.trim() === "") {
-          setMessage("❌ Lütfen üniversitenizin adını tam olarak yazın.");
+          setMessageType("error");
+          setMessage("Lütfen üniversitenizin adını tam olarak yazın.");
           setIsLoading(false);
           return;
         }
@@ -122,14 +164,15 @@ export default function AuthPage() {
               fullName,
               email,
               password,
-              university: finalUniversity, // 🎓 EKSİK PARÇA TAMAMLANDI! Artık Java bu bilgiyi alıp SQL'e yazacak.
+              university: finalUniversity,
             }),
           },
         );
 
         const text = await response.text();
         if (response.ok) {
-          setMessage("✅ Başarıyla kayıt oldun! Lütfen giriş yap.");
+          setMessageType("success");
+          setMessage("Başarıyla kayıt oldun! Lütfen giriş yap.");
           setFullName("");
           setEmail("");
           setPassword("");
@@ -137,12 +180,16 @@ export default function AuthPage() {
           setTimeout(() => {
             setIsLogin(true);
             setMessage("");
+            setMessageType("");
           }, 2000);
         } else {
-          setMessage("❌ " + text);
+          setMessageType("error");
+          // 🚀 ÇEVİRMEN DEVREDE
+          setMessage(translateBackendMessage(text));
         }
       } catch (error) {
-        setMessage("❌ Sunucuya bağlanılamadı. Arka planda Java çalışıyor mu?");
+        setMessageType("error");
+        setMessage("Sunucuya bağlanılamadı. Arka planda sunucu çalışıyor mu?");
       } finally {
         setIsLoading(false);
       }
@@ -159,23 +206,27 @@ export default function AuthPage() {
 
         if (response.ok) {
           const userData = await response.json();
-          // 🚀 YENİ: Kullanıcının üniversite bilgisini de tarayıcı hafızasına alıyoruz!
           localStorage.setItem("user", JSON.stringify(userData));
 
           if (userData.university) {
             localStorage.setItem("userUni", userData.university);
           }
 
-          setMessage("✅ " + userData.message + " Yönlendiriliyorsun...");
+          setMessageType("success");
+          // 🚀 ÇEVİRMEN DEVREDE
+          setMessage("Giriş başarılı! Yönlendiriliyorsun...");
           setEmail("");
           setPassword("");
           setTimeout(() => (window.location.href = "/profile"), 1500);
         } else {
           const errorText = await response.text();
-          setMessage("❌ " + errorText);
+          setMessageType("error");
+          // 🚀 ÇEVİRMEN DEVREDE
+          setMessage(translateBackendMessage(errorText));
         }
       } catch (error) {
-        setMessage("❌ Sunucuya bağlanılamadı. Arka planda Java çalışıyor mu?");
+        setMessageType("error");
+        setMessage("Sunucuya bağlanılamadı. Arka planda sunucu çalışıyor mu?");
       } finally {
         setIsLoading(false);
       }
@@ -184,7 +235,7 @@ export default function AuthPage() {
 
   return (
     <main className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-slate-900">
-      {/* 🚀 PREMIUM CİDDİ ARKA PLAN (CSS Mimari) */}
+      {/* PREMIUM CİDDİ ARKA PLAN (CSS Mimari) */}
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -212,15 +263,16 @@ export default function AuthPage() {
       <div className="absolute top-8 left-8 z-50">
         <Link
           href="/"
-          className="text-slate-300 hover:text-white font-bold flex items-center gap-2 transition-colors drop-shadow-md text-sm sm:text-base"
+          className="text-slate-300 hover:text-white font-bold flex items-center gap-2 transition-colors drop-shadow-md text-sm sm:text-base group"
         >
-          <span>&larr;</span> Ana Sayfaya Dön
+          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          Ana Sayfaya Dön
         </Link>
       </div>
 
       {/* BUZLU CAM FORM KUTUSU */}
       <div className="relative z-10 bg-white/95 backdrop-blur-xl w-full max-w-md rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden border border-white/40 my-12">
-        <div className="bg-gradient-to-br from-blue-50/60 to-indigo-50/60 p-6 sm:p-8 text-center border-b border-white/40">
+        <div className="bg-gradient-to-br from-blue-50/60 to-indigo-50/60 p-6 sm:p-8 text-center border-b border-slate-100">
           <Link
             href="/"
             className="flex justify-center items-center gap-2.5 hover:scale-105 transition-transform mb-4 inline-flex"
@@ -238,7 +290,7 @@ export default function AuthPage() {
             </span>
           </Link>
           <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">
-            {isLogin ? "Tekrar Hoş Geldin! 👋" : "UniCycle'a Katıl! 🚀"}
+            {isLogin ? "Tekrar Hoş Geldin" : "UniCycle'a Katıl"}
           </h1>
           <p className="text-slate-500 text-xs sm:text-sm mt-2 font-medium">
             {isLogin
@@ -250,9 +302,24 @@ export default function AuthPage() {
         <div className="p-6 sm:p-8">
           {message && (
             <div
-              className={`mb-4 p-3 rounded-xl text-sm font-bold text-center ${message.includes("✅") ? "bg-green-50 text-green-600 border border-green-100" : "bg-red-50 text-red-600 border border-red-100"}`}
+              className={`mb-5 p-3.5 rounded-xl text-sm font-bold text-left flex items-start gap-3 shadow-sm border ${
+                messageType === "success"
+                  ? "bg-green-50 text-green-700 border-green-200"
+                  : messageType === "info"
+                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                    : "bg-red-50 text-red-700 border-red-200"
+              }`}
             >
-              {message}
+              {messageType === "success" && (
+                <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+              )}
+              {messageType === "error" && (
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              )}
+              {messageType === "info" && (
+                <Loader2 className="w-5 h-5 shrink-0 mt-0.5 animate-spin" />
+              )}
+              <span className="leading-snug">{message}</span>
             </div>
           )}
 
@@ -263,14 +330,19 @@ export default function AuthPage() {
                   <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     İsim ve Soyisim
                   </label>
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Örn: Feride Okur"
-                    className="w-full bg-slate-50 text-slate-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 text-sm font-semibold"
-                    required={!isLogin}
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <User className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Örn: Feride Okur"
+                      className="w-full bg-slate-50 text-slate-900 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 text-sm font-semibold transition-all"
+                      required={!isLogin}
+                    />
+                  </div>
                   <p className="text-[10px] text-slate-400 mt-1.5 px-1 font-medium">
                     Güvenlik için soyadınızı girmek zorunludur.
                   </p>
@@ -280,17 +352,22 @@ export default function AuthPage() {
                   <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     Üniversiteniz
                   </label>
-                  <select
-                    value={university}
-                    onChange={(e) => setUniversity(e.target.value)}
-                    className="w-full bg-slate-50 text-slate-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 font-semibold text-sm appearance-none cursor-pointer"
-                  >
-                    {UNIVERSITIES.map((uni, idx) => (
-                      <option key={idx} value={uni}>
-                        {uni}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <Building2 className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <select
+                      value={university}
+                      onChange={(e) => setUniversity(e.target.value)}
+                      className="w-full bg-slate-50 text-slate-900 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 font-semibold text-sm appearance-none cursor-pointer transition-all"
+                    >
+                      {UNIVERSITIES.map((uni, idx) => (
+                        <option key={idx} value={uni}>
+                          {uni}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {university === "Diğer..." && (
@@ -298,14 +375,19 @@ export default function AuthPage() {
                     <label className="block text-[11px] sm:text-xs font-bold text-[#20B2AA] mb-1.5 uppercase tracking-wider px-1">
                       Okulunuzun Adı
                     </label>
-                    <input
-                      type="text"
-                      value={customUniversity}
-                      onChange={(e) => setCustomUniversity(e.target.value)}
-                      placeholder="Örn: X Teknik Üniversitesi"
-                      className="w-full bg-teal-50 text-teal-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-teal-200 font-bold text-sm"
-                      required={!isLogin && university === "Diğer..."}
-                    />
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <Building2 className="h-5 w-5 text-teal-500" />
+                      </div>
+                      <input
+                        type="text"
+                        value={customUniversity}
+                        onChange={(e) => setCustomUniversity(e.target.value)}
+                        placeholder="Örn: X Teknik Üniversitesi"
+                        className="w-full bg-teal-50 text-teal-900 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-teal-200 font-bold text-sm transition-all"
+                        required={!isLogin && university === "Diğer..."}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -315,40 +397,54 @@ export default function AuthPage() {
               <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                 Üniversite E-Postası
               </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="isim@ogrenci.edu.tr"
-                className="w-full bg-slate-50 text-slate-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 text-sm font-semibold"
-                required
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="isim@ogrenci.edu.tr"
+                  className="w-full bg-slate-50 text-slate-900 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 text-sm font-semibold transition-all"
+                  required
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                 Şifre
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-slate-50 text-slate-900 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 text-sm font-bold tracking-widest"
-                required
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-slate-50 text-slate-900 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] border border-slate-200 text-sm font-bold tracking-widest transition-all"
+                  required
+                />
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-lg py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg mt-4"
+              className="w-full flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-base sm:text-lg py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {isLoading
-                ? "⏳ Bekleyiniz..."
-                : isLogin
-                  ? "Giriş Yap"
-                  : "Hesap Oluştur"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" /> Bekleyiniz...
+                </>
+              ) : isLogin ? (
+                "Giriş Yap"
+              ) : (
+                "Hesap Oluştur"
+              )}
             </button>
           </form>
 
@@ -359,6 +455,7 @@ export default function AuthPage() {
               onClick={() => {
                 setIsLogin(!isLogin);
                 setMessage("");
+                setMessageType("");
               }}
               className="ml-1.5 font-black text-blue-600 hover:text-[#20B2AA] transition-colors"
             >
