@@ -290,7 +290,9 @@ export default function ProfilePage() {
           ? searchTerm.substring(1).trim()
           : searchTerm.trim();
         if (!query) return;
+
         let combined: { type: "user" | "product"; item: any }[] = [];
+
         if (isUserSearch) {
           const userRes = await fetch(
             `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
@@ -315,7 +317,25 @@ export default function ProfilePage() {
             }
           }
         }
-        setLiveResults(combined);
+
+        // 🚀 İŞTE SİHİRLİ FİLTRE: Açılır menüdeki klonları her sayfada yok eder!
+        const uniqueLive = combined.filter(
+          (v: any, i: number, a: any[]) =>
+            a.findIndex((v2: any) => {
+              if (v.type === "user" && v2.type === "user") {
+                return (
+                  v2.item.id === v.item.id ||
+                  (v2.item.fullName &&
+                    v.item.fullName &&
+                    v2.item.fullName.toLowerCase() ===
+                      v.item.fullName.toLowerCase())
+                );
+              }
+              return v2.type === v.type && v2.item.id === v.item.id;
+            }) === i,
+        );
+
+        setLiveResults(uniqueLive);
       } catch (error) {
         console.error(error);
       }
@@ -483,7 +503,9 @@ export default function ProfilePage() {
                           : "📦"}
                       </div>
                       <div className="font-bold text-slate-800 text-sm">
-                        {result.item.fullName || result.item.title}
+                        <div className="font-bold text-slate-800 text-sm capitalize">
+                          {result.item.fullName || result.item.title}
+                        </div>
                       </div>
                     </Link>
                   ))}
@@ -749,7 +771,9 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex-1 truncate">
                     <div className="font-bold text-slate-800 truncate text-xs">
-                      {result.item.fullName || result.item.title}
+                      <div className="font-bold text-slate-800 truncate text-xs capitalize">
+                        {result.item.fullName || result.item.title}
+                      </div>
                     </div>
                   </div>
                 </Link>

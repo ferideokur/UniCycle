@@ -1,49 +1,58 @@
 "use client";
 
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Suspense, useEffect, useState } from "react";
+import {
+  Heart,
+  MessageCircle,
+  Package,
+  UserPlus,
+  Bell,
+  Search,
+} from "lucide-react";
 
-// 📦 Core Search Component
+// 🚀 İsimleri her yerde büyük harfle başlatan formül
+const formatName = (name: string) => {
+  if (!name) return "";
+  return name
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
 function SearchContent() {
   const searchParams = useSearchParams();
-  const rawQuery = searchParams.get("q") || "";
   const router = useRouter();
+  const q = searchParams.get("q") || "";
 
-  const [results, setResults] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchType, setSearchType] = useState<"products" | "users">(
-    "products",
-  );
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // 🚀 HEADER VE KULLANICI HAFIZASI (Ana Sayfadan Alındı)
-  const [searchInput, setSearchInput] = useState(rawQuery);
-  const [user, setUser] = useState<any>(null);
-  const [likedProducts, setLikedProducts] = useState<number[]>([]);
+  // 🚀 Üst menü arama çubuğu ve açılır menü state'leri
+  const [headerSearchTerm, setHeaderSearchTerm] = useState(q);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [liveResults, setLiveResults] = useState<
+    { type: "user" | "product"; item: any }[]
+  >([]);
 
-  // 🔔 BİLDİRİM HAFIZASI
+  // Bildirim state'leri
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notificationsList, setNotificationsList] = useState<any[]>([]);
 
-  // 1. URL Değiştiğinde Arama Kutusunu Güncelle
-  useEffect(() => {
-    setSearchInput(rawQuery);
-  }, [rawQuery]);
+  // Arama sayfası ana sonuç state'leri
+  const [mainResults, setMainResults] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // 2. Kullanıcı, Beğeniler ve Bildirimleri Çek
+  // Kullanıcı ve Bildirimleri Yükle
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        const likes = JSON.parse(
-          localStorage.getItem(`likes_${parsedUser.email}`) || "[]",
-        );
-        setLikedProducts(likes);
+        setCurrentUser(parsedUser);
 
-        // Bildirim Sayısını Çek
         fetch(
           `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
         )
@@ -56,236 +65,268 @@ function SearchContent() {
               const seenNotifs = JSON.parse(
                 localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
               );
-              const activeNotifs = data.filter(
-                (n: any) => !deletedNotifs.includes(n.id),
-              );
+              const activeNotifs = data
+                .filter((n: any) => !deletedNotifs.includes(n.id))
+                .reverse();
               const unreadNotifs = activeNotifs.filter(
                 (n: any) => !seenNotifs.includes(n.id),
               );
               setNotificationsCount(unreadNotifs.length);
+              setNotificationsList(activeNotifs);
             }
           })
           .catch((err) => console.error("Bildirimler çekilemedi:", err));
-
-        window.addEventListener("notificationsSeen", () =>
-          setNotificationsCount(0),
-        );
       } catch (e) {
         console.error(e);
       }
     }
-    return () =>
-      window.removeEventListener("notificationsSeen", () =>
-        setNotificationsCount(0),
-      );
   }, []);
 
-  // 3. 🌐 JAVA'DAN ARAMA SONUÇLARINI ÇEKME
+  // ANA ARAMA İŞLEMİ (Sayfa Ortası)
   useEffect(() => {
-    const fetchResults = async () => {
+    setHeaderSearchTerm(q);
+    const fetchMainResults = async () => {
       setIsLoading(true);
-      setResults([]);
-
       try {
-        const isUserSearch = rawQuery.startsWith("@");
-        const cleanQuery = isUserSearch
-          ? rawQuery.substring(1).trim()
-          : rawQuery.trim();
-
-        if (!cleanQuery) {
-          setIsLoading(false);
+        const isUserSearch = q.startsWith("@");
+        const query = isUserSearch ? q.substring(1).trim() : q.trim();
+        if (!query) {
+          setMainResults([]);
           return;
         }
 
-        if (isUserSearch) {
-          setSearchType("users");
-          const res = await fetch(
-            `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(cleanQuery)}`,
-          );
-          if (res.ok) {
-            const data = await res.json();
-            setResults(data);
-          }
-        } else {
-          setSearchType("products");
-          const res = await fetch(
-            `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(cleanQuery)}`,
-          );
-          if (res.ok) {
-            const data = await res.json();
-            data.sort((a: any, b: any) => b.id - a.id);
-            setResults(data);
+        const endpoint = isUserSearch
+          ? `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`
+          : `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`;
+
+        const res = await fetch(endpoint);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            // 🚀 DÜZELTME: Hem ID'ye hem de İSME göre filtrele! (Veritabanındaki klonları yok eder)
+            const uniqueData = data.filter(
+              (v: any, i: number, a: any[]) =>
+                a.findIndex((v2: any) => {
+                  if (isUserSearch) {
+                    return (
+                      v2.id === v.id ||
+                      (v2.fullName &&
+                        v.fullName &&
+                        v2.fullName.toLowerCase() === v.fullName.toLowerCase())
+                    );
+                  }
+                  return v2.id === v.id;
+                }) === i,
+            );
+            setMainResults(uniqueData);
           }
         }
       } catch (error) {
-        console.error("Fetch error:", error);
+        console.error("Arama hatası:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchResults();
-  }, [rawQuery]);
+    if (q) fetchMainResults();
+    else {
+      setMainResults([]);
+      setIsLoading(false);
+    }
+  }, [q]);
 
-  // 🚀 AKSİYON FONKSİYONLARI
-  const handleNewSearch = (e: React.FormEvent) => {
+  // ÜST MENÜ CANLI ARAMA (Dropdown için)
+  useEffect(() => {
+    const fetchLive = async () => {
+      if (headerSearchTerm.trim().length < 2) {
+        setLiveResults([]);
+        return;
+      }
+      try {
+        const isUserSearch = headerSearchTerm.startsWith("@");
+        const query = isUserSearch
+          ? headerSearchTerm.substring(1).trim()
+          : headerSearchTerm.trim();
+        if (!query) return;
+
+        let combined: any[] = [];
+        if (isUserSearch) {
+          const res = await fetch(
+            `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
+          );
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data))
+              combined = data.map((u: any) => ({ type: "user", item: u }));
+          }
+        } else {
+          const res = await fetch(
+            `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`,
+          );
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data))
+              combined = data.map((p: any) => ({ type: "product", item: p }));
+          }
+        }
+
+        // 🚀 DÜZELTME: Açılır menüdeki klonları da yok eder
+        const uniqueLive = combined.filter(
+          (v: any, i: number, a: any[]) =>
+            a.findIndex((v2: any) => {
+              if (v.type === "user" && v2.type === "user") {
+                return (
+                  v2.item.id === v.item.id ||
+                  (v2.item.fullName &&
+                    v.item.fullName &&
+                    v2.item.fullName.toLowerCase() ===
+                      v.item.fullName.toLowerCase())
+                );
+              }
+              return v2.type === v.type && v2.item.id === v.item.id;
+            }) === i,
+        );
+        setLiveResults(uniqueLive);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    const timer = setTimeout(() => fetchLive(), 300);
+    return () => clearTimeout(timer);
+  }, [headerSearchTerm]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchInput.trim() !== "") {
-      router.push(`/search?q=${encodeURIComponent(searchInput)}`);
+    if (headerSearchTerm.trim() !== "") {
+      setIsDropdownOpen(false);
+      router.push(`/search?q=${encodeURIComponent(headerSearchTerm)}`);
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (currentUser) {
+      try {
+        await fetch(
+          `https://unicycle-api.onrender.com/api/users/${currentUser.id}/logout`,
+          { method: "POST" },
+        );
+      } catch (e) {}
+    }
     localStorage.removeItem("user");
-    setUser(null);
-    setLikedProducts([]);
+    setCurrentUser(null);
     window.location.href = "/";
   };
 
-  const toggleLike = async (e: React.MouseEvent, productObject: any) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (!user) {
-      alert("Beğenmek için giriş yapmalısın!");
-      return;
-    }
-
-    let newLikes = [...likedProducts];
-    const isAlreadyLiked = newLikes.includes(productObject.id);
-
-    if (isAlreadyLiked) {
-      newLikes = newLikes.filter((id) => id !== productObject.id);
-    } else {
-      newLikes.push(productObject.id);
-      // Bildirim Gönder
-      if (productObject.user && productObject.user.id !== user.id) {
-        try {
-          await fetch(
-            "https://unicycle-api.onrender.com/api/interaction/notifications",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                userId: productObject.user.id,
-                message: `${user.fullName}, "${productObject.title}" adlı ilanını beğendi.`,
-              }),
-            },
-          );
-        } catch (err) {
-          console.error("Bildirim gönderilemedi:", err);
-        }
-      }
-    }
-    setLikedProducts(newLikes);
-    localStorage.setItem(`likes_${user.email}`, JSON.stringify(newLikes));
-  };
+  const isUserSearchMode = q.startsWith("@");
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans">
-      {/* 🚀 ÜST MENÜ NAVBAR (PREMIUM İKİZ İKONLU) */}
-      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans relative w-full overflow-x-hidden flex flex-col">
+      {/* 🚀 ÜST MENÜ NAVBAR (Premium İkiz) */}
+      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
+        <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
-            <Link
-              href="/"
-              className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer shrink-0"
-            >
-              <Image
-                src="/logo.jpeg"
-                alt="UniCycle"
-                width={44}
-                height={44}
-                className="object-contain rounded-md"
-                priority
-              />
-              <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800 hidden lg:block">
-                Uni<span className="text-[#20B2AA]">Cycle</span>
-              </span>
-            </Link>
+            <div className="flex-shrink-0">
+              <Link
+                href="/"
+                className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
+              >
+                <Image
+                  src="/logo.jpeg"
+                  alt="UniCycle"
+                  width={44}
+                  height={44}
+                  className="object-contain bg-transparent mix-blend-multiply rounded-md sm:w-[52px] sm:h-[52px]"
+                  priority
+                />
+                <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
+                  Uni<span className="text-[#20B2AA]">Cycle</span>
+                </span>
+              </Link>
+            </div>
 
-            {/* ✨ PREMIUM ARAMA ÇUBUĞU (Arama Sayfası İçin) */}
+            {/* ✨ PREMIUM ARAMA ÇUBUĞU */}
             <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
               <form
-                onSubmit={handleNewSearch}
+                onSubmit={handleSearchSubmit}
                 className="w-full relative flex items-center"
               >
                 <input
                   type="text"
                   placeholder="Ürün, @üye veya ders notu ara..."
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
+                  value={headerSearchTerm}
+                  onChange={(e) => {
+                    setHeaderSearchTerm(e.target.value);
+                    setIsDropdownOpen(true);
+                  }}
+                  onFocus={() => setIsDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
                   className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
                 />
-                <svg
-                  className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none" />
                 <button type="submit" className="hidden">
                   Ara
                 </button>
               </form>
+
+              {isDropdownOpen && liveResults.length > 0 && (
+                <div className="absolute top-full left-6 right-10 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+                  {liveResults.slice(0, 5).map((result, idx) => (
+                    <Link
+                      href={
+                        result.type === "user"
+                          ? `/user/${result.item.id}`
+                          : `/listing-detail/${result.item.id}`
+                      }
+                      key={idx}
+                      className="flex items-center gap-3 px-5 py-2 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0 text-sm">
+                        {result.type === "user"
+                          ? formatName(result.item.fullName || "U").charAt(0)
+                          : "📦"}
+                      </div>
+                      <div className="font-bold text-slate-800 text-sm">
+                        {formatName(result.item.fullName) || result.item.title}
+                      </div>
+                    </Link>
+                  ))}
+                  <div
+                    className="px-5 py-2.5 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={handleSearchSubmit}
+                  >
+                    <span className="text-xs font-bold text-blue-600">
+                      Tüm sonuçları gör &rarr;
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
               <Link
                 href="/create-listing"
-                className="hidden md:flex font-black text-[#20B2AA] hover:text-blue-800 items-center gap-1 transition-colors"
+                className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
               >
                 <span className="text-xl">+</span> İlan Ver
               </Link>
 
-              {user ? (
+              {currentUser ? (
                 <div className="flex items-center gap-2 sm:gap-4 relative">
-                  {/* ❤️ PREMIUM FAVORİLER BUTONU */}
                   <Link
                     href="/favorites"
                     className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                     title="Favorilerim"
                   >
-                    <svg
-                      className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                      />
-                    </svg>
+                    <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300" />
                   </Link>
 
-                  {/* 🔔 PREMIUM BİLDİRİM ÇANI */}
                   <div className="relative shrink-0">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                      className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 border border-slate-200 shadow-sm group transition-all shrink-0"
+                      className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                       title="Bildirimler"
                     >
-                      <svg
-                        className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                        ></path>
-                      </svg>
+                      <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300" />
                       {notificationsCount > 0 && (
                         <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
                           {notificationsCount}
@@ -293,7 +334,7 @@ function SearchContent() {
                       )}
                     </button>
                     {isNotificationOpen && (
-                      <div className="absolute top-full right-[-20px] sm:right-0 mt-3 w-[300px] sm:w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                           <span className="font-bold text-slate-800">
                             Bildirimler
@@ -302,6 +343,74 @@ function SearchContent() {
                             <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
                               {notificationsCount} Yeni
                             </span>
+                          )}
+                        </div>
+                        <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                          {notificationsList.length === 0 ? (
+                            <div className="px-4 py-8 text-center text-slate-500 text-sm font-medium">
+                              Şu an hiç bildirimin yok.
+                            </div>
+                          ) : (
+                            notificationsList.slice(0, 5).map((notif: any) => {
+                              let icon = <Bell className="w-5 h-5" />;
+                              let bg = "bg-blue-50";
+                              let text = "text-blue-500";
+                              const msgLower =
+                                notif.message?.toLowerCase() || "";
+                              if (
+                                msgLower.includes("beğen") ||
+                                msgLower.includes("favori")
+                              ) {
+                                icon = (
+                                  <Heart className="w-5 h-5 fill-current" />
+                                );
+                                bg = "bg-red-50";
+                                text = "text-red-500";
+                              } else if (
+                                msgLower.includes("mesaj") ||
+                                msgLower.includes("yorum") ||
+                                msgLower.includes("soru")
+                              ) {
+                                icon = <MessageCircle className="w-5 h-5" />;
+                                bg = "bg-green-50";
+                                text = "text-green-500";
+                              } else if (msgLower.includes("takip")) {
+                                icon = <UserPlus className="w-5 h-5" />;
+                                bg = "bg-pink-50";
+                                text = "text-pink-500";
+                              } else if (
+                                msgLower.includes("ilan") ||
+                                msgLower.includes("ekledi")
+                              ) {
+                                icon = <Package className="w-5 h-5" />;
+                                bg = "bg-orange-50";
+                                text = "text-orange-500";
+                              }
+                              return (
+                                <div
+                                  key={notif.id}
+                                  className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center group"
+                                >
+                                  <div
+                                    className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} shrink-0 transition-transform group-hover:scale-105`}
+                                  >
+                                    {icon}
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="text-sm text-slate-700 leading-snug font-semibold">
+                                      {notif.message}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                                      {notif.createdAt
+                                        ? new Date(
+                                            notif.createdAt,
+                                          ).toLocaleDateString("tr-TR")
+                                        : "Yeni"}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })
                           )}
                         </div>
                         <Link
@@ -317,227 +426,226 @@ function SearchContent() {
 
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm transition-all"
+                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
                   >
-                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs shrink-0">
+                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
                       👤
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="hidden sm:block text-slate-400 hover:text-red-500 font-bold transition-colors text-sm shrink-0 ml-2"
+                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
+                    title="Çıkış Yap"
                   >
-                    Çıkış
+                    <span className="hidden sm:block font-bold text-sm">
+                      Çıkış
+                    </span>
+                    <svg
+                      className="w-[22px] h-[22px] sm:hidden group-hover:scale-110 transition-transform"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      ></path>
+                    </svg>
                   </button>
                 </div>
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center justify-center bg-slate-800 text-white px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
+                  className="flex items-center justify-center bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
                 >
                   Giriş Yap
                 </Link>
               )}
             </div>
           </div>
+        </div>
 
-          {/* MOBİL ARAMA (Sadece Mobilde Görünür) */}
-          <div className="md:hidden pb-3 pt-1 w-full relative z-40">
-            <form onSubmit={handleNewSearch} className="w-full relative">
-              <input
-                type="text"
-                placeholder="Ürün, @üye veya ders notu ara..."
-                className="w-full bg-[#F3F4F6] text-slate-800 rounded-md py-2.5 px-4 pl-10 focus:outline-none focus:ring-1 focus:ring-[#20B2AA] transition-all border border-transparent font-medium text-sm"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-              />
-              <span className="absolute left-3 top-2.5 text-slate-400 text-lg">
-                🔍
-              </span>
-              <button type="submit" className="hidden">
-                Ara
-              </button>
-            </form>
-          </div>
+        {/* 📱 MOBİL ARAMA ÇUBUĞU */}
+        <div className="md:hidden pb-3 pt-2 w-full relative z-40 px-4 bg-white border-t border-slate-50 shadow-sm">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="w-full relative flex items-center"
+          >
+            <input
+              type="text"
+              placeholder="Ürün veya @üye ara..."
+              className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-[#20B2AA]/30 border border-transparent transition-all font-semibold text-sm shadow-inner"
+              value={headerSearchTerm}
+              onChange={(e) => {
+                setHeaderSearchTerm(e.target.value);
+                setIsDropdownOpen(true);
+              }}
+              onFocus={() => setIsDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <button type="submit" className="hidden">
+              Ara
+            </button>
+          </form>
+          {isDropdownOpen && liveResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+              {liveResults.slice(0, 4).map((result, idx) => (
+                <Link
+                  href={
+                    result.type === "user"
+                      ? `/user/${result.item.id}`
+                      : `/listing-detail/${result.item.id}`
+                  }
+                  key={`mob-${idx}`}
+                  className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50"
+                >
+                  <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
+                    {result.type === "user" ? (
+                      <span className="font-bold text-blue-600">
+                        {formatName(result.item.fullName || "U").charAt(0)}
+                      </span>
+                    ) : (
+                      <span className="text-xs">📦</span>
+                    )}
+                  </div>
+                  <div className="flex-1 truncate">
+                    <div className="font-bold text-slate-800 truncate text-xs">
+                      {formatName(result.item.fullName) || result.item.title}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
-      {/* 📊 ARAMA SONUÇLARI İÇERİĞİ */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-10">
-        <div className="mb-8 border-b border-slate-200 pb-6 flex justify-between items-end">
+      {/* 🔍 ARAMA SONUÇLARI İÇERİĞİ */}
+      <main className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+        <div className="flex justify-between items-end mb-6 sm:mb-8 border-b border-slate-200 pb-4">
           <div>
-            <h1 className="text-3xl font-black text-slate-800 tracking-tight">
+            <h1 className="text-2xl sm:text-4xl font-black text-slate-800 tracking-tight mb-1 sm:mb-2">
               Arama Sonuçları
             </h1>
-            <p className="text-lg text-slate-500 mt-2 font-medium">
-              <span className="font-bold text-blue-600">"{rawQuery}"</span>{" "}
-              araması için {isLoading ? "..." : results.length} sonuç bulundu.
+            <p className="text-sm sm:text-base font-medium text-slate-500">
+              <span className="text-blue-600 font-bold">"{q}"</span> araması
+              için {mainResults.length} sonuç bulundu.
             </p>
           </div>
-          <Link
-            href="/"
-            className="hidden md:flex items-center text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors"
+          <button
+            onClick={() => router.push("/")}
+            className="hidden sm:block text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors"
           >
-            &larr; Anasayfaya Dön
-          </Link>
+            &larr; Ana Sayfaya Dön
+          </button>
         </div>
 
-        {/* ⏳ SKELETON LOADING */}
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mt-4">
-            {[...Array(8)].map((_, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col animate-pulse"
-              >
-                <div className="aspect-[4/5] bg-slate-200 w-full"></div>
-                <div className="p-4 flex-1 flex flex-col gap-4">
-                  <div className="flex justify-between items-center mt-1">
-                    <div className="h-2.5 bg-slate-200 rounded-full w-1/3"></div>
-                    <div className="h-5 bg-slate-100 rounded-md w-1/4"></div>
-                  </div>
-                  <div className="space-y-2.5 mt-2">
-                    <div className="h-3.5 bg-slate-200 rounded-full w-5/6"></div>
-                    <div className="h-3.5 bg-slate-200 rounded-full w-4/6"></div>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="flex justify-center items-center py-20 text-4xl text-slate-300 animate-spin">
+            ⏳
           </div>
-        ) : results.length === 0 ? (
-          /* 🕵️‍♀️ NO RESULTS FOUND */
-          <div className="text-center py-20 bg-white rounded-[3rem] border border-slate-100 shadow-sm mt-4">
-            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-5xl mx-auto mb-6">
-              🕵️‍♀️
-            </div>
-            <h3 className="text-2xl font-black text-slate-800 mb-3">
-              Aradığın şeyi bulamadık...
+        ) : mainResults.length === 0 ? (
+          <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
+            <span className="text-5xl block mb-4">📭</span>
+            <h3 className="text-xl font-bold text-slate-700 mb-2">
+              Sonuç Bulunamadı
             </h3>
-            <p className="text-slate-500 font-medium text-lg mb-8 max-w-md mx-auto">
-              Görünüşe göre kampüste henüz kimse "
-              <span className="font-bold text-slate-700">{rawQuery}</span>" ile
-              ilgili bir şey paylaşmamış.
+            <p className="text-slate-500 font-medium">
+              Farklı kelimelerle veya kategori değiştirerek tekrar aramayı
+              deneyin.
             </p>
-            <Link
-              href="/"
-              className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3.5 px-8 rounded-full transition-colors inline-block"
-            >
-              Tüm İlanlara Göz At
-            </Link>
           </div>
         ) : (
-          /* 🎯 RESULTS RENDERING */
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {/* 1. If Search Type is Users */}
-            {searchType === "users" &&
-              results.map((userItem: any) => (
-                <div
-                  key={userItem.id}
-                  className="group bg-white rounded-3xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-slate-100 flex flex-col items-center text-center"
-                >
-                  <div className="w-24 h-24 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-3xl font-black mb-4 group-hover:scale-110 transition-transform">
-                    {userItem.fullName
-                      ? userItem.fullName.charAt(0).toUpperCase()
-                      : "U"}
-                  </div>
-                  <h2 className="text-lg font-bold text-slate-800">
-                    {userItem.fullName}
-                  </h2>
-                  <p className="text-sm font-medium text-slate-400 mt-1">
-                    @
-                    {userItem.fullName
-                      ? userItem.fullName.split(" ")[0].toLowerCase()
-                      : "user"}
-                  </p>
-
-                  <Link
-                    href={`/user/${userItem.id}`}
-                    className="mt-6 bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-600 font-bold py-2 px-6 rounded-full transition-colors w-full block text-center"
+          <>
+            {isUserSearchMode ? (
+              // 👤 KULLANICI KARTLARI
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {mainResults.map((userItem) => (
+                  <div
+                    key={userItem.id}
+                    className="bg-white rounded-3xl p-5 sm:p-6 flex flex-col items-center shadow-sm border border-slate-200 hover:shadow-md transition-all group"
                   >
-                    Profili Gör
-                  </Link>
-                </div>
-              ))}
-
-            {/* 2. If Search Type is Products */}
-            {searchType === "products" &&
-              results.map((p: any) => {
-                const isLiked = likedProducts.includes(p.id);
-
-                return (
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-black mb-3 sm:mb-4 group-hover:scale-105 transition-transform">
+                      {formatName(userItem.fullName).charAt(0)}
+                    </div>
+                    <h3 className="font-bold text-slate-800 text-sm sm:text-lg text-center line-clamp-1 mb-1">
+                      {formatName(userItem.fullName)}
+                    </h3>
+                    <p className="text-slate-400 text-xs sm:text-sm font-medium mb-4 sm:mb-6">
+                      @{userItem.fullName.split(" ")[0].toLowerCase()}
+                    </p>
+                    <Link
+                      href={`/user/${userItem.id}`}
+                      className="w-full bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-bold py-2 sm:py-2.5 rounded-xl text-center text-xs sm:text-sm transition-colors border border-slate-100 hover:border-blue-200 shadow-sm"
+                    >
+                      Profili Gör
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // 📦 ÜRÜN KARTLARI
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
+                {mainResults.map((p) => (
                   <Link
                     href={`/listing-detail/${p.id}`}
                     key={p.id}
-                    className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-slate-100 flex flex-col"
+                    className="group block relative cursor-pointer"
                   >
-                    <div className="aspect-[4/5] relative overflow-hidden bg-slate-100">
-                      {p.photosBase64 && p.photosBase64.length > 0 ? (
+                    <div className="aspect-[4/5] rounded-xl sm:rounded-2xl overflow-hidden bg-gray-100 mb-2 relative border border-slate-200 shadow-sm group-hover:shadow-md transition">
+                      {p.photosBase64?.[0] ? (
                         <img
                           src={p.photosBase64[0]}
-                          alt={p.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-6xl">
+                        <div className="w-full h-full flex items-center justify-center text-3xl">
                           📦
                         </div>
                       )}
                       {p.priceType === "takas" && (
-                        <div className="absolute top-3 left-3 bg-purple-600 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-md uppercase">
-                          Takas
+                        <div className="absolute top-2 left-2 bg-purple-600 text-white text-[9px] sm:text-[10px] font-black px-2 py-1 rounded-md uppercase shadow-sm">
+                          Takaslık
                         </div>
                       )}
                       {p.priceType === "ucretsiz" && (
-                        <div className="absolute top-3 left-3 bg-green-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-md uppercase">
+                        <div className="absolute top-2 left-2 bg-green-500 text-white text-[9px] sm:text-[10px] font-black px-2 py-1 rounded-md uppercase shadow-sm">
                           Ücretsiz
                         </div>
                       )}
-
-                      {/* 🚀 EKLENEN KISIM: Kalp Butonu ve Bildirim Gönderme */}
-                      <button
-                        onClick={(e) => toggleLike(e, p)}
-                        className={`absolute top-3 right-3 p-2.5 rounded-full shadow-md backdrop-blur-md transition-all hover:scale-110 active:scale-95 z-10 ${isLiked ? "bg-red-500/90 text-white" : "bg-white/90 text-gray-400 hover:text-red-500"}`}
-                      >
-                        <svg
-                          className="w-5 h-5 fill-current"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                        </svg>
-                      </button>
                     </div>
-                    <div className="p-4 flex-1 flex flex-col">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider line-clamp-1 pr-2">
-                          {p.category}
-                        </span>
-                        <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md shrink-0">
-                          @{p.user ? p.user.fullName.split(" ")[0] : "Öğrenci"}
-                        </span>
-                      </div>
-                      <h2 className="text-sm font-bold text-slate-800 line-clamp-2 leading-snug mb-3 group-hover:text-blue-600 transition-colors">
+                    <div>
+                      <h3
+                        className="text-xs sm:text-sm font-bold text-slate-800 line-clamp-1 mb-0.5 sm:mb-1"
+                        title={p.title}
+                      >
                         {p.title}
-                      </h2>
-                      <div className="mt-auto flex items-end justify-between">
-                        <div className="text-lg font-black text-slate-900 tracking-tight">
-                          {p.priceType === "fiyat"
-                            ? `₺${p.price}`
-                            : p.priceType === "takas"
-                              ? "Takas"
-                              : "Bedava"}
-                        </div>
+                      </h3>
+                      <p className="text-[10px] sm:text-xs text-slate-500 mb-1 line-clamp-1 font-medium">
+                        {p.category}
+                      </p>
+                      <div className="text-sm sm:text-lg font-black text-slate-900">
+                        {p.priceType === "fiyat"
+                          ? `₺${p.price}`
+                          : p.priceType === "takas"
+                            ? "Takas"
+                            : "Bedava"}
                       </div>
                     </div>
                   </Link>
-                );
-              })}
-          </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
-      </div>
+      </main>
 
-      {/* 🌊 FOOTER EKLENDİ (Bütünlük İçin) */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 rounded-t-[3rem] shadow-sm">
+      {/* 🌊 FOOTER */}
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="mb-4">
@@ -550,28 +658,72 @@ function SearchContent() {
               öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
             </p>
           </div>
-          <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400 col-span-1 md:col-span-4">
-            © 2026 UniCycle. Tüm hakları saklıdır.
+          <div>
+            <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
+            <ul className="space-y-2 text-sm font-medium text-slate-500">
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Nasıl Çalışır?
+                </button>
+              </li>
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Güvenlik İpuçları
+                </button>
+              </li>
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Kampüs Kuralları
+                </button>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
+            <ul className="space-y-2 text-sm font-medium text-slate-500">
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Destek Merkezi
+                </button>
+              </li>
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  Bize Ulaşın
+                </button>
+              </li>
+              <li>
+                <button className="hover:text-blue-600 transition-colors">
+                  S.S.S.
+                </button>
+              </li>
+            </ul>
           </div>
         </div>
+        <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
+          © 2026 UniCycle. Tüm hakları saklıdır.
+        </div>
       </footer>
+
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `.custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; } @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }`,
+        }}
+      />
     </div>
   );
 }
 
-// 🛡️ Wrapper Component (Suspense Boundary)
+// 🚀 Next.js 13+ zorunluluğu: useSearchParams içeren componentler Suspense içine alınmalı
 export default function SearchPage() {
   return (
-    <main className="min-h-screen bg-[#F8FAFC] font-sans">
-      <Suspense
-        fallback={
-          <div className="text-center font-bold text-slate-500 text-xl mt-40 animate-pulse">
-            Sayfa Yükleniyor...
-          </div>
-        }
-      >
-        <SearchContent />
-      </Suspense>
-    </main>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center text-4xl text-slate-300 animate-spin">
+          ⏳
+        </div>
+      }
+    >
+      <SearchContent />
+    </Suspense>
   );
 }

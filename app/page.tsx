@@ -477,17 +477,13 @@ export default function Home() {
     const fetchLive = async () => {
       if (searchTerm.trim().length < 2) {
         setLiveResults([]);
-
         return;
       }
-
       try {
         const isUserSearch = searchTerm.startsWith("@");
-
         const query = isUserSearch
           ? searchTerm.substring(1).trim()
           : searchTerm.trim();
-
         if (!query) return;
 
         let combined: { type: "user" | "product"; item: any }[] = [];
@@ -496,10 +492,8 @@ export default function Home() {
           const userRes = await fetch(
             `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
           );
-
           if (userRes.ok) {
             const users = await userRes.json();
-
             if (Array.isArray(users))
               combined = users.map((u: any) => ({ type: "user", item: u }));
           }
@@ -507,26 +501,41 @@ export default function Home() {
           const prodRes = await fetch(
             `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`,
           );
-
           if (prodRes.ok) {
-            const prods = await prodRes.json();
-
-            if (Array.isArray(prods)) {
-              prods.sort((a: any, b: any) => b.id - a.id);
-
-              combined = prods.map((p: any) => ({ type: "product", item: p }));
+            const products = await prodRes.json();
+            if (Array.isArray(products)) {
+              products.sort((a: any, b: any) => b.id - a.id);
+              combined = products.map((p: any) => ({
+                type: "product",
+                item: p,
+              }));
             }
           }
         }
 
-        setLiveResults(combined);
+        // 🚀 İŞTE SİHİRLİ FİLTRE: Açılır menüdeki klonları her sayfada yok eder!
+        const uniqueLive = combined.filter(
+          (v: any, i: number, a: any[]) =>
+            a.findIndex((v2: any) => {
+              if (v.type === "user" && v2.type === "user") {
+                return (
+                  v2.item.id === v.item.id ||
+                  (v2.item.fullName &&
+                    v.item.fullName &&
+                    v2.item.fullName.toLowerCase() ===
+                      v.item.fullName.toLowerCase())
+                );
+              }
+              return v2.type === v.type && v2.item.id === v.item.id;
+            }) === i,
+        );
+
+        setLiveResults(uniqueLive);
       } catch (error) {
-        console.error("Arama hatası", error);
+        console.error(error);
       }
     };
-
     const timer = setTimeout(() => fetchLive(), 300);
-
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
@@ -901,7 +910,9 @@ export default function Home() {
                       </div>
 
                       <div className="font-bold text-slate-800 text-sm">
-                        {result.item.fullName || result.item.title}
+                        <div className="font-bold text-slate-800 text-sm capitalize">
+                          {result.item.fullName || result.item.title}
+                        </div>
                       </div>
                     </Link>
                   ))}
@@ -1189,7 +1200,9 @@ export default function Home() {
 
                   <div className="flex-1 truncate">
                     <div className="font-bold text-slate-800 truncate text-xs">
-                      {result.item.fullName || result.item.title}
+                      <div className="font-bold text-slate-800 truncate text-xs capitalize">
+                        {result.item.fullName || result.item.title}
+                      </div>
                     </div>
                   </div>
                 </Link>

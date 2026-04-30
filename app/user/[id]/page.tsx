@@ -165,29 +165,53 @@ export default function PublicProfilePage() {
           : searchTerm.trim();
         if (!query) return;
 
-        let combined: any[] = [];
+        let combined: { type: "user" | "product"; item: any }[] = [];
+
         if (isUserSearch) {
-          const res = await fetch(
+          const userRes = await fetch(
             `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
           );
-          if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data))
-              combined = data.map((u: any) => ({ type: "user", item: u }));
+          if (userRes.ok) {
+            const users = await userRes.json();
+            if (Array.isArray(users))
+              combined = users.map((u: any) => ({ type: "user", item: u }));
           }
         } else {
-          const res = await fetch(
+          const prodRes = await fetch(
             `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`,
           );
-          if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data))
-              combined = data.map((p: any) => ({ type: "product", item: p }));
+          if (prodRes.ok) {
+            const products = await prodRes.json();
+            if (Array.isArray(products)) {
+              products.sort((a: any, b: any) => b.id - a.id);
+              combined = products.map((p: any) => ({
+                type: "product",
+                item: p,
+              }));
+            }
           }
         }
-        setLiveResults(combined);
-      } catch (err) {
-        console.error(err);
+
+        // 🚀 İŞTE SİHİRLİ FİLTRE: Açılır menüdeki klonları her sayfada yok eder!
+        const uniqueLive = combined.filter(
+          (v: any, i: number, a: any[]) =>
+            a.findIndex((v2: any) => {
+              if (v.type === "user" && v2.type === "user") {
+                return (
+                  v2.item.id === v.item.id ||
+                  (v2.item.fullName &&
+                    v.item.fullName &&
+                    v2.item.fullName.toLowerCase() ===
+                      v.item.fullName.toLowerCase())
+                );
+              }
+              return v2.type === v.type && v2.item.id === v.item.id;
+            }) === i,
+        );
+
+        setLiveResults(uniqueLive);
+      } catch (error) {
+        console.error(error);
       }
     };
     const timer = setTimeout(() => fetchLive(), 300);
