@@ -161,17 +161,24 @@ export default function ListingDetailPage() {
     }
   };
 
+  // 🚀 Premium Arama Motoru (İlan No eklendi)
   useEffect(() => {
     const fetchLive = async () => {
-      if (searchTerm.trim().length < 2) {
+      // 1 karakterli aramaları da desteklemek için (örn: "4") limiti kaldırdım veya 1 yaptım.
+      if (searchTerm.trim().length < 1) {
         setLiveResults([]);
         return;
       }
       try {
         const isUserSearch = searchTerm.startsWith("@");
-        const query = isUserSearch
-          ? searchTerm.substring(1).trim()
-          : searchTerm.trim();
+        // Eğer arama # ile başlıyorsa, bu bir ID aramasıdır. Veya sadece sayıysa.
+        const isIdSearch =
+          searchTerm.startsWith("#") || !isNaN(Number(searchTerm.trim()));
+
+        let query = searchTerm.trim();
+        if (isUserSearch) query = searchTerm.substring(1).trim();
+        if (searchTerm.startsWith("#")) query = searchTerm.substring(1).trim();
+
         if (!query) return;
 
         let combined: { type: "user" | "product"; item: any }[] = [];
@@ -185,7 +192,24 @@ export default function ListingDetailPage() {
             if (Array.isArray(users))
               combined = users.map((u: any) => ({ type: "user", item: u }));
           }
+        } else if (isIdSearch && !isNaN(Number(query))) {
+          // Eğer sayı girdiyse tüm ürünleri çekip ID'ye göre filtreleyelim (Çünkü backendde ID search rotası yoksa)
+          const prodRes = await fetch(
+            `https://unicycle-api.onrender.com/api/products`,
+          );
+          if (prodRes.ok) {
+            const allProducts = await prodRes.json();
+            if (Array.isArray(allProducts)) {
+              const matchedProduct = allProducts.find(
+                (p) => p.id.toString() === query.toString(),
+              );
+              if (matchedProduct) {
+                combined = [{ type: "product", item: matchedProduct }];
+              }
+            }
+          }
         } else {
+          // Normal metin araması
           const prodRes = await fetch(
             `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`,
           );
@@ -230,6 +254,8 @@ export default function ListingDetailPage() {
     e.preventDefault();
     if (searchTerm.trim() !== "") {
       setIsDropdownOpen(false);
+      // Eğer kullanıcı #4 veya 4 yazıp enter'a basarsa, direkt ID üzerinden yönlendirmeyi deneyebiliriz.
+      // Ama mevcut /search rotası metin bazlıysa, oraya göndermek daha güvenli.
       router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
     }
   };
@@ -371,7 +397,7 @@ export default function ListingDetailPage() {
       if (res.ok) {
         setNewComment("");
         fetchComments();
-        showToast("✅ Yorum başarıyla eklendi!");
+        showToast("Yorum başarıyla eklendi!");
         if (product?.user?.id !== currentUser.id) {
           try {
             await fetch(
@@ -406,7 +432,7 @@ export default function ListingDetailPage() {
       );
       if (res.ok) {
         fetchComments();
-        showToast("🗑️ Yorum silindi.");
+        showToast("Yorum silindi.");
       }
     } catch (err) {
       console.error(err);
@@ -492,7 +518,7 @@ export default function ListingDetailPage() {
               >
                 <input
                   type="text"
-                  placeholder="Ürün, @üye veya ders notu ara..."
+                  placeholder="Ürün, @üye veya #ilan ara..."
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -509,7 +535,7 @@ export default function ListingDetailPage() {
               </form>
 
               {isDropdownOpen && liveResults.length > 0 && (
-                <div className="absolute top-full left-6 right-10 mt-2 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+                <div className="absolute top-full left-6 right-10 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] py-2 animate-in fade-in slide-in-from-top-2">
                   {liveResults.slice(0, 5).map((result, idx) => (
                     <Link
                       href={
@@ -518,26 +544,60 @@ export default function ListingDetailPage() {
                           : `/listing-detail/${result.item.id}`
                       }
                       key={idx}
-                      className="flex items-center gap-3 px-5 py-2 hover:bg-slate-50 transition-colors"
+                      className="flex items-center gap-3 px-5 py-2.5 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 group"
                     >
-                      <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0 text-sm">
-                        {result.type === "user"
-                          ? (result.item.fullName || "U")
+                      <div className="w-10 h-10 bg-slate-100 text-blue-600 rounded-xl flex items-center justify-center font-bold shrink-0 text-sm overflow-hidden border border-slate-200 shadow-sm group-hover:border-blue-300 transition-colors">
+                        {result.type === "user" ? (
+                          <span className="text-lg font-black">
+                            {(result.item.fullName || "U")
                               .charAt(0)
-                              .toUpperCase()
-                          : "📦"}
+                              .toUpperCase()}
+                          </span>
+                        ) : result.item.photosBase64 &&
+                          result.item.photosBase64.length > 0 ? (
+                          <img
+                            src={result.item.photosBase64[0]}
+                            alt="ürün"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-lg">📦</span>
+                        )}
                       </div>
-                      <div className="font-bold text-slate-800 text-sm capitalize">
-                        {formatName(result.item.fullName) || result.item.title}
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <div className="font-bold text-slate-800 text-sm capitalize truncate group-hover:text-blue-600 transition-colors">
+                          {result.type === "user"
+                            ? formatName(result.item.fullName)
+                            : result.item.title}
+                        </div>
+                        {result.type === "product" ? (
+                          <div className="text-[11px] font-semibold text-slate-400 mt-0.5 flex items-center gap-1.5">
+                            <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-md leading-none">
+                              #{result.item.id}
+                            </span>
+                            <span>•</span>
+                            <span className="text-slate-500">
+                              {result.item.priceType === "fiyat"
+                                ? `₺${result.item.price}`
+                                : result.item.priceType === "takas"
+                                  ? "Takas"
+                                  : "Ücretsiz"}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="text-[11px] font-semibold text-slate-400 mt-0.5">
+                            Kampüs Üyesi
+                          </div>
+                        )}
                       </div>
                     </Link>
                   ))}
                   <div
-                    className="px-5 py-2.5 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
+                    className="px-5 py-3 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
                     onClick={handleSearchSubmit}
                   >
-                    <span className="text-xs font-bold text-blue-600">
-                      Tüm sonuçları gör &rarr;
+                    <span className="text-xs font-black text-blue-600">
+                      Tüm sonuçları gör
                     </span>
                   </div>
                 </div>
@@ -740,7 +800,7 @@ export default function ListingDetailPage() {
           >
             <input
               type="text"
-              placeholder="Ürün veya @üye ara..."
+              placeholder="Ürün, @üye veya #ilan ara..."
               className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-[#20B2AA]/30 border border-transparent transition-all font-semibold text-sm shadow-inner"
               value={searchTerm}
               onChange={(e) => {
@@ -756,7 +816,7 @@ export default function ListingDetailPage() {
             </button>
           </form>
           {isDropdownOpen && liveResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-200 overflow-hidden z-[100] py-2">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-100 overflow-hidden z-[100] py-2 animate-in fade-in slide-in-from-top-1">
               {liveResults.slice(0, 4).map((result, idx) => (
                 <Link
                   href={
@@ -765,24 +825,60 @@ export default function ListingDetailPage() {
                       : `/listing-detail/${result.item.id}`
                   }
                   key={`mob-${idx}`}
-                  className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 border-b border-slate-50"
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 border-b border-slate-50 last:border-0"
                 >
-                  <div className="w-8 h-8 bg-slate-100 rounded overflow-hidden flex shrink-0 items-center justify-center">
+                  <div className="w-10 h-10 bg-slate-100 text-blue-600 rounded-xl flex items-center justify-center font-bold shrink-0 overflow-hidden border border-slate-200 shadow-sm">
                     {result.type === "user" ? (
-                      <span className="font-bold text-blue-600">
-                        {formatName(result.item.fullName || "U").charAt(0)}
+                      <span className="text-base font-black">
+                        {(result.item.fullName || "U").charAt(0).toUpperCase()}
                       </span>
+                    ) : result.item.photosBase64 &&
+                      result.item.photosBase64.length > 0 ? (
+                      <img
+                        src={result.item.photosBase64[0]}
+                        alt="ürün"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
-                      <span className="text-xs">📦</span>
+                      <span className="text-base">📦</span>
                     )}
                   </div>
-                  <div className="flex-1 truncate">
-                    <div className="font-bold text-slate-800 truncate text-xs capitalize">
-                      {formatName(result.item.fullName) || result.item.title}
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <div className="font-bold text-slate-800 truncate text-[13px] capitalize">
+                      {result.type === "user"
+                        ? formatName(result.item.fullName)
+                        : result.item.title}
                     </div>
+                    {result.type === "product" ? (
+                      <div className="text-[10px] font-semibold text-slate-400 mt-0.5 flex items-center gap-1.5">
+                        <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex items-center leading-none">
+                          #{result.item.id}
+                        </span>
+                        <span>•</span>
+                        <span className="text-slate-500">
+                          {result.item.priceType === "fiyat"
+                            ? `₺${result.item.price}`
+                            : result.item.priceType === "takas"
+                              ? "Takas"
+                              : "Ücretsiz"}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-[10px] font-semibold text-slate-400 mt-0.5">
+                        Kampüs Üyesi
+                      </div>
+                    )}
                   </div>
                 </Link>
               ))}
+              <div
+                className="px-4 py-3 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
+                onClick={handleSearchSubmit}
+              >
+                <span className="text-xs font-black text-blue-600">
+                  Tüm sonuçları gör
+                </span>
+              </div>
             </div>
           )}
         </div>
@@ -790,7 +886,7 @@ export default function ListingDetailPage() {
 
       {/* 🖥️ ANA DÜZEN */}
       <div className="max-w-[1200px] mx-auto mt-4 sm:mt-8 px-4 sm:px-6 w-full flex-1">
-        {/* 🔙 ZARİF BREADCRUMB VE GERİ DÖN YAPISI (Kutular Kaldırıldı) */}
+        {/* 🔙 ZARİF BREADCRUMB VE GERİ DÖN YAPISI */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm font-semibold text-slate-400 overflow-hidden whitespace-nowrap flex-1">
             <Link
@@ -800,12 +896,15 @@ export default function ListingDetailPage() {
               Ana Sayfa
             </Link>
             <ChevronRight size={14} className="shrink-0 text-slate-300" />
+
+            {/* Kategori artık tıklanabilir ve arama sayfasına yönlendiriyor */}
             <Link
               href={`/search?q=${encodeURIComponent(product.category)}`}
-              className="text-slate-600 hover:text-[#20B2AA] transition-colors shrink-0 cursor-pointer"
+              className="text-slate-600 hover:text-[#20B2AA] transition-colors shrink-0 cursor-pointer border-b border-transparent hover:border-[#20B2AA]"
             >
               {product.category}
             </Link>
+
             <ChevronRight size={14} className="shrink-0 text-slate-300" />
             <span className="text-slate-800 truncate max-w-[120px] sm:max-w-[200px]">
               {product.title}
@@ -915,13 +1014,31 @@ export default function ListingDetailPage() {
                         key={comment.id}
                         className="flex gap-2 sm:gap-4 group relative"
                       >
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center font-bold shrink-0 mt-0.5 sm:mt-1 text-xs sm:text-base">
+                        {/* Avatar kısmı tıklandığında kullanıcının profiline gidecek */}
+                        <Link
+                          href={
+                            comment.user?.id ? `/user/${comment.user.id}` : "#"
+                          }
+                          className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center font-bold shrink-0 mt-0.5 sm:mt-1 text-xs sm:text-base hover:bg-blue-100 hover:text-blue-600 transition-colors"
+                        >
                           {commentUser.charAt(0)}
-                        </div>
+                        </Link>
+
                         <div className="flex-1 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl rounded-tl-none border border-slate-100">
                           <div className="flex justify-between items-center mb-1">
                             <div className="flex items-center gap-1.5 sm:gap-2 font-bold text-slate-800 text-xs sm:text-sm capitalize">
-                              {commentUser}{" "}
+                              {/* İsim kısmı tıklandığında kullanıcının profiline gidecek */}
+                              <Link
+                                href={
+                                  comment.user?.id
+                                    ? `/user/${comment.user.id}`
+                                    : "#"
+                                }
+                                className="hover:text-blue-600 hover:underline transition-colors"
+                              >
+                                {commentUser}
+                              </Link>
+
                               {comment.user?.id === product.user?.id && (
                                 <span className="bg-[#20B2AA]/10 text-[#20B2AA] text-[8px] sm:text-[9px] px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider">
                                   Satıcı
@@ -981,9 +1098,14 @@ export default function ListingDetailPage() {
                   <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
                     Kategori
                   </span>
-                  <span className="text-slate-800 font-bold bg-slate-100 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm">
+
+                  {/* Kategori rozeti tıklanabilir yapıldı */}
+                  <Link
+                    href={`/search?q=${encodeURIComponent(product.category)}`}
+                    className="text-slate-800 font-bold bg-slate-100 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                  >
                     {product.category}
-                  </span>
+                  </Link>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
@@ -997,7 +1119,7 @@ export default function ListingDetailPage() {
                   <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
                     İlan No
                   </span>
-                  <span className="text-slate-400 font-bold text-xs sm:text-sm">
+                  <span className="text-slate-400 font-bold text-xs sm:text-sm select-all">
                     #{product.id}
                   </span>
                 </div>
