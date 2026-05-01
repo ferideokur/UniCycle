@@ -87,360 +87,320 @@ export default function ListingDetailPage() {
   };
 
   const updateNotificationCount = (userId: number) => {
-    fetch(
-      `https://unicycle-api.onrender.com/api/interaction/notifications/${userId}`,
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          const deletedNotifs = JSON.parse(
-            localStorage.getItem(`deletedNotifs_${userId}`) || "[]",
-          );
-          const seenNotifs = JSON.parse(
-            localStorage.getItem(`seenNotifs_${userId}`) || "[]",
-          );
+    const updateNotificationCount = (userId: number) => {
+      fetch(
+        `https://unicycle-api.onrender.com/api/interaction/notifications/${userId}`,
+        { cache: "no-store", headers: { "Cache-Control": "no-cache" } },
+      )
+        .then((res) => res.json())
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            const deletedNotifs = JSON.parse(
+              localStorage.getItem(`deletedNotifs_${userId}`) || "[]",
+            );
+            const seenNotifs = JSON.parse(
+              localStorage.getItem(`seenNotifs_${userId}`) || "[]",
+            );
 
-          // 1. Silinmemiş olanları al
-          let activeNotifs = data.filter(
-            (n: any) => !deletedNotifs.includes(n.id),
-          );
+            // 1. Silinmemiş olanları al
+            let activeNotifs = data.filter(
+              (n: any) => !deletedNotifs.includes(n.id),
+            );
 
-          // 2. 🚀 KESİN SIRALAMA: Yeniden Eskiye (En Yeni En Üstte)
-          activeNotifs.sort((a: any, b: any) => {
-            const dateA = a.createdAt
-              ? new Date(
-                  a.createdAt.endsWith("Z") ? a.createdAt : `${a.createdAt}Z`,
-                ).getTime()
-              : 0;
-            const dateB = b.createdAt
-              ? new Date(
-                  b.createdAt.endsWith("Z") ? b.createdAt : `${b.createdAt}Z`,
-                ).getTime()
-              : 0;
-            return dateB - dateA;
-          });
+            // 2. 🚀 KESİN SIRALAMA: Yeniden Eskiye (En Yeni En Üstte)
+            activeNotifs.sort((a: any, b: any) => {
+              const dateA = a.createdAt
+                ? new Date(
+                    a.createdAt.endsWith("Z") ? a.createdAt : `${a.createdAt}Z`,
+                  ).getTime()
+                : 0;
+              const dateB = b.createdAt
+                ? new Date(
+                    b.createdAt.endsWith("Z") ? b.createdAt : `${b.createdAt}Z`,
+                  ).getTime()
+                : 0;
+              return dateB - dateA;
+            });
 
-          // 3. 🚀 DB'DEKİ İKİZLERİ GİZLE (Büyük/Küçük Harf Duyarsız)
-          activeNotifs = activeNotifs.filter(
-            (notif: any, index: number, self: any[]) =>
-              index ===
-              self.findIndex(
-                (n: any) =>
-                  n.message?.trim().toLowerCase() ===
-                  notif.message?.trim().toLowerCase(),
-              ),
-          );
+            // 3. 🚀 DB'DEKİ İKİZLERİ GİZLE (Büyük/Küçük Harf Duyarsız)
+            activeNotifs = activeNotifs.filter(
+              (notif: any, index: number, self: any[]) =>
+                index ===
+                self.findIndex(
+                  (n: any) =>
+                    n.message?.trim().toLowerCase() ===
+                    notif.message?.trim().toLowerCase(),
+                ),
+            );
 
-          const unreadNotifs = activeNotifs.filter(
-            (n: any) => !seenNotifs.includes(n.id),
-          );
+            const unreadNotifs = activeNotifs.filter(
+              (n: any) => !seenNotifs.includes(n.id),
+            );
 
-          setNotificationsCount(unreadNotifs.length);
-          setNotificationsList(activeNotifs);
-        }
-      })
-      .catch((err) => console.error("Bildirimler çekilemedi:", err));
-  };
+            setNotificationsCount(unreadNotifs.length);
+            setNotificationsList(activeNotifs);
+          }
+        })
+        .catch((err) => console.error("Bildirimler çekilemedi:", err));
+    };
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setCurrentUser(parsedUser);
-      const likes = JSON.parse(
-        localStorage.getItem(`likes_${parsedUser.email}`) || "[]",
-      );
-      setIsLiked(likes.includes(Number(id)));
+    useEffect(() => {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setCurrentUser(parsedUser);
+        const likes = JSON.parse(
+          localStorage.getItem(`likes_${parsedUser.email}`) || "[]",
+        );
+        setIsLiked(likes.includes(Number(id)));
 
-      // İlk bildirim çekimi
-      updateNotificationCount(parsedUser.id);
-
-      // 10 saniyede bir bildirimleri güncelle
-      const interval = setInterval(() => {
+        // İlk bildirim çekimi
         updateNotificationCount(parsedUser.id);
-      }, 10000);
 
-      window.addEventListener("notificationsSeen", () =>
-        setNotificationsCount(0),
-      );
+        // 10 saniyede bir bildirimleri güncelle
+        const interval = setInterval(() => {
+          updateNotificationCount(parsedUser.id);
+        }, 10000);
 
-      // Component unmount olduğunda interval'i ve event listener'ı temizle
-      return () => {
-        clearInterval(interval);
-        window.removeEventListener("notificationsSeen", () =>
+        window.addEventListener("notificationsSeen", () =>
           setNotificationsCount(0),
         );
-      };
-    }
-  }, [id]);
 
-  useEffect(() => {
-    fetch("https://unicycle-api.onrender.com/api/products")
-      .then((res) => res.json())
-      .then((data) => {
-        const foundProduct = data.find((p: any) => p.id.toString() === id);
-        setProduct(foundProduct);
-        setLoading(false);
-        fetchComments();
-        fetchLikeCount();
-      })
-      .catch((err) => {
-        console.error("Hata:", err);
-        setLoading(false);
-      });
-  }, [id]);
-
-  const fetchLikeCount = async () => {
-    try {
-      const res = await fetch(
-        `https://unicycle-api.onrender.com/api/interaction/likes/count/${id}`,
-      );
-      if (res.ok) {
-        const count = await res.json();
-        setLikeCount(count);
-      }
-    } catch (err) {
-      console.error("Beğeni sayısı çekilemedi:", err);
-    }
-  };
-
-  // 🚀 Premium Arama Motoru (İlan No eklendi)
-  useEffect(() => {
-    const fetchLive = async () => {
-      // 1 karakterli aramaları da desteklemek için (örn: "4") limiti kaldırdım veya 1 yaptım.
-      if (searchTerm.trim().length < 1) {
-        setLiveResults([]);
-        return;
-      }
-      try {
-        const isUserSearch = searchTerm.startsWith("@");
-        // Eğer arama # ile başlıyorsa, bu bir ID aramasıdır. Veya sadece sayıysa.
-        const isIdSearch =
-          searchTerm.startsWith("#") || !isNaN(Number(searchTerm.trim()));
-
-        let query = searchTerm.trim();
-        if (isUserSearch) query = searchTerm.substring(1).trim();
-        if (searchTerm.startsWith("#")) query = searchTerm.substring(1).trim();
-
-        if (!query) return;
-
-        let combined: { type: "user" | "product"; item: any }[] = [];
-
-        if (isUserSearch) {
-          const userRes = await fetch(
-            `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
+        // Component unmount olduğunda interval'i ve event listener'ı temizle
+        return () => {
+          clearInterval(interval);
+          window.removeEventListener("notificationsSeen", () =>
+            setNotificationsCount(0),
           );
-          if (userRes.ok) {
-            const users = await userRes.json();
-            if (Array.isArray(users))
-              combined = users.map((u: any) => ({ type: "user", item: u }));
-          }
-        } else if (isIdSearch && !isNaN(Number(query))) {
-          // Eğer sayı girdiyse tüm ürünleri çekip ID'ye göre filtreleyelim (Çünkü backendde ID search rotası yoksa)
-          const prodRes = await fetch(
-            `https://unicycle-api.onrender.com/api/products`,
-          );
-          if (prodRes.ok) {
-            const allProducts = await prodRes.json();
-            if (Array.isArray(allProducts)) {
-              const matchedProduct = allProducts.find(
-                (p: any) => p.id.toString() === query.toString(),
-              );
-              if (matchedProduct) {
-                combined = [{ type: "product", item: matchedProduct }];
-              }
-            }
-          }
-        } else {
-          // Normal metin araması
-          const prodRes = await fetch(
-            `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`,
-          );
-          if (prodRes.ok) {
-            const products = await prodRes.json();
-            if (Array.isArray(products)) {
-              products.sort((a: any, b: any) => b.id - a.id);
-              combined = products.map((p: any) => ({
-                type: "product",
-                item: p,
-              }));
-            }
-          }
-        }
-
-        const uniqueLive = combined.filter(
-          (v: any, i: number, a: any[]) =>
-            a.findIndex((v2: any) => {
-              if (v.type === "user" && v2.type === "user") {
-                return (
-                  v2.item.id === v.item.id ||
-                  (v2.item.fullName &&
-                    v.item.fullName &&
-                    v2.item.fullName.toLowerCase() ===
-                      v.item.fullName.toLowerCase())
-                );
-              }
-              return v2.type === v.type && v2.item.id === v.item.id;
-            }) === i,
-        );
-
-        setLiveResults(uniqueLive);
-      } catch (error) {
-        console.error(error);
+        };
       }
-    };
-    const timer = setTimeout(() => fetchLive(), 300);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+    }, [id]);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim() !== "") {
-      setIsDropdownOpen(false);
-      // Eğer kullanıcı #4 veya 4 yazıp enter'a basarsa, direkt ID üzerinden yönlendirmeyi deneyebiliriz.
-      // Ama mevcut /search rotası metin bazlıysa, oraya göndermek daha güvenli.
-      router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    setCurrentUser(null);
-    window.location.href = "/";
-  };
-
-  const fetchComments = async () => {
-    try {
-      const res = await fetch(
-        `https://unicycle-api.onrender.com/api/comments/product/${id}`,
-      );
-      if (res.ok) setComments(await res.json());
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(""), 3000);
-  };
-
-  const handleMessageClick = () => {
-    if (!currentUser) return showToast("🔒 Mesaj atmak için giriş yapmalısın!");
-    if (product && product.user) {
-      window.dispatchEvent(
-        new CustomEvent("openChatWithContext", {
-          detail: {
-            sellerId: product.user.id,
-            sellerName: product.user.fullName,
-            productTitle: product.title,
-          },
-        }),
-      );
-    }
-  };
-
-  const handleShare = async () => {
-    if (!product) return;
-    const shareData = {
-      title: product.title,
-      text: `UniCycle'da bu ilana göz at: ${product.title}`,
-      url: window.location.href,
-    };
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        console.log(err);
-      }
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      showToast("🔗 İlan linki panoya kopyalandı!");
-    }
-  };
-
-  const handleLikeToggle = async () => {
-    if (!currentUser) return showToast("🔒 Beğenmek için giriş yapmalısın!");
-    const currentLikes = JSON.parse(
-      localStorage.getItem(`likes_${currentUser.email}`) || "[]",
-    );
-    let newLikes;
-    if (isLiked) {
-      newLikes = currentLikes.filter((favId: number) => favId !== Number(id));
-      setLikeCount((prev) => Math.max(0, prev - 1));
-      showToast("💔 İlan favorilerden çıkarıldı!");
-      try {
-        await fetch(
-          `https://unicycle-api.onrender.com/api/interaction/likes?userId=${currentUser.id}&productId=${id}`,
-          { method: "DELETE" },
-        );
-      } catch (err) {
-        console.error(err);
-      }
-    } else {
-      newLikes = [...currentLikes, Number(id)];
-      setLikeCount((prev) => prev + 1);
-      showToast("❤️ İlan favorilere eklendi!");
-      try {
-        await fetch("https://unicycle-api.onrender.com/api/interaction/likes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: currentUser.id,
-            productId: Number(id),
-          }),
+    useEffect(() => {
+      fetch("https://unicycle-api.onrender.com/api/products")
+        .then((res) => res.json())
+        .then((data) => {
+          const foundProduct = data.find((p: any) => p.id.toString() === id);
+          setProduct(foundProduct);
+          setLoading(false);
+          fetchComments();
+          fetchLikeCount();
+        })
+        .catch((err) => {
+          console.error("Hata:", err);
+          setLoading(false);
         });
+    }, [id]);
+
+    const fetchLikeCount = async () => {
+      try {
+        const res = await fetch(
+          `https://unicycle-api.onrender.com/api/interaction/likes/count/${id}`,
+        );
+        if (res.ok) {
+          const count = await res.json();
+          setLikeCount(count);
+        }
+      } catch (err) {
+        console.error("Beğeni sayısı çekilemedi:", err);
+      }
+    };
+
+    // 🚀 Premium Arama Motoru (İlan No eklendi)
+    useEffect(() => {
+      const fetchLive = async () => {
+        // 1 karakterli aramaları da desteklemek için (örn: "4") limiti kaldırdım veya 1 yaptım.
+        if (searchTerm.trim().length < 1) {
+          setLiveResults([]);
+          return;
+        }
+        try {
+          const isUserSearch = searchTerm.startsWith("@");
+          // Eğer arama # ile başlıyorsa, bu bir ID aramasıdır. Veya sadece sayıysa.
+          const isIdSearch =
+            searchTerm.startsWith("#") || !isNaN(Number(searchTerm.trim()));
+
+          let query = searchTerm.trim();
+          if (isUserSearch) query = searchTerm.substring(1).trim();
+          if (searchTerm.startsWith("#"))
+            query = searchTerm.substring(1).trim();
+
+          if (!query) return;
+
+          let combined: { type: "user" | "product"; item: any }[] = [];
+
+          if (isUserSearch) {
+            const userRes = await fetch(
+              `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
+            );
+            if (userRes.ok) {
+              const users = await userRes.json();
+              if (Array.isArray(users))
+                combined = users.map((u: any) => ({ type: "user", item: u }));
+            }
+          } else if (isIdSearch && !isNaN(Number(query))) {
+            // Eğer sayı girdiyse tüm ürünleri çekip ID'ye göre filtreleyelim (Çünkü backendde ID search rotası yoksa)
+            const prodRes = await fetch(
+              `https://unicycle-api.onrender.com/api/products`,
+            );
+            if (prodRes.ok) {
+              const allProducts = await prodRes.json();
+              if (Array.isArray(allProducts)) {
+                const matchedProduct = allProducts.find(
+                  (p: any) => p.id.toString() === query.toString(),
+                );
+                if (matchedProduct) {
+                  combined = [{ type: "product", item: matchedProduct }];
+                }
+              }
+            }
+          } else {
+            // Normal metin araması
+            const prodRes = await fetch(
+              `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`,
+            );
+            if (prodRes.ok) {
+              const products = await prodRes.json();
+              if (Array.isArray(products)) {
+                products.sort((a: any, b: any) => b.id - a.id);
+                combined = products.map((p: any) => ({
+                  type: "product",
+                  item: p,
+                }));
+              }
+            }
+          }
+
+          const uniqueLive = combined.filter(
+            (v: any, i: number, a: any[]) =>
+              a.findIndex((v2: any) => {
+                if (v.type === "user" && v2.type === "user") {
+                  return (
+                    v2.item.id === v.item.id ||
+                    (v2.item.fullName &&
+                      v.item.fullName &&
+                      v2.item.fullName.toLowerCase() ===
+                        v.item.fullName.toLowerCase())
+                  );
+                }
+                return v2.type === v.type && v2.item.id === v.item.id;
+              }) === i,
+          );
+
+          setLiveResults(uniqueLive);
+        } catch (error) {
+          console.error(error);
+        }
+      };
+      const timer = setTimeout(() => fetchLive(), 300);
+      return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    const handleSearchSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (searchTerm.trim() !== "") {
+        setIsDropdownOpen(false);
+        // Eğer kullanıcı #4 veya 4 yazıp enter'a basarsa, direkt ID üzerinden yönlendirmeyi deneyebiliriz.
+        // Ama mevcut /search rotası metin bazlıysa, oraya göndermek daha güvenli.
+        router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
+      }
+    };
+
+    const handleLogout = () => {
+      localStorage.removeItem("user");
+      setCurrentUser(null);
+      window.location.href = "/";
+    };
+
+    const fetchComments = async () => {
+      try {
+        const res = await fetch(
+          `https://unicycle-api.onrender.com/api/comments/product/${id}`,
+        );
+        if (res.ok) setComments(await res.json());
       } catch (err) {
         console.error(err);
       }
-      if (product?.user?.id !== currentUser.id) {
+    };
+
+    const showToast = (msg: string) => {
+      setToastMessage(msg);
+      setTimeout(() => setToastMessage(""), 3000);
+    };
+
+    const handleMessageClick = () => {
+      if (!currentUser)
+        return showToast("🔒 Mesaj atmak için giriş yapmalısın!");
+      if (product && product.user) {
+        window.dispatchEvent(
+          new CustomEvent("openChatWithContext", {
+            detail: {
+              sellerId: product.user.id,
+              sellerName: product.user.fullName,
+              productTitle: product.title,
+            },
+          }),
+        );
+      }
+    };
+
+    const handleShare = async () => {
+      if (!product) return;
+      const shareData = {
+        title: product.title,
+        text: `UniCycle'da bu ilana göz at: ${product.title}`,
+        url: window.location.href,
+      };
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+        } catch (err) {
+          console.log(err);
+        }
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        showToast("🔗 İlan linki panoya kopyalandı!");
+      }
+    };
+
+    const handleLikeToggle = async () => {
+      if (!currentUser) return showToast("🔒 Beğenmek için giriş yapmalısın!");
+      const currentLikes = JSON.parse(
+        localStorage.getItem(`likes_${currentUser.email}`) || "[]",
+      );
+      let newLikes;
+      if (isLiked) {
+        newLikes = currentLikes.filter((favId: number) => favId !== Number(id));
+        setLikeCount((prev) => Math.max(0, prev - 1));
+        showToast("💔 İlan favorilerden çıkarıldı!");
         try {
           await fetch(
-            "https://unicycle-api.onrender.com/api/interaction/notifications",
+            `https://unicycle-api.onrender.com/api/interaction/likes?userId=${currentUser.id}&productId=${id}`,
+            { method: "DELETE" },
+          );
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
+        newLikes = [...currentLikes, Number(id)];
+        setLikeCount((prev) => prev + 1);
+        showToast("❤️ İlan favorilere eklendi!");
+        try {
+          await fetch(
+            "https://unicycle-api.onrender.com/api/interaction/likes",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                userId: product.user.id,
-                message: `${currentUser.fullName}, "${product.title}" ilanını beğendi.`,
+                userId: currentUser.id,
+                productId: Number(id),
               }),
             },
           );
         } catch (err) {
           console.error(err);
         }
-      }
-    }
-    localStorage.setItem(
-      `likes_${currentUser.email}`,
-      JSON.stringify(newLikes),
-    );
-    setIsLiked(!isLiked);
-  };
-
-  const handleAddComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentUser)
-      return showToast("🔒 Yorum yapmak için giriş yapmalısın!");
-    if (newComment.trim() === "") return;
-    setIsSubmittingComment(true);
-    try {
-      const res = await fetch(
-        "https://unicycle-api.onrender.com/api/comments",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: currentUser.id,
-            productId: Number(id),
-            text: newComment,
-          }),
-        },
-      );
-      if (res.ok) {
-        setNewComment("");
-        fetchComments();
-        showToast("Yorum başarıyla eklendi!");
         if (product?.user?.id !== currentUser.id) {
           try {
             await fetch(
@@ -450,7 +410,7 @@ export default function ListingDetailPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   userId: product.user.id,
-                  message: `${currentUser.fullName}, "${product.title}" ilanına bir yorum yaptı.`,
+                  message: `${currentUser.fullName}, "${product.title}" ilanını beğendi.`,
                 }),
               },
             );
@@ -459,235 +419,267 @@ export default function ListingDetailPage() {
           }
         }
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSubmittingComment(false);
-    }
-  };
-
-  const handleDeleteComment = async (commentId: number) => {
-    if (!window.confirm("Bu yorumu silmek istediğinize emin misiniz?")) return;
-    try {
-      const res = await fetch(
-        `https://unicycle-api.onrender.com/api/comments/${commentId}`,
-        { method: "DELETE" },
+      localStorage.setItem(
+        `likes_${currentUser.email}`,
+        JSON.stringify(newLikes),
       );
-      if (res.ok) {
-        fetchComments();
-        showToast("Yorum silindi.");
+      setIsLiked(!isLiked);
+    };
+
+    const handleAddComment = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!currentUser)
+        return showToast("🔒 Yorum yapmak için giriş yapmalısın!");
+      if (newComment.trim() === "") return;
+      setIsSubmittingComment(true);
+      try {
+        const res = await fetch(
+          "https://unicycle-api.onrender.com/api/comments",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: currentUser.id,
+              productId: Number(id),
+              text: newComment,
+            }),
+          },
+        );
+        if (res.ok) {
+          setNewComment("");
+          fetchComments();
+          showToast("Yorum başarıyla eklendi!");
+          if (product?.user?.id !== currentUser.id) {
+            try {
+              await fetch(
+                "https://unicycle-api.onrender.com/api/interaction/notifications",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    userId: product.user.id,
+                    message: `${currentUser.fullName}, "${product.title}" ilanına bir yorum yaptı.`,
+                  }),
+                },
+              );
+            } catch (err) {
+              console.error(err);
+            }
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsSubmittingComment(false);
       }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "";
+    const handleDeleteComment = async (commentId: number) => {
+      if (!window.confirm("Bu yorumu silmek istediğinize emin misiniz?"))
+        return;
+      try {
+        const res = await fetch(
+          `https://unicycle-api.onrender.com/api/comments/${commentId}`,
+          { method: "DELETE" },
+        );
+        if (res.ok) {
+          fetchComments();
+          showToast("Yorum silindi.");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-    // Yorumlar için saat düzeltmesi
-    const utcDate = dateString.endsWith("Z") ? dateString : `${dateString}Z`;
-    const date = new Date(utcDate);
-    return (
-      date.toLocaleDateString("tr-TR") +
-      " " +
-      date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })
-    );
-  };
+    const formatDate = (dateString: string) => {
+      if (!dateString) return "";
 
-  if (loading)
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-        <div className="animate-spin text-4xl sm:text-5xl">⏳</div>
-      </div>
-    );
-  if (!product)
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
-        <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
-          İlan bulunamadı!
-        </h2>
-        <Link
-          href="/"
-          className="mt-4 text-blue-600 font-bold hover:underline text-sm sm:text-base"
-        >
-          Ana Sayfaya Dön
-        </Link>
-      </div>
-    );
+      // Yorumlar için saat düzeltmesi
+      const utcDate = dateString.endsWith("Z") ? dateString : `${dateString}Z`;
+      const date = new Date(utcDate);
+      return (
+        date.toLocaleDateString("tr-TR") +
+        " " +
+        date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })
+      );
+    };
 
-  const photos =
-    product.photosBase64?.length > 0
-      ? product.photosBase64
-      : ["https://via.placeholder.com/800x600?text=Fotograf+Yok"];
-  const sellerName = formatName(product.user?.fullName || "Bilinmeyen Satıcı");
-  const isOwner =
-    currentUser &&
-    product.user &&
-    Number(currentUser.id) === Number(product.user.id);
-
-  return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans relative w-full overflow-x-hidden flex flex-col">
-      {toastMessage && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-slate-800 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-full shadow-2xl font-bold animate-in fade-in slide-in-from-top-5 text-xs sm:text-sm whitespace-nowrap">
-          {toastMessage}
+    if (loading)
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+          <div className="animate-spin text-4xl sm:text-5xl">⏳</div>
         </div>
-      )}
+      );
+    if (!product)
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
+            İlan bulunamadı!
+          </h2>
+          <Link
+            href="/"
+            className="mt-4 text-blue-600 font-bold hover:underline text-sm sm:text-base"
+          >
+            Ana Sayfaya Dön
+          </Link>
+        </div>
+      );
 
-      {/* 🚀 ÜST MENÜ NAVBAR */}
-      <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
-        <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
-            <div className="flex-shrink-0">
-              <Link
-                href="/"
-                className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
-              >
-                <Image
-                  src="/logo.jpeg"
-                  alt="UniCycle"
-                  width={44}
-                  height={44}
-                  className="object-contain bg-transparent mix-blend-multiply rounded-md sm:w-[52px] sm:h-[52px]"
-                  priority
-                />
-                <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
-                  Uni<span className="text-[#20B2AA]">Cycle</span>
-                </span>
-              </Link>
-            </div>
+    const photos =
+      product.photosBase64?.length > 0
+        ? product.photosBase64
+        : ["https://via.placeholder.com/800x600?text=Fotograf+Yok"];
+    const sellerName = formatName(
+      product.user?.fullName || "Bilinmeyen Satıcı",
+    );
+    const isOwner =
+      currentUser &&
+      product.user &&
+      Number(currentUser.id) === Number(product.user.id);
 
-            <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
-              <form
-                onSubmit={handleSearchSubmit}
-                className="w-full relative flex items-center"
-              >
-                <input
-                  type="text"
-                  placeholder="Ürün, @üye veya #ilan ara..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setIsDropdownOpen(true);
-                  }}
-                  onFocus={() => setIsDropdownOpen(true)}
-                  onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-                  className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
-                />
-                <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none" />
-                <button type="submit" className="hidden">
-                  Ara
-                </button>
-              </form>
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans relative w-full overflow-x-hidden flex flex-col">
+        {toastMessage && (
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-slate-800 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-full shadow-2xl font-bold animate-in fade-in slide-in-from-top-5 text-xs sm:text-sm whitespace-nowrap">
+            {toastMessage}
+          </div>
+        )}
 
-              {isDropdownOpen && liveResults.length > 0 && (
-                <div className="absolute top-full left-6 right-10 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] py-2 animate-in fade-in slide-in-from-top-2">
-                  {liveResults.slice(0, 5).map((result, idx) => (
-                    <Link
-                      href={
-                        result.type === "user"
-                          ? `/user/${result.item.id}`
-                          : `/listing-detail/${result.item.id}`
-                      }
-                      key={idx}
-                      className="flex items-center gap-3 px-5 py-2.5 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 group"
-                    >
-                      <div className="w-10 h-10 bg-slate-100 text-blue-600 rounded-xl flex items-center justify-center font-bold shrink-0 text-sm overflow-hidden border border-slate-200 shadow-sm group-hover:border-blue-300 transition-colors">
-                        {result.type === "user" ? (
-                          <span className="text-lg font-black">
-                            {(result.item.fullName || "U")
-                              .charAt(0)
-                              .toUpperCase()}
-                          </span>
-                        ) : result.item.photosBase64 &&
-                          result.item.photosBase64.length > 0 ? (
-                          <img
-                            src={result.item.photosBase64[0]}
-                            alt="ürün"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-lg">📦</span>
-                        )}
-                      </div>
-                      <div className="flex flex-col flex-1 min-w-0">
-                        <div className="font-bold text-slate-800 text-sm capitalize truncate group-hover:text-blue-600 transition-colors">
-                          {result.type === "user"
-                            ? formatName(result.item.fullName)
-                            : result.item.title}
+        {/* 🚀 ÜST MENÜ NAVBAR */}
+        <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
+          <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
+              <div className="flex-shrink-0">
+                <Link
+                  href="/"
+                  className="flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform group cursor-pointer"
+                >
+                  <Image
+                    src="/logo.jpeg"
+                    alt="UniCycle"
+                    width={44}
+                    height={44}
+                    className="object-contain bg-transparent mix-blend-multiply rounded-md sm:w-[52px] sm:h-[52px]"
+                    priority
+                  />
+                  <span className="text-2xl sm:text-[32px] font-extrabold tracking-tight text-slate-800">
+                    Uni<span className="text-[#20B2AA]">Cycle</span>
+                  </span>
+                </Link>
+              </div>
+
+              <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
+                <form
+                  onSubmit={handleSearchSubmit}
+                  className="w-full relative flex items-center"
+                >
+                  <input
+                    type="text"
+                    placeholder="Ürün, @üye veya #ilan ara..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setIsDropdownOpen(true);
+                    }}
+                    onFocus={() => setIsDropdownOpen(true)}
+                    onBlur={() =>
+                      setTimeout(() => setIsDropdownOpen(false), 200)
+                    }
+                    className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
+                  />
+                  <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none" />
+                  <button type="submit" className="hidden">
+                    Ara
+                  </button>
+                </form>
+
+                {isDropdownOpen && liveResults.length > 0 && (
+                  <div className="absolute top-full left-6 right-10 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] py-2 animate-in fade-in slide-in-from-top-2">
+                    {liveResults.slice(0, 5).map((result, idx) => (
+                      <Link
+                        href={
+                          result.type === "user"
+                            ? `/user/${result.item.id}`
+                            : `/listing-detail/${result.item.id}`
+                        }
+                        key={idx}
+                        className="flex items-center gap-3 px-5 py-2.5 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 group"
+                      >
+                        <div className="w-10 h-10 bg-slate-100 text-blue-600 rounded-xl flex items-center justify-center font-bold shrink-0 text-sm overflow-hidden border border-slate-200 shadow-sm group-hover:border-blue-300 transition-colors">
+                          {result.type === "user" ? (
+                            <span className="text-lg font-black">
+                              {(result.item.fullName || "U")
+                                .charAt(0)
+                                .toUpperCase()}
+                            </span>
+                          ) : result.item.photosBase64 &&
+                            result.item.photosBase64.length > 0 ? (
+                            <img
+                              src={result.item.photosBase64[0]}
+                              alt="ürün"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-lg">📦</span>
+                          )}
                         </div>
-                        {result.type === "product" ? (
-                          <div className="text-[11px] font-semibold text-slate-400 mt-0.5 flex items-center gap-1.5">
-                            <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-md leading-none">
-                              #{result.item.id}
-                            </span>
-                            <span>•</span>
-                            <span className="text-slate-500">
-                              {result.item.priceType === "fiyat"
-                                ? `₺${result.item.price}`
-                                : result.item.priceType === "takas"
-                                  ? "Takas"
-                                  : "Ücretsiz"}
-                            </span>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <div className="font-bold text-slate-800 text-sm capitalize truncate group-hover:text-blue-600 transition-colors">
+                            {result.type === "user"
+                              ? formatName(result.item.fullName)
+                              : result.item.title}
                           </div>
-                        ) : (
-                          <div className="text-[11px] font-semibold text-slate-400 mt-0.5">
-                            Kampüs Üyesi
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-                  ))}
-                  <div
-                    className="px-5 py-3 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
-                    onClick={handleSearchSubmit}
-                  >
-                    <span className="text-xs font-black text-blue-600">
-                      Tüm sonuçları gör
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              <Link
-                href="/create-listing"
-                className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
-              >
-                <span className="text-xl">+</span> İlan Ver
-              </Link>
-
-              {currentUser ? (
-                <div className="flex items-center gap-2 sm:gap-4 relative">
-                  <Link
-                    href="/favorites"
-                    className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
-                    title="Favorilerim"
-                  >
-                    <svg
-                      className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
+                          {result.type === "product" ? (
+                            <div className="text-[11px] font-semibold text-slate-400 mt-0.5 flex items-center gap-1.5">
+                              <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-md leading-none">
+                                #{result.item.id}
+                              </span>
+                              <span>•</span>
+                              <span className="text-slate-500">
+                                {result.item.priceType === "fiyat"
+                                  ? `₺${result.item.price}`
+                                  : result.item.priceType === "takas"
+                                    ? "Takas"
+                                    : "Ücretsiz"}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="text-[11px] font-semibold text-slate-400 mt-0.5">
+                              Kampüs Üyesi
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                    <div
+                      className="px-5 py-3 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
+                      onClick={handleSearchSubmit}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                      />
-                    </svg>
-                  </Link>
+                      <span className="text-xs font-black text-blue-600">
+                        Tüm sonuçları gör
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-                  <div className="relative shrink-0">
-                    <button
-                      onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+              <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
+                <Link
+                  href="/create-listing"
+                  className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
+                >
+                  <span className="text-xl">+</span> İlan Ver
+                </Link>
+
+                {currentUser ? (
+                  <div className="flex items-center gap-2 sm:gap-4 relative">
+                    <Link
+                      href="/favorites"
                       className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
-                      title="Bildirimler"
+                      title="Favorilerim"
                     >
                       <svg
-                        className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
+                        className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
@@ -696,726 +688,761 @@ export default function ListingDetailPage() {
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                        />
+                      </svg>
+                    </Link>
+
+                    <div className="relative shrink-0">
+                      <button
+                        onClick={() =>
+                          setIsNotificationOpen(!isNotificationOpen)
+                        }
+                        className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                        title="Bildirimler"
+                      >
+                        <svg
+                          className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                          ></path>
+                        </svg>
+                        {notificationsCount > 0 && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
+                            {notificationsCount}
+                          </span>
+                        )}
+                      </button>
+                      {isNotificationOpen && (
+                        <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                          <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <span className="font-bold text-slate-800">
+                              Bildirimler
+                            </span>
+                            {notificationsCount > 0 && (
+                              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                                {notificationsCount} Yeni
+                              </span>
+                            )}
+                          </div>
+                          <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                            {notificationsList.length === 0 ? (
+                              <div className="px-4 py-8 text-center text-slate-500 text-sm font-medium">
+                                Şu an hiç bildirimin yok.
+                              </div>
+                            ) : (
+                              notificationsList
+                                .slice(0, 5)
+                                .map((notif: any) => {
+                                  let icon = <Bell className="w-5 h-5" />;
+                                  let bg = "bg-blue-50";
+                                  let text = "text-blue-500";
+                                  const msgLower =
+                                    notif.message?.toLowerCase() || "";
+
+                                  if (
+                                    msgLower.includes("beğen") ||
+                                    msgLower.includes("favori")
+                                  ) {
+                                    icon = (
+                                      <Heart className="w-5 h-5 fill-current" />
+                                    );
+                                    bg = "bg-red-50";
+                                    text = "text-red-500";
+                                  } else if (
+                                    msgLower.includes("mesaj") ||
+                                    msgLower.includes("yorum") ||
+                                    msgLower.includes("soru")
+                                  ) {
+                                    icon = (
+                                      <MessageCircle className="w-5 h-5" />
+                                    );
+                                    bg = "bg-green-50";
+                                    text = "text-green-500";
+                                  } else if (msgLower.includes("takip")) {
+                                    icon = <UserPlus className="w-5 h-5" />;
+                                    bg = "bg-pink-50";
+                                    text = "text-pink-500";
+                                  } else if (
+                                    msgLower.includes("ilan") ||
+                                    msgLower.includes("ekledi")
+                                  ) {
+                                    icon = <Package className="w-5 h-5" />;
+                                    bg = "bg-orange-50";
+                                    text = "text-orange-500";
+                                  }
+
+                                  const formattedMessage = cleanNotification(
+                                    notif.message,
+                                  );
+
+                                  // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
+                                  let dropDate = "Yeni";
+                                  if (notif.createdAt) {
+                                    const utcDate = notif.createdAt.endsWith(
+                                      "Z",
+                                    )
+                                      ? notif.createdAt
+                                      : `${notif.createdAt}Z`;
+                                    const dObj = new Date(utcDate);
+                                    dropDate = `${dObj.toLocaleDateString("tr-TR")} • ${dObj.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
+                                  }
+
+                                  return (
+                                    <div
+                                      key={notif.id}
+                                      className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center group"
+                                    >
+                                      <div
+                                        className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} shrink-0 transition-transform group-hover:scale-105`}
+                                      >
+                                        {icon}
+                                      </div>
+                                      <div className="flex-1">
+                                        <p className="text-sm text-slate-700 leading-snug font-semibold">
+                                          {formattedMessage}
+                                        </p>
+                                        <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                                          {dropDate}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                            )}
+                          </div>
+                          <Link
+                            href="/notifications"
+                            onClick={() => setIsNotificationOpen(false)}
+                            className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors"
+                          >
+                            Tüm Bildirimleri Gör
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+
+                    <Link
+                      href="/profile"
+                      className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
+                    >
+                      <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+                        👤
+                      </div>
+                      <span className="hidden sm:block text-sm">Hesabım</span>
+                    </Link>
+
+                    <button
+                      onClick={handleLogout}
+                      className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
+                      title="Çıkış Yap"
+                    >
+                      <span className="hidden sm:block font-bold text-sm">
+                        Çıkış
+                      </span>
+                      <svg
+                        className="w-[22px] h-[22px] sm:hidden group-hover:scale-110 transition-transform"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                         ></path>
                       </svg>
-                      {notificationsCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
-                          {notificationsCount}
-                        </span>
-                      )}
                     </button>
-                    {isNotificationOpen && (
-                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
-                        <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                          <span className="font-bold text-slate-800">
-                            Bildirimler
-                          </span>
-                          {notificationsCount > 0 && (
-                            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                              {notificationsCount} Yeni
-                            </span>
-                          )}
-                        </div>
-                        <div className="max-h-80 overflow-y-auto custom-scrollbar">
-                          {notificationsList.length === 0 ? (
-                            <div className="px-4 py-8 text-center text-slate-500 text-sm font-medium">
-                              Şu an hiç bildirimin yok.
-                            </div>
-                          ) : (
-                            notificationsList.slice(0, 5).map((notif: any) => {
-                              let icon = <Bell className="w-5 h-5" />;
-                              let bg = "bg-blue-50";
-                              let text = "text-blue-500";
-                              const msgLower =
-                                notif.message?.toLowerCase() || "";
-
-                              if (
-                                msgLower.includes("beğen") ||
-                                msgLower.includes("favori")
-                              ) {
-                                icon = (
-                                  <Heart className="w-5 h-5 fill-current" />
-                                );
-                                bg = "bg-red-50";
-                                text = "text-red-500";
-                              } else if (
-                                msgLower.includes("mesaj") ||
-                                msgLower.includes("yorum") ||
-                                msgLower.includes("soru")
-                              ) {
-                                icon = <MessageCircle className="w-5 h-5" />;
-                                bg = "bg-green-50";
-                                text = "text-green-500";
-                              } else if (msgLower.includes("takip")) {
-                                icon = <UserPlus className="w-5 h-5" />;
-                                bg = "bg-pink-50";
-                                text = "text-pink-500";
-                              } else if (
-                                msgLower.includes("ilan") ||
-                                msgLower.includes("ekledi")
-                              ) {
-                                icon = <Package className="w-5 h-5" />;
-                                bg = "bg-orange-50";
-                                text = "text-orange-500";
-                              }
-
-                              const formattedMessage = cleanNotification(
-                                notif.message,
-                              );
-
-                              // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
-                              let dropDate = "Yeni";
-                              if (notif.createdAt) {
-                                const utcDate = notif.createdAt.endsWith("Z")
-                                  ? notif.createdAt
-                                  : `${notif.createdAt}Z`;
-                                const dObj = new Date(utcDate);
-                                dropDate = `${dObj.toLocaleDateString("tr-TR")} • ${dObj.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
-                              }
-
-                              return (
-                                <div
-                                  key={notif.id}
-                                  className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center group"
-                                >
-                                  <div
-                                    className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} shrink-0 transition-transform group-hover:scale-105`}
-                                  >
-                                    {icon}
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="text-sm text-slate-700 leading-snug font-semibold">
-                                      {formattedMessage}
-                                    </p>
-                                    <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                      {dropDate}
-                                    </p>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                        <Link
-                          href="/notifications"
-                          onClick={() => setIsNotificationOpen(false)}
-                          className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors"
-                        >
-                          Tüm Bildirimleri Gör
-                        </Link>
-                      </div>
-                    )}
                   </div>
-
-                  <Link
-                    href="/profile"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
-                  >
-                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
-                      👤
-                    </div>
-                    <span className="hidden sm:block text-sm">Hesabım</span>
-                  </Link>
-
-                  <button
-                    onClick={handleLogout}
-                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
-                    title="Çıkış Yap"
-                  >
-                    <span className="hidden sm:block font-bold text-sm">
-                      Çıkış
-                    </span>
-                    <svg
-                      className="w-[22px] h-[22px] sm:hidden group-hover:scale-110 transition-transform"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                      ></path>
-                    </svg>
-                  </button>
-                </div>
-              ) : (
-                <Link
-                  href="/login"
-                  className="flex items-center justify-center bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
-                >
-                  Giriş Yap
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 📱 MOBİL ARAMA ÇUBUĞU */}
-        <div className="md:hidden pb-3 pt-2 w-full relative z-40 px-4 bg-white border-t border-slate-50 shadow-sm">
-          <form
-            onSubmit={handleSearchSubmit}
-            className="w-full relative flex items-center"
-          >
-            <input
-              type="text"
-              placeholder="Ürün, @üye veya #ilan ara..."
-              className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-[#20B2AA]/30 border border-transparent transition-all font-semibold text-sm shadow-inner"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setIsDropdownOpen(true);
-              }}
-              onFocus={() => setIsDropdownOpen(true)}
-              onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-            />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <button type="submit" className="hidden">
-              Ara
-            </button>
-          </form>
-          {isDropdownOpen && liveResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-100 overflow-hidden z-[100] py-2 animate-in fade-in slide-in-from-top-1">
-              {liveResults.slice(0, 4).map((result, idx) => (
-                <Link
-                  href={
-                    result.type === "user"
-                      ? `/user/${result.item.id}`
-                      : `/listing-detail/${result.item.id}`
-                  }
-                  key={`mob-${idx}`}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 border-b border-slate-50 last:border-0"
-                >
-                  <div className="w-10 h-10 bg-slate-100 text-blue-600 rounded-xl flex items-center justify-center font-bold shrink-0 overflow-hidden border border-slate-200 shadow-sm">
-                    {result.type === "user" ? (
-                      <span className="text-base font-black">
-                        {(result.item.fullName || "U").charAt(0).toUpperCase()}
-                      </span>
-                    ) : result.item.photosBase64 &&
-                      result.item.photosBase64.length > 0 ? (
-                      <img
-                        src={result.item.photosBase64[0]}
-                        alt="ürün"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-base">📦</span>
-                    )}
-                  </div>
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <div className="font-bold text-slate-800 truncate text-[13px] capitalize">
-                      {result.type === "user"
-                        ? formatName(result.item.fullName)
-                        : result.item.title}
-                    </div>
-                    {result.type === "product" ? (
-                      <div className="text-[10px] font-semibold text-slate-400 mt-0.5 flex items-center gap-1.5">
-                        <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex items-center leading-none">
-                          #{result.item.id}
-                        </span>
-                        <span>•</span>
-                        <span className="text-slate-500">
-                          {result.item.priceType === "fiyat"
-                            ? `₺${result.item.price}`
-                            : result.item.priceType === "takas"
-                              ? "Takas"
-                              : "Ücretsiz"}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="text-[10px] font-semibold text-slate-400 mt-0.5">
-                        Kampüs Üyesi
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              ))}
-              <div
-                className="px-4 py-3 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
-                onClick={handleSearchSubmit}
-              >
-                <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      </header>
-
-      {/* 🖥️ ANA DÜZEN */}
-      <div className="max-w-[1200px] mx-auto mt-4 sm:mt-8 px-4 sm:px-6 w-full flex-1">
-        {/* 🔙 ZARİF BREADCRUMB VE GERİ DÖN YAPISI */}
-        <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm font-semibold text-slate-400 overflow-hidden whitespace-nowrap flex-1">
-            <Link
-              href="/"
-              className="hover:text-[#20B2AA] transition-colors shrink-0"
-            >
-              Ana Sayfa
-            </Link>
-            <ChevronRight size={14} className="shrink-0 text-slate-300" />
-
-            {/* Kategori artık tıklanabilir ve arama sayfasına yönlendiriyor */}
-            <Link
-              href={`/search?q=${encodeURIComponent(product.category)}`}
-              className="text-slate-600 hover:text-[#20B2AA] transition-colors shrink-0 cursor-pointer border-b border-transparent hover:border-[#20B2AA]"
-            >
-              {product.category}
-            </Link>
-
-            <ChevronRight size={14} className="shrink-0 text-slate-300" />
-            <span className="text-slate-800 truncate max-w-[120px] sm:max-w-[200px]">
-              {product.title}
-            </span>
-          </div>
-          <button
-            onClick={() => router.back()}
-            className="font-bold text-slate-500 hover:text-[#20B2AA] transition-colors flex items-center gap-1 text-[11px] sm:text-sm shrink-0 pl-2 group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />{" "}
-            Geri Dön
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
-          {/* Sol Kolon */}
-          <div className="lg:col-span-8 space-y-4 sm:space-y-6">
-            <div className="bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
-              <div className="w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[4/3] bg-slate-50 rounded-xl sm:rounded-2xl overflow-hidden relative flex items-center justify-center border border-slate-100">
-                <img
-                  src={photos[activeImageIndex]}
-                  alt={product.title}
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              {photos.length > 1 && (
-                <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4 overflow-x-auto pb-2 custom-scrollbar">
-                  {photos.map((photo: string, index: number) => (
-                    <button
-                      key={index}
-                      onClick={() => setActiveImageIndex(index)}
-                      className={`relative w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 shrink-0 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all ${
-                        activeImageIndex === index
-                          ? "border-blue-600 shadow-md scale-105"
-                          : "border-transparent hover:border-blue-300 opacity-70 hover:opacity-100"
-                      }`}
-                    >
-                      <img
-                        src={photo}
-                        className="w-full h-full object-cover"
-                        alt={`Foto ${index}`}
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
-              <h3 className="text-lg sm:text-xl font-black text-slate-800 mb-3 sm:mb-4 border-b pb-3 sm:pb-4">
-                İlan Açıklaması
-              </h3>
-              <p className="text-sm sm:text-base text-slate-600 leading-relaxed whitespace-pre-wrap font-medium">
-                {product.description || "Satıcı henüz bir açıklama girmemiş."}
-              </p>
-            </div>
-            <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
-              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b pb-3 sm:pb-4">
-                <MessageSquare className="text-blue-500 w-5 h-5 sm:w-6 sm:h-6" />
-                <h3 className="text-lg sm:text-xl font-black text-slate-800">
-                  Soru ve Yorumlar
-                </h3>
-                <span className="bg-blue-100 text-blue-600 font-bold px-2 py-0.5 rounded-full text-xs sm:text-sm">
-                  {comments.length}
-                </span>
-              </div>
-              <form
-                onSubmit={handleAddComment}
-                className="mb-6 sm:mb-8 flex gap-2 sm:gap-3"
-              >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-black shrink-0 text-base sm:text-lg">
-                  {currentUser
-                    ? formatName(currentUser.fullName).charAt(0)
-                    : "U"}
-                </div>
-                <div className="flex-1 relative">
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Satıcıya bir soru sor..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-full py-2.5 sm:py-3.5 pl-4 sm:pl-5 pr-12 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] font-medium text-sm text-slate-700 shadow-inner"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isSubmittingComment || !newComment.trim()}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[#20B2AA] hover:text-teal-700 disabled:text-slate-300 transition-colors"
-                  >
-                    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
-                </div>
-              </form>
-              <div className="space-y-3 sm:space-y-4">
-                {comments.length === 0 ? (
-                  <p className="text-center text-slate-400 font-medium py-3 sm:py-4 text-xs sm:text-sm">
-                    Henüz yorum yapılmamış. İlk soruyu sen sor!
-                  </p>
                 ) : (
-                  comments.map((comment) => {
-                    const commentUser = formatName(
-                      comment.user?.fullName || "Bilinmeyen Kullanıcı",
-                    );
-                    const canDelete =
-                      currentUser &&
-                      (currentUser.id === comment.user?.id || isOwner);
-                    return (
-                      <div
-                        key={comment.id}
-                        className="flex gap-2 sm:gap-4 group relative"
-                      >
-                        {/* Avatar kısmı tıklandığında kullanıcının profiline gidecek */}
-                        <Link
-                          href={
-                            comment.user?.id ? `/user/${comment.user.id}` : "#"
-                          }
-                          className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center font-bold shrink-0 mt-0.5 sm:mt-1 text-xs sm:text-base hover:bg-blue-100 hover:text-blue-600 transition-colors"
-                        >
-                          {commentUser.charAt(0)}
-                        </Link>
-
-                        <div className="flex-1 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl rounded-tl-none border border-slate-100">
-                          <div className="flex justify-between items-center mb-1">
-                            <div className="flex items-center gap-1.5 sm:gap-2 font-bold text-slate-800 text-xs sm:text-sm capitalize">
-                              {/* İsim kısmı tıklandığında kullanıcının profiline gidecek */}
-                              <Link
-                                href={
-                                  comment.user?.id
-                                    ? `/user/${comment.user.id}`
-                                    : "#"
-                                }
-                                className="hover:text-blue-600 hover:underline transition-colors"
-                              >
-                                {commentUser}
-                              </Link>
-
-                              {comment.user?.id === product.user?.id && (
-                                <span className="bg-[#20B2AA]/10 text-[#20B2AA] text-[8px] sm:text-[9px] px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                  Satıcı
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[9px] sm:text-xs font-semibold text-slate-400">
-                              {formatDate(comment.createdAt)}
-                            </span>
-                          </div>
-                          <p className="text-slate-600 text-xs sm:text-sm font-medium">
-                            {comment.text}
-                          </p>
-                        </div>
-                        {canDelete && (
-                          <button
-                            onClick={() => handleDeleteComment(comment.id)}
-                            className="absolute top-1 sm:top-2 right-[-5px] sm:right-[-10px] opacity-100 lg:opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 bg-white px-2 py-1 rounded-md shadow-sm border border-red-100 text-[10px] sm:text-xs font-bold transition-all"
-                          >
-                            Sil
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Sağ Kolon */}
-          <div className="lg:col-span-4 space-y-4 sm:space-y-6">
-            <div className="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
-              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 leading-tight mb-3 sm:mb-4">
-                {product.title}
-              </h1>
-              <div className="mb-4 sm:mb-6">
-                {product.priceType === "fiyat" && (
-                  <div className="text-3xl sm:text-4xl font-black text-blue-600">
-                    {product.price}{" "}
-                    <span className="text-xl sm:text-2xl text-blue-400">₺</span>
-                  </div>
-                )}
-                {product.priceType === "takas" && (
-                  <div className="text-2xl sm:text-3xl font-black text-purple-600 flex items-center gap-2">
-                    🤝 Takasa Açık
-                  </div>
-                )}
-                {product.priceType === "ucretsiz" && (
-                  <div className="text-2xl sm:text-3xl font-black text-green-600 flex items-center gap-2">
-                    🎁 Ücretsiz
-                  </div>
-                )}
-              </div>
-              <div className="space-y-3 sm:space-y-4 border-t border-slate-100 pt-4 sm:pt-6 mb-6 sm:mb-8">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
-                    Kategori
-                  </span>
-
-                  {/* Kategori rozeti tıklanabilir yapıldı */}
                   <Link
-                    href={`/search?q=${encodeURIComponent(product.category)}`}
-                    className="text-slate-800 font-bold bg-slate-100 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                    href="/login"
+                    className="flex items-center justify-center bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
                   >
-                    {product.category}
+                    Giriş Yap
                   </Link>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
-                    Durum
-                  </span>
-                  <span className="text-slate-800 font-bold bg-slate-100 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm">
-                    {product.itemCondition || "Belirtilmemiş"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
-                    İlan No
-                  </span>
-                  <span className="text-slate-400 font-bold text-xs sm:text-sm select-all">
-                    #{product.id}
-                  </span>
-                </div>
+                )}
               </div>
-              <div className="flex flex-row gap-2 sm:gap-3 mt-4">
+            </div>
+          </div>
+
+          {/* 📱 MOBİL ARAMA ÇUBUĞU */}
+          <div className="md:hidden pb-3 pt-2 w-full relative z-40 px-4 bg-white border-t border-slate-50 shadow-sm">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="w-full relative flex items-center"
+            >
+              <input
+                type="text"
+                placeholder="Ürün, @üye veya #ilan ara..."
+                className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-2.5 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-[#20B2AA]/30 border border-transparent transition-all font-semibold text-sm shadow-inner"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setIsDropdownOpen(true);
+                }}
+                onFocus={() => setIsDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <button type="submit" className="hidden">
+                Ara
+              </button>
+            </form>
+            {isDropdownOpen && liveResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-2xl shadow-xl border border-slate-100 overflow-hidden z-[100] py-2 animate-in fade-in slide-in-from-top-1">
+                {liveResults.slice(0, 4).map((result, idx) => (
+                  <Link
+                    href={
+                      result.type === "user"
+                        ? `/user/${result.item.id}`
+                        : `/listing-detail/${result.item.id}`
+                    }
+                    key={`mob-${idx}`}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 border-b border-slate-50 last:border-0"
+                  >
+                    <div className="w-10 h-10 bg-slate-100 text-blue-600 rounded-xl flex items-center justify-center font-bold shrink-0 overflow-hidden border border-slate-200 shadow-sm">
+                      {result.type === "user" ? (
+                        <span className="text-base font-black">
+                          {(result.item.fullName || "U")
+                            .charAt(0)
+                            .toUpperCase()}
+                        </span>
+                      ) : result.item.photosBase64 &&
+                        result.item.photosBase64.length > 0 ? (
+                        <img
+                          src={result.item.photosBase64[0]}
+                          alt="ürün"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-base">📦</span>
+                      )}
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <div className="font-bold text-slate-800 truncate text-[13px] capitalize">
+                        {result.type === "user"
+                          ? formatName(result.item.fullName)
+                          : result.item.title}
+                      </div>
+                      {result.type === "product" ? (
+                        <div className="text-[10px] font-semibold text-slate-400 mt-0.5 flex items-center gap-1.5">
+                          <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex items-center leading-none">
+                            #{result.item.id}
+                          </span>
+                          <span>•</span>
+                          <span className="text-slate-500">
+                            {result.item.priceType === "fiyat"
+                              ? `₺${result.item.price}`
+                              : result.item.priceType === "takas"
+                                ? "Takas"
+                                : "Ücretsiz"}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="text-[10px] font-semibold text-slate-400 mt-0.5">
+                          Kampüs Üyesi
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                ))}
                 <div
-                  onClick={handleLikeToggle}
-                  className={`flex-[3] flex rounded-xl overflow-hidden border transition-all duration-300 shadow-sm cursor-pointer hover:shadow-md group ${
-                    isLiked
-                      ? "border-red-200"
-                      : "border-slate-200 hover:border-red-300"
-                  }`}
+                  className="px-4 py-3 border-t border-slate-100 text-center bg-slate-50 mt-1 cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={handleSearchSubmit}
                 >
-                  <div
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 sm:py-3.5 text-xs sm:text-sm font-bold transition-colors ${
-                      isLiked
-                        ? "bg-red-50 text-red-600 border-r border-red-200"
-                        : "bg-white text-slate-600 border-r border-slate-100 group-hover:bg-red-50"
-                    }`}
-                  >
-                    <Heart
-                      className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:scale-110 ${
-                        isLiked
-                          ? "fill-current text-red-500"
-                          : "text-slate-400 group-hover:text-red-400"
-                      }`}
-                    />
-                    <span className="tracking-wide whitespace-nowrap">
-                      {isLiked ? "Favorilerde" : "Favoriye Al"}
-                    </span>
-                  </div>
-                  <div
-                    className={`flex items-center justify-center px-3 sm:px-5 font-black text-xs sm:text-sm tabular-nums transition-colors ${
-                      isLiked
-                        ? "bg-red-500 text-white"
-                        : "bg-slate-50 text-slate-500"
-                    }`}
-                  >
-                    {likeCount}
-                  </div>
+                  <span className="text-xs font-black text-blue-600">
+                    Tüm sonuçları gör
+                  </span>
                 </div>
-                <button
-                  onClick={handleShare}
-                  className="flex-[2] bg-white hover:bg-slate-50 text-slate-600 font-bold py-3 sm:py-3.5 rounded-xl flex items-center justify-center gap-2 text-xs sm:text-sm border border-slate-200 transition-all shadow-sm hover:shadow-md"
-                >
-                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-                  <span className="whitespace-nowrap">Paylaş</span>
-                </button>
               </div>
-            </div>
-            <div className="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
+            )}
+          </div>
+        </header>
+
+        {/* 🖥️ ANA DÜZEN */}
+        <div className="max-w-[1200px] mx-auto mt-4 sm:mt-8 px-4 sm:px-6 w-full flex-1">
+          {/* 🔙 ZARİF BREADCRUMB VE GERİ DÖN YAPISI */}
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm font-semibold text-slate-400 overflow-hidden whitespace-nowrap flex-1">
               <Link
-                href={`/user/${product.user?.id}`}
-                className="flex items-center gap-3 sm:gap-4 group border-b border-slate-100 pb-4 sm:pb-6 mb-4 sm:mb-6 hover:bg-slate-50 p-2 sm:p-3 -mx-2 sm:-mx-3 rounded-2xl transition-all cursor-pointer"
+                href="/"
+                className="hover:text-[#20B2AA] transition-colors shrink-0"
               >
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl sm:text-2xl font-black shadow-inner group-hover:scale-105 transition-transform shrink-0">
-                  {sellerName.charAt(0)}
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-base sm:text-lg font-extrabold text-slate-800 capitalize group-hover:text-[#20B2AA] transition-colors line-clamp-1">
-                    {sellerName}
-                  </h3>
-                  <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-slate-400 mt-0.5 sm:mt-1">
-                    <ShieldCheck
-                      size={14}
-                      className="text-[#20B2AA] sm:w-4 sm:h-4"
-                    />{" "}
-                    Kampüs Onaylı
-                  </div>
-                </div>
+                Ana Sayfa
               </Link>
-              {isOwner ? (
-                <div className="w-full bg-green-50 text-green-700 font-black py-3 sm:py-4 rounded-xl border border-green-200 flex items-center justify-center gap-2 text-xs sm:text-sm shadow-sm">
-                  Bu senin ilanın
-                </div>
-              ) : (
-                <button
-                  onClick={handleMessageClick}
-                  className="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-3 sm:py-4 rounded-xl shadow-lg transition-transform hover:scale-[1.02] active:scale-95 text-sm sm:text-base"
-                >
-                  Satıcıya Mesaj Gönder
-                </button>
-              )}
-              <div className="mt-3 sm:mt-4 text-center text-[10px] sm:text-xs font-bold text-slate-400 flex items-center justify-center gap-1 sm:gap-2">
-                <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                {product.university ||
-                  product.user?.university ||
-                  "Üniversite Belirtilmemiş"}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+              <ChevronRight size={14} className="shrink-0 text-slate-300" />
 
-      {/* 📜 FOOTER BİLGİ POP-UP'I (MODAL) */}
-      {infoModal.isOpen && (
-        <div className="fixed inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-            <div className="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h2 className="text-lg sm:text-xl font-black text-slate-800">
-                {infoModal.title}
-              </h2>
-              <button
-                onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
-                className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors"
+              {/* Kategori artık tıklanabilir ve arama sayfasına yönlendiriyor */}
+              <Link
+                href={`/search?q=${encodeURIComponent(product.category)}`}
+                className="text-slate-600 hover:text-[#20B2AA] transition-colors shrink-0 cursor-pointer border-b border-transparent hover:border-[#20B2AA]"
               >
-                ✕
-              </button>
-            </div>
-            <div className="p-6 sm:p-8 text-sm sm:text-base text-slate-600 font-medium whitespace-pre-wrap leading-relaxed max-h-[60vh] overflow-y-auto custom-scrollbar">
-              {infoModal.content}
-            </div>
-            <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
-              <button
-                onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base"
-              >
-                Anladım
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                {product.category}
+              </Link>
 
-      {/* 🌊 FOOTER (PREMIUM) */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 sm:mt-16 rounded-t-[3rem] shadow-sm w-full">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-2">
-            <div className="mb-4">
-              <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
-                Uni<span className="text-[#20B2AA]">Cycle</span>
+              <ChevronRight size={14} className="shrink-0 text-slate-300" />
+              <span className="text-slate-800 truncate max-w-[120px] sm:max-w-[200px]">
+                {product.title}
               </span>
             </div>
-            <p className="text-sm font-medium text-slate-500 max-w-sm">
-              Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
-              öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
-            </p>
+            <button
+              onClick={() => router.back()}
+              className="font-bold text-slate-500 hover:text-[#20B2AA] transition-colors flex items-center gap-1 text-[11px] sm:text-sm shrink-0 pl-2 group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />{" "}
+              Geri Dön
+            </button>
           </div>
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
-            <ul className="space-y-2 text-sm font-medium text-slate-500">
-              <li>
-                <button
-                  onClick={() =>
-                    openInfoModal(
-                      "Nasıl Çalışır?",
-                      "UniCycle'da alışveriş yapmak çok kolay!\n\n1. Kendi üniversitenin e-postasıyla kayıt ol.\n2. İhtiyacın olmayan eşyalarını ilan olarak ekle.\n3. Kampüsündeki diğer öğrencilerle mesajlaşarak güvenle alışveriş yap!",
-                    )
-                  }
-                  className="hover:text-blue-600 transition-colors"
-                >
-                  Nasıl Çalışır?
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() =>
-                    openInfoModal(
-                      "Güvenlik İpuçları",
-                      "Alışverişlerinde güvenliğin için şu kurallara dikkat et:\n\n• Sadece kampüs içindeki güvenli ve kalabalık alanlarda (kütüphane, kafeterya vb.) buluşun.\n• Kimseye önceden para veya kapora göndermeyin.\n• Şüpheli durumlarda ilanları bize şikayet edin.",
-                    )
-                  }
-                  className="hover:text-blue-600 transition-colors"
-                >
-                  Güvenlik İpuçları
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() =>
-                    openInfoModal(
-                      "Kampüs Kuralları",
-                      "Bu platform tamamen öğrencilere aittir.\n\n• Saygılı bir iletişim dili kullanmak zorunludur.\n• Sadece yasal ve kampüs kurallarına uygun ürünler satılabilir.\n• Kopya veya telif hakkı ihlali içeren materyallerin satışı yasaktır.",
-                    )
-                  }
-                  className="hover:text-blue-600 transition-colors"
-                >
-                  Kampüs Kuralları
-                </button>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
-            <ul className="space-y-2 text-sm font-medium text-slate-500">
-              <li>
-                <button
-                  onClick={() =>
-                    openInfoModal(
-                      "Destek Merkezi",
-                      "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin.",
-                    )
-                  }
-                  className="hover:text-blue-600 transition-colors"
-                >
-                  Destek Merkezi
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() =>
-                    openInfoModal(
-                      "Bize Ulaşın",
-                      "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67",
-                    )
-                  }
-                  className="hover:text-blue-600 transition-colors"
-                >
-                  Bize Ulaşın
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() =>
-                    openInfoModal(
-                      "Sıkça Sorulan Sorular",
-                      "S: Üye olmak ücretli mi?\nC: Hayır, UniCycle üniversite öğrencileri için tamamen ücretsizdir.\n\nS: Kargo ile ürün gönderebilir miyim?\nC: Platformumuz kampüs içi elden teslim odaklıdır ancak satıcı ile anlaşırsanız kargo da yapabilirsiniz.",
-                    )
-                  }
-                  className="hover:text-blue-600 transition-colors"
-                >
-                  S.S.S.
-                </button>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
-          © 2026 UniCycle. Tüm hakları saklıdır.
-        </div>
-      </footer>
 
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
+            {/* Sol Kolon */}
+            <div className="lg:col-span-8 space-y-4 sm:space-y-6">
+              <div className="bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
+                <div className="w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[4/3] bg-slate-50 rounded-xl sm:rounded-2xl overflow-hidden relative flex items-center justify-center border border-slate-100">
+                  <img
+                    src={photos[activeImageIndex]}
+                    alt={product.title}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                {photos.length > 1 && (
+                  <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4 overflow-x-auto pb-2 custom-scrollbar">
+                    {photos.map((photo: string, index: number) => (
+                      <button
+                        key={index}
+                        onClick={() => setActiveImageIndex(index)}
+                        className={`relative w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 shrink-0 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all ${
+                          activeImageIndex === index
+                            ? "border-blue-600 shadow-md scale-105"
+                            : "border-transparent hover:border-blue-300 opacity-70 hover:opacity-100"
+                        }`}
+                      >
+                        <img
+                          src={photo}
+                          className="w-full h-full object-cover"
+                          alt={`Foto ${index}`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
+                <h3 className="text-lg sm:text-xl font-black text-slate-800 mb-3 sm:mb-4 border-b pb-3 sm:pb-4">
+                  İlan Açıklaması
+                </h3>
+                <p className="text-sm sm:text-base text-slate-600 leading-relaxed whitespace-pre-wrap font-medium">
+                  {product.description || "Satıcı henüz bir açıklama girmemiş."}
+                </p>
+              </div>
+              <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
+                <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b pb-3 sm:pb-4">
+                  <MessageSquare className="text-blue-500 w-5 h-5 sm:w-6 sm:h-6" />
+                  <h3 className="text-lg sm:text-xl font-black text-slate-800">
+                    Soru ve Yorumlar
+                  </h3>
+                  <span className="bg-blue-100 text-blue-600 font-bold px-2 py-0.5 rounded-full text-xs sm:text-sm">
+                    {comments.length}
+                  </span>
+                </div>
+                <form
+                  onSubmit={handleAddComment}
+                  className="mb-6 sm:mb-8 flex gap-2 sm:gap-3"
+                >
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-black shrink-0 text-base sm:text-lg">
+                    {currentUser
+                      ? formatName(currentUser.fullName).charAt(0)
+                      : "U"}
+                  </div>
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Satıcıya bir soru sor..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-full py-2.5 sm:py-3.5 pl-4 sm:pl-5 pr-12 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] font-medium text-sm text-slate-700 shadow-inner"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isSubmittingComment || !newComment.trim()}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[#20B2AA] hover:text-teal-700 disabled:text-slate-300 transition-colors"
+                    >
+                      <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                  </div>
+                </form>
+                <div className="space-y-3 sm:space-y-4">
+                  {comments.length === 0 ? (
+                    <p className="text-center text-slate-400 font-medium py-3 sm:py-4 text-xs sm:text-sm">
+                      Henüz yorum yapılmamış. İlk soruyu sen sor!
+                    </p>
+                  ) : (
+                    comments.map((comment) => {
+                      const commentUser = formatName(
+                        comment.user?.fullName || "Bilinmeyen Kullanıcı",
+                      );
+                      const canDelete =
+                        currentUser &&
+                        (currentUser.id === comment.user?.id || isOwner);
+                      return (
+                        <div
+                          key={comment.id}
+                          className="flex gap-2 sm:gap-4 group relative"
+                        >
+                          {/* Avatar kısmı tıklandığında kullanıcının profiline gidecek */}
+                          <Link
+                            href={
+                              comment.user?.id
+                                ? `/user/${comment.user.id}`
+                                : "#"
+                            }
+                            className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center font-bold shrink-0 mt-0.5 sm:mt-1 text-xs sm:text-base hover:bg-blue-100 hover:text-blue-600 transition-colors"
+                          >
+                            {commentUser.charAt(0)}
+                          </Link>
+
+                          <div className="flex-1 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl rounded-tl-none border border-slate-100">
+                            <div className="flex justify-between items-center mb-1">
+                              <div className="flex items-center gap-1.5 sm:gap-2 font-bold text-slate-800 text-xs sm:text-sm capitalize">
+                                {/* İsim kısmı tıklandığında kullanıcının profiline gidecek */}
+                                <Link
+                                  href={
+                                    comment.user?.id
+                                      ? `/user/${comment.user.id}`
+                                      : "#"
+                                  }
+                                  className="hover:text-blue-600 hover:underline transition-colors"
+                                >
+                                  {commentUser}
+                                </Link>
+
+                                {comment.user?.id === product.user?.id && (
+                                  <span className="bg-[#20B2AA]/10 text-[#20B2AA] text-[8px] sm:text-[9px] px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                    Satıcı
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[9px] sm:text-xs font-semibold text-slate-400">
+                                {formatDate(comment.createdAt)}
+                              </span>
+                            </div>
+                            <p className="text-slate-600 text-xs sm:text-sm font-medium">
+                              {comment.text}
+                            </p>
+                          </div>
+                          {canDelete && (
+                            <button
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="absolute top-1 sm:top-2 right-[-5px] sm:right-[-10px] opacity-100 lg:opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 bg-white px-2 py-1 rounded-md shadow-sm border border-red-100 text-[10px] sm:text-xs font-bold transition-all"
+                            >
+                              Sil
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Sağ Kolon */}
+            <div className="lg:col-span-4 space-y-4 sm:space-y-6">
+              <div className="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
+                <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 leading-tight mb-3 sm:mb-4">
+                  {product.title}
+                </h1>
+                <div className="mb-4 sm:mb-6">
+                  {product.priceType === "fiyat" && (
+                    <div className="text-3xl sm:text-4xl font-black text-blue-600">
+                      {product.price}{" "}
+                      <span className="text-xl sm:text-2xl text-blue-400">
+                        ₺
+                      </span>
+                    </div>
+                  )}
+                  {product.priceType === "takas" && (
+                    <div className="text-2xl sm:text-3xl font-black text-purple-600 flex items-center gap-2">
+                      🤝 Takasa Açık
+                    </div>
+                  )}
+                  {product.priceType === "ucretsiz" && (
+                    <div className="text-2xl sm:text-3xl font-black text-green-600 flex items-center gap-2">
+                      🎁 Ücretsiz
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-3 sm:space-y-4 border-t border-slate-100 pt-4 sm:pt-6 mb-6 sm:mb-8">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
+                      Kategori
+                    </span>
+
+                    {/* Kategori rozeti tıklanabilir yapıldı */}
+                    <Link
+                      href={`/search?q=${encodeURIComponent(product.category)}`}
+                      className="text-slate-800 font-bold bg-slate-100 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                    >
+                      {product.category}
+                    </Link>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
+                      Durum
+                    </span>
+                    <span className="text-slate-800 font-bold bg-slate-100 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm">
+                      {product.itemCondition || "Belirtilmemiş"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
+                      İlan No
+                    </span>
+                    <span className="text-slate-400 font-bold text-xs sm:text-sm select-all">
+                      #{product.id}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-row gap-2 sm:gap-3 mt-4">
+                  <div
+                    onClick={handleLikeToggle}
+                    className={`flex-[3] flex rounded-xl overflow-hidden border transition-all duration-300 shadow-sm cursor-pointer hover:shadow-md group ${
+                      isLiked
+                        ? "border-red-200"
+                        : "border-slate-200 hover:border-red-300"
+                    }`}
+                  >
+                    <div
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 sm:py-3.5 text-xs sm:text-sm font-bold transition-colors ${
+                        isLiked
+                          ? "bg-red-50 text-red-600 border-r border-red-200"
+                          : "bg-white text-slate-600 border-r border-slate-100 group-hover:bg-red-50"
+                      }`}
+                    >
+                      <Heart
+                        className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:scale-110 ${
+                          isLiked
+                            ? "fill-current text-red-500"
+                            : "text-slate-400 group-hover:text-red-400"
+                        }`}
+                      />
+                      <span className="tracking-wide whitespace-nowrap">
+                        {isLiked ? "Favorilerde" : "Favoriye Al"}
+                      </span>
+                    </div>
+                    <div
+                      className={`flex items-center justify-center px-3 sm:px-5 font-black text-xs sm:text-sm tabular-nums transition-colors ${
+                        isLiked
+                          ? "bg-red-500 text-white"
+                          : "bg-slate-50 text-slate-500"
+                      }`}
+                    >
+                      {likeCount}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleShare}
+                    className="flex-[2] bg-white hover:bg-slate-50 text-slate-600 font-bold py-3 sm:py-3.5 rounded-xl flex items-center justify-center gap-2 text-xs sm:text-sm border border-slate-200 transition-all shadow-sm hover:shadow-md"
+                  >
+                    <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+                    <span className="whitespace-nowrap">Paylaş</span>
+                  </button>
+                </div>
+              </div>
+              <div className="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
+                <Link
+                  href={`/user/${product.user?.id}`}
+                  className="flex items-center gap-3 sm:gap-4 group border-b border-slate-100 pb-4 sm:pb-6 mb-4 sm:mb-6 hover:bg-slate-50 p-2 sm:p-3 -mx-2 sm:-mx-3 rounded-2xl transition-all cursor-pointer"
+                >
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl sm:text-2xl font-black shadow-inner group-hover:scale-105 transition-transform shrink-0">
+                    {sellerName.charAt(0)}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-base sm:text-lg font-extrabold text-slate-800 capitalize group-hover:text-[#20B2AA] transition-colors line-clamp-1">
+                      {sellerName}
+                    </h3>
+                    <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-slate-400 mt-0.5 sm:mt-1">
+                      <ShieldCheck
+                        size={14}
+                        className="text-[#20B2AA] sm:w-4 sm:h-4"
+                      />{" "}
+                      Kampüs Onaylı
+                    </div>
+                  </div>
+                </Link>
+                {isOwner ? (
+                  <div className="w-full bg-green-50 text-green-700 font-black py-3 sm:py-4 rounded-xl border border-green-200 flex items-center justify-center gap-2 text-xs sm:text-sm shadow-sm">
+                    Bu senin ilanın
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleMessageClick}
+                    className="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-3 sm:py-4 rounded-xl shadow-lg transition-transform hover:scale-[1.02] active:scale-95 text-sm sm:text-base"
+                  >
+                    Satıcıya Mesaj Gönder
+                  </button>
+                )}
+                <div className="mt-3 sm:mt-4 text-center text-[10px] sm:text-xs font-bold text-slate-400 flex items-center justify-center gap-1 sm:gap-2">
+                  <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  {product.university ||
+                    product.user?.university ||
+                    "Üniversite Belirtilmemiş"}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 📜 FOOTER BİLGİ POP-UP'I (MODAL) */}
+        {infoModal.isOpen && (
+          <div className="fixed inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+              <div className="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h2 className="text-lg sm:text-xl font-black text-slate-800">
+                  {infoModal.title}
+                </h2>
+                <button
+                  onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                  className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="p-6 sm:p-8 text-sm sm:text-base text-slate-600 font-medium whitespace-pre-wrap leading-relaxed max-h-[60vh] overflow-y-auto custom-scrollbar">
+                {infoModal.content}
+              </div>
+              <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button
+                  onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base"
+                >
+                  Anladım
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 🌊 FOOTER (PREMIUM) */}
+        <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 sm:mt-16 rounded-t-[3rem] shadow-sm w-full">
+          <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="col-span-1 md:col-span-2">
+              <div className="mb-4">
+                <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
+                  Uni<span className="text-[#20B2AA]">Cycle</span>
+                </span>
+              </div>
+              <p className="text-sm font-medium text-slate-500 max-w-sm">
+                Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
+                öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
+              </p>
+            </div>
+            <div>
+              <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
+              <ul className="space-y-2 text-sm font-medium text-slate-500">
+                <li>
+                  <button
+                    onClick={() =>
+                      openInfoModal(
+                        "Nasıl Çalışır?",
+                        "UniCycle'da alışveriş yapmak çok kolay!\n\n1. Kendi üniversitenin e-postasıyla kayıt ol.\n2. İhtiyacın olmayan eşyalarını ilan olarak ekle.\n3. Kampüsündeki diğer öğrencilerle mesajlaşarak güvenle alışveriş yap!",
+                      )
+                    }
+                    className="hover:text-blue-600 transition-colors"
+                  >
+                    Nasıl Çalışır?
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() =>
+                      openInfoModal(
+                        "Güvenlik İpuçları",
+                        "Alışverişlerinde güvenliğin için şu kurallara dikkat et:\n\n• Sadece kampüs içindeki güvenli ve kalabalık alanlarda (kütüphane, kafeterya vb.) buluşun.\n• Kimseye önceden para veya kapora göndermeyin.\n• Şüpheli durumlarda ilanları bize şikayet edin.",
+                      )
+                    }
+                    className="hover:text-blue-600 transition-colors"
+                  >
+                    Güvenlik İpuçları
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() =>
+                      openInfoModal(
+                        "Kampüs Kuralları",
+                        "Bu platform tamamen öğrencilere aittir.\n\n• Saygılı bir iletişim dili kullanmak zorunludur.\n• Sadece yasal ve kampüs kurallarına uygun ürünler satılabilir.\n• Kopya veya telif hakkı ihlali içeren materyallerin satışı yasaktır.",
+                      )
+                    }
+                    className="hover:text-blue-600 transition-colors"
+                  >
+                    Kampüs Kuralları
+                  </button>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
+              <ul className="space-y-2 text-sm font-medium text-slate-500">
+                <li>
+                  <button
+                    onClick={() =>
+                      openInfoModal(
+                        "Destek Merkezi",
+                        "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin.",
+                      )
+                    }
+                    className="hover:text-blue-600 transition-colors"
+                  >
+                    Destek Merkezi
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() =>
+                      openInfoModal(
+                        "Bize Ulaşın",
+                        "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67",
+                      )
+                    }
+                    className="hover:text-blue-600 transition-colors"
+                  >
+                    Bize Ulaşın
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() =>
+                      openInfoModal(
+                        "Sıkça Sorulan Sorular",
+                        "S: Üye olmak ücretli mi?\nC: Hayır, UniCycle üniversite öğrencileri için tamamen ücretsizdir.\n\nS: Kargo ile ürün gönderebilir miyim?\nC: Platformumuz kampüs içi elden teslim odaklıdır ancak satıcı ile anlaşırsanız kargo da yapabilirsiniz.",
+                      )
+                    }
+                    className="hover:text-blue-600 transition-colors"
+                  >
+                    S.S.S.
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
+            © 2026 UniCycle. Tüm hakları saklıdır.
+          </div>
+        </footer>
+
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
         .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
         @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
@@ -1424,8 +1451,9 @@ export default function ListingDetailPage() {
         .mobile-search { display: block; }
         @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }
       `,
-        }}
-      />
-    </div>
-  );
+          }}
+        />
+      </div>
+    );
+  };
 }

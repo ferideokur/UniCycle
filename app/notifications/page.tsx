@@ -90,6 +90,10 @@ export default function NotificationsPage() {
       try {
         const res = await fetch(
           `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
+          {
+            cache: "no-store",
+            headers: { "Cache-Control": "no-cache" },
+          },
         );
         const data = await res.json();
 
