@@ -247,12 +247,76 @@ export default function UserProfilePage() {
     window.location.href = "/";
   };
 
-  const handleSaveProfile = () => {
+  // 🚀 HESAP SİLME FONKSİYONU
+  const handleDeleteAccount = async () => {
+    if (
+      !window.confirm(
+        "Hesabınızı silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve tüm ilanlarınız silinir!",
+      )
+    ) {
+      return;
+    }
+
     if (!user) return;
-    const profileData = { bio, profileImage, coverImage, coverY };
-    localStorage.setItem(`profile_${user.email}`, JSON.stringify(profileData));
-    setIsEditing(false);
-    alert("Profil başarıyla güncellendi!");
+
+    try {
+      const res = await fetch(
+        `https://unicycle-api.onrender.com/api/users/${user.id}`,
+        { method: "DELETE" },
+      );
+
+      if (res.ok) {
+        alert("Hesabınız başarıyla silindi. Sizi özleyeceğiz! 🥺");
+        localStorage.removeItem("user");
+        localStorage.removeItem(`profile_${user.email}`);
+        window.location.href = "/";
+      } else {
+        alert("Hesap silinirken bir hata oluştu. Lütfen tekrar deneyin.");
+      }
+    } catch (error) {
+      console.error("Hesap silme başarısız:", error);
+      alert("Sunucuyla bağlantı kurulamadı.");
+    }
+  };
+
+  // 🚀 GERÇEK VERİTABANI KAYIT FONKSİYONU
+  const handleSaveProfile = async () => {
+    if (!user) return;
+
+    try {
+      // Backend'e göndereceğimiz paket
+      const updateData = {
+        bio: bio,
+        profileImage: profileImage, // Base64 uzun metin
+        coverImage: coverImage, // Base64 uzun metin
+        coverY: coverY,
+      };
+
+      const res = await fetch(
+        `https://unicycle-api.onrender.com/api/users/${user.id}`,
+        {
+          method: "PUT", // veya PATCH (Backend tasarımına göre)
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updateData),
+        },
+      );
+
+      if (res.ok) {
+        setIsEditing(false);
+        alert("Profil başarıyla veritabanına kaydedildi! 🎉");
+      } else {
+        // Eğer backend 400 veya 500'lü bir hata dönerse
+        alert(
+          "Kaydetme başarısız oldu. Backend bu verileri eksik bulmuş olabilir.",
+        );
+        console.error("Backend yanıtı:", await res.text());
+      }
+    } catch (error) {
+      console.error("Güncelleme hatası:", error);
+      alert("Sunucuya bağlanılamadı. İnternetini veya API'yi kontrol et.");
+    }
   };
 
   const handleImageUpload = (
@@ -683,7 +747,7 @@ export default function UserProfilePage() {
                 onClick={handleSearchSubmit}
               >
                 <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör{" "}
+                  Tüm sonuçları gör &rarr;
                 </span>
               </div>
             </div>
@@ -704,16 +768,27 @@ export default function UserProfilePage() {
             )}
 
             {isEditing && (
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
-                <label className="bg-white/90 text-slate-800 px-4 py-2 rounded-full font-bold text-sm cursor-pointer hover:scale-105 transition-transform flex items-center gap-2 shadow-lg">
-                  📷 Kapak Yükle
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleImageUpload(e, "cover")}
-                  />
-                </label>
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
+                <div className="flex gap-3">
+                  <label className="bg-white text-slate-800 px-4 py-2 rounded-full font-bold text-sm cursor-pointer hover:scale-105 transition-transform flex items-center gap-2 shadow-lg">
+                    📷 Yükle
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(e, "cover")}
+                    />
+                  </label>
+                  {/* 🚀 KAPAK FOTOĞRAFI KALDIR BUTONU */}
+                  {coverImage && (
+                    <button
+                      onClick={() => setCoverImage(null)}
+                      className="bg-red-500 text-white px-4 py-2 rounded-full font-bold text-sm cursor-pointer hover:bg-red-600 transition-colors flex items-center gap-2 shadow-lg"
+                    >
+                      <Trash2 size={16} /> Kaldır
+                    </button>
+                  )}
+                </div>
                 {coverImage && (
                   <input
                     type="range"
@@ -721,7 +796,7 @@ export default function UserProfilePage() {
                     max="100"
                     value={coverY}
                     onChange={(e) => setCoverY(Number(e.target.value))}
-                    className="w-1/2 cursor-pointer accent-blue-500"
+                    className="w-1/2 cursor-pointer accent-blue-500 mt-2"
                     title="Kapağı Yukarı/Aşağı Kaydır"
                   />
                 )}
@@ -737,15 +812,26 @@ export default function UserProfilePage() {
                   className="w-full h-full object-cover"
                 />
                 {isEditing && (
-                  <label className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-xs font-bold cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
-                    Değiştir
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleImageUpload(e, "profile")}
-                    />
-                  </label>
+                  <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <label className="text-xs font-bold cursor-pointer hover:text-blue-300 transition-colors">
+                      Değiştir
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleImageUpload(e, "profile")}
+                      />
+                    </label>
+                    {/* 🚀 PROFİL FOTOĞRAFI KALDIR BUTONU */}
+                    {profileImage && (
+                      <button
+                        onClick={() => setProfileImage(null)}
+                        className="text-xs font-bold text-red-400 hover:text-red-300 transition-colors"
+                      >
+                        Kaldır
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -779,14 +865,25 @@ export default function UserProfilePage() {
               </p>
 
               {isEditing ? (
-                <textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="Kendinden bahset..."
-                  className="mt-4 w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                  rows={3}
-                  maxLength={150}
-                />
+                <div className="mt-4">
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    placeholder="Kendinden bahset..."
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    rows={3}
+                    maxLength={150}
+                  />
+                  {/* 🚀 HESABI SİL BUTONU (Sadece Düzenleme Modunda Açık) */}
+                  <div className="mt-4 border-t border-red-50 pt-4 flex justify-end">
+                    <button
+                      onClick={handleDeleteAccount}
+                      className="text-red-500 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors"
+                    >
+                      <Trash2 size={16} /> Hesabımı Kalıcı Olarak Sil
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <p className="text-slate-600 mt-3 text-sm font-medium leading-relaxed max-w-lg">
                   {bio || "Hoş geldin! Burası senin kişisel vitrinin."}
