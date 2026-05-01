@@ -12,6 +12,7 @@ import {
   UserPlus,
   Trash2,
   Search,
+  Bell,
 } from "lucide-react";
 
 // 🚀 İsimleri her yerde büyük harfle başlatan formül
@@ -86,13 +87,10 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      window.location.href = "/login";
-      return;
-    }
-
+    if (!storedUser) return;
     const parsedUser = JSON.parse(storedUser);
-    setUser(parsedUser);
+
+    setUser(parsedUser); // Sayfa yenilendiğinde user objesini dolduralım ki null hatası olmasın
 
     // Kayıtlı profil verilerini çek
     const savedProfile = localStorage.getItem(`profile_${parsedUser.email}`);
@@ -103,31 +101,6 @@ export default function UserProfilePage() {
       setCoverImage(parsedProfile.coverImage || null);
       setCoverY(parsedProfile.coverY || 50);
     }
-
-    // Bildirimleri Çek
-    fetch(
-      `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          const deletedNotifs = JSON.parse(
-            localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
-          );
-          const seenNotifs = JSON.parse(
-            localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
-          );
-          const activeNotifs = data
-            .filter((n: any) => !deletedNotifs.includes(n.id))
-            .reverse();
-          const unreadNotifs = activeNotifs.filter(
-            (n: any) => !seenNotifs.includes(n.id),
-          );
-          setNotificationsCount(unreadNotifs.length);
-          setNotificationsList(activeNotifs);
-        }
-      })
-      .catch((err) => console.error("Bildirimler çekilemedi:", err));
 
     // Kullanıcının ilanlarını çek
     fetch("https://unicycle-api.onrender.com/api/products")
@@ -145,6 +118,69 @@ export default function UserProfilePage() {
         console.error(err);
         setIsLoading(false);
       });
+
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch(
+          `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
+        );
+        const data = await res.json();
+
+        if (Array.isArray(data)) {
+          const deletedNotifs = JSON.parse(
+            localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
+          );
+          const seenNotifs = JSON.parse(
+            localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
+          );
+
+          // 1. Silinmemiş olanları al
+          let activeNotifs = data.filter(
+            (n: any) => !deletedNotifs.includes(n.id),
+          );
+
+          // 2. 🚀 KESİN SIRALAMA: Yeniden Eskiye (En Yeni En Üstte)
+          activeNotifs.sort((a: any, b: any) => {
+            const dateA = a.createdAt
+              ? new Date(
+                  a.createdAt.endsWith("Z") ? a.createdAt : `${a.createdAt}Z`,
+                ).getTime()
+              : 0;
+            const dateB = b.createdAt
+              ? new Date(
+                  b.createdAt.endsWith("Z") ? b.createdAt : `${b.createdAt}Z`,
+                ).getTime()
+              : 0;
+            return dateB - dateA;
+          });
+
+          // 3. 🚀 DB'DEKİ İKİZLERİ GİZLE (Büyük/Küçük Harf Duyarsız)
+          activeNotifs = activeNotifs.filter(
+            (notif: any, index: number, self: any[]) =>
+              index ===
+              self.findIndex(
+                (n: any) =>
+                  n.message?.trim().toLowerCase() ===
+                  notif.message?.trim().toLowerCase(),
+              ),
+          );
+
+          const unreadNotifs = activeNotifs.filter(
+            (n: any) => !seenNotifs.includes(n.id),
+          );
+
+          setNotificationsCount(unreadNotifs.length);
+          setNotificationsList(activeNotifs);
+        }
+      } catch (err) {
+        console.error("Bildirimler çekilemedi:", err);
+      }
+    };
+
+    fetchNotifications();
+    // 10 saniyede bir gizlice güncelle
+    const interval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   // 🚀 Premium Arama Motoru
@@ -478,7 +514,7 @@ export default function UserProfilePage() {
                     onClick={handleSearchSubmit}
                   >
                     <span className="text-xs font-black text-blue-600">
-                      Tüm sonuçları gör{" "}
+                      Tüm sonuçları gör
                     </span>
                   </div>
                 </div>
@@ -560,11 +596,12 @@ export default function UserProfilePage() {
                             Şu an hiç bildirimin yok.
                           </div>
                         ) : (
-                          notificationsList.map((notif: any) => {
-                            let icon = <MessageCircle className="w-5 h-5" />;
-                            let bg = "bg-green-50";
-                            let text = "text-green-500";
+                          notificationsList.slice(0, 5).map((notif: any) => {
+                            let icon = <Bell className="w-5 h-5" />;
+                            let bg = "bg-blue-50";
+                            let text = "text-blue-500";
                             const msgLower = notif.message?.toLowerCase() || "";
+
                             if (
                               msgLower.includes("beğen") ||
                               msgLower.includes("favori")
@@ -572,6 +609,14 @@ export default function UserProfilePage() {
                               icon = <Heart className="w-5 h-5 fill-current" />;
                               bg = "bg-red-50";
                               text = "text-red-500";
+                            } else if (
+                              msgLower.includes("mesaj") ||
+                              msgLower.includes("yorum") ||
+                              msgLower.includes("soru")
+                            ) {
+                              icon = <MessageCircle className="w-5 h-5" />;
+                              bg = "bg-green-50";
+                              text = "text-green-500";
                             } else if (msgLower.includes("takip")) {
                               icon = <UserPlus className="w-5 h-5" />;
                               bg = "bg-pink-50";
@@ -589,6 +634,16 @@ export default function UserProfilePage() {
                               notif.message,
                             );
 
+                            // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
+                            let dropDate = "Yeni";
+                            if (notif.createdAt) {
+                              const utcDate = notif.createdAt.endsWith("Z")
+                                ? notif.createdAt
+                                : `${notif.createdAt}Z`;
+                              const dObj = new Date(utcDate);
+                              dropDate = `${dObj.toLocaleDateString("tr-TR")} • ${dObj.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
+                            }
+
                             return (
                               <div
                                 key={notif.id}
@@ -604,11 +659,7 @@ export default function UserProfilePage() {
                                     {formattedMessage}
                                   </p>
                                   <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                    {notif.createdAt
-                                      ? new Date(
-                                          notif.createdAt,
-                                        ).toLocaleDateString("tr-TR")
-                                      : "Yeni"}
+                                    {dropDate}
                                   </p>
                                 </div>
                               </div>

@@ -78,54 +78,83 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-
-      // Veritabanından güncel bildirimleri çek
-      fetch(
-        `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (Array.isArray(data)) {
-            const deletedNotifs = JSON.parse(
-              localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
-            );
-            const seenNotifs = JSON.parse(
-              localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
-            );
-
-            const activeNotifs = data
-              .filter((n: any) => !deletedNotifs.includes(n.id))
-              .reverse();
-
-            const unreadNotifs = activeNotifs.filter(
-              (n: any) => !seenNotifs.includes(n.id),
-            );
-
-            setNotifications(activeNotifs);
-            setNotificationsList(activeNotifs);
-            setNotificationsCount(unreadNotifs.length);
-
-            // Sayfaya girildiği için okunmamış rozetini sıfırla
-            const newSeenNotifs = activeNotifs.map((n: any) => n.id);
-            localStorage.setItem(
-              `seenNotifs_${parsedUser.id}`,
-              JSON.stringify(newSeenNotifs),
-            );
-            window.dispatchEvent(new Event("notificationsSeen"));
-            setNotificationsCount(0); // Bu sayfada zaten gördü
-          }
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error("Bildirimler çekilemedi:", err);
-          setLoading(false);
-        });
-    } else {
-      window.location.href = "/login";
+    if (!storedUser) {
+      setLoading(false);
+      return;
     }
+    const parsedUser = JSON.parse(storedUser);
+    setUser(parsedUser);
+
+    // Bildirimleri Çekme Fonksiyonu
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch(
+          `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
+        );
+        const data = await res.json();
+
+        if (Array.isArray(data)) {
+          const deletedNotifs = JSON.parse(
+            localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
+          );
+          const seenNotifs = JSON.parse(
+            localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
+          );
+
+          // 1. Silinmemiş olanları al
+          let activeNotifs = data.filter(
+            (n: any) => !deletedNotifs.includes(n.id),
+          );
+
+          // 2. 🚀 KESİN SIRALAMA: Yeniden Eskiye (En Yeni En Üstte)
+          activeNotifs.sort((a: any, b: any) => {
+            const dateA = a.createdAt
+              ? new Date(
+                  a.createdAt.endsWith("Z") ? a.createdAt : `${a.createdAt}Z`,
+                ).getTime()
+              : 0;
+            const dateB = b.createdAt
+              ? new Date(
+                  b.createdAt.endsWith("Z") ? b.createdAt : `${b.createdAt}Z`,
+                ).getTime()
+              : 0;
+            return dateB - dateA;
+          });
+
+          // 3. 🚀 DB'DEKİ İKİZLERİ GİZLE (Büyük/Küçük Harf Duyarsız)
+          activeNotifs = activeNotifs.filter(
+            (notif: any, index: number, self: any[]) =>
+              index ===
+              self.findIndex(
+                (n: any) =>
+                  n.message?.trim().toLowerCase() ===
+                  notif.message?.trim().toLowerCase(),
+              ),
+          );
+
+          const unreadNotifs = activeNotifs.filter(
+            (n: any) => !seenNotifs.includes(n.id),
+          );
+
+          setNotificationsCount(unreadNotifs.length);
+          setNotificationsList(activeNotifs);
+
+          // Ana sayfa için bildirimleri state'e basıyoruz
+          setNotifications(activeNotifs);
+        }
+      } catch (err) {
+        console.error("Bildirimler çekilemedi:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // İlk yüklemede çek
+    fetchNotifications();
+
+    // 🚀 YENİ: Her 10 saniyede bir sessizce kontrol et (Polling)
+    const interval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   // 🚀 Premium Arama Motoru
@@ -230,6 +259,8 @@ export default function NotificationsPage() {
 
   const handleDelete = async (id: number) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
+    setNotificationsList((prev) => prev.filter((n) => n.id !== id));
+
     const deleted = JSON.parse(
       localStorage.getItem(`deletedNotifs_${user.id}`) || "[]",
     );
@@ -254,6 +285,9 @@ export default function NotificationsPage() {
       return;
     const allIds = notifications.map((n) => n.id);
     setNotifications([]);
+    setNotificationsList([]);
+    setNotificationsCount(0);
+
     const deleted = JSON.parse(
       localStorage.getItem(`deletedNotifs_${user.id}`) || "[]",
     );
@@ -512,6 +546,16 @@ export default function NotificationsPage() {
                                 notif.message,
                               );
 
+                              // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
+                              let dropDate = "Yeni";
+                              if (notif.createdAt) {
+                                const utcDate = notif.createdAt.endsWith("Z")
+                                  ? notif.createdAt
+                                  : `${notif.createdAt}Z`;
+                                const dObj = new Date(utcDate);
+                                dropDate = `${dObj.toLocaleDateString("tr-TR")} • ${dObj.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
+                              }
+
                               return (
                                 <div
                                   key={notif.id}
@@ -527,11 +571,7 @@ export default function NotificationsPage() {
                                       {formattedMessage}
                                     </p>
                                     <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                      {notif.createdAt
-                                        ? new Date(
-                                            notif.createdAt,
-                                          ).toLocaleDateString("tr-TR")
-                                        : "Yeni"}
+                                      {dropDate}
                                     </p>
                                   </div>
                                 </div>
@@ -751,8 +791,23 @@ export default function NotificationsPage() {
                   text = "text-orange-500";
                 }
 
-                // 🚀 YENİ: BİLDİRİMLER BURADA DA TEMİZLENİYOR
                 const formattedMessage = cleanNotification(notif.message);
+
+                // 🚀 ANA SAYFA İÇİN SAAT DÜZELTMESİ (UTC)
+                let mainDate = "Bugün";
+                let mainTime = "Yeni";
+
+                if (notif.createdAt) {
+                  const utcDate = notif.createdAt.endsWith("Z")
+                    ? notif.createdAt
+                    : `${notif.createdAt}Z`;
+                  const dateObj = new Date(utcDate);
+                  mainDate = dateObj.toLocaleDateString("tr-TR");
+                  mainTime = dateObj.toLocaleTimeString("tr-TR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                }
 
                 return (
                   <div
@@ -769,22 +824,9 @@ export default function NotificationsPage() {
                         {formattedMessage}
                       </p>
                       <p className="text-[11px] sm:text-xs font-semibold text-slate-400 mt-1.5 flex items-center gap-1.5">
-                        <span>
-                          {notif.createdAt
-                            ? new Date(notif.createdAt).toLocaleDateString(
-                                "tr-TR",
-                              )
-                            : "Bugün"}
-                        </span>
+                        <span>{mainDate}</span>
                         <span>•</span>
-                        <span>
-                          {notif.createdAt
-                            ? new Date(notif.createdAt).toLocaleTimeString(
-                                "tr-TR",
-                                { hour: "2-digit", minute: "2-digit" },
-                              )
-                            : "Yeni"}
-                        </span>
+                        <span>{mainTime}</span>
                       </p>
                     </div>
                     <button

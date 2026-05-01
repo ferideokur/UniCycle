@@ -286,6 +286,8 @@ export default function Home() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+    let interval: any;
+
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
@@ -296,11 +298,13 @@ export default function Home() {
         );
         setLikedProducts(likes);
 
-        fetch(
-          `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
-        )
-          .then((res) => res.json())
-          .then((data) => {
+        const fetchNotifications = async () => {
+          try {
+            const res = await fetch(
+              `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
+            );
+            const data = await res.json();
+
             if (Array.isArray(data)) {
               const deletedNotifs = JSON.parse(
                 localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
@@ -308,9 +312,42 @@ export default function Home() {
               const seenNotifs = JSON.parse(
                 localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
               );
-              const activeNotifs = data
-                .filter((n: any) => !deletedNotifs.includes(n.id))
-                .reverse();
+
+              // 1. Silinmemiş olanları al
+              let activeNotifs = data.filter(
+                (n: any) => !deletedNotifs.includes(n.id),
+              );
+
+              // 2. 🚀 KESİN SIRALAMA: Yeniden Eskiye (En Yeni En Üstte)
+              activeNotifs.sort((a: any, b: any) => {
+                const dateA = a.createdAt
+                  ? new Date(
+                      a.createdAt.endsWith("Z")
+                        ? a.createdAt
+                        : `${a.createdAt}Z`,
+                    ).getTime()
+                  : 0;
+                const dateB = b.createdAt
+                  ? new Date(
+                      b.createdAt.endsWith("Z")
+                        ? b.createdAt
+                        : `${b.createdAt}Z`,
+                    ).getTime()
+                  : 0;
+                return dateB - dateA;
+              });
+
+              // 3. 🚀 DB'DEKİ İKİZLERİ GİZLE (Büyük/Küçük Harf Duyarsız)
+              activeNotifs = activeNotifs.filter(
+                (notif: any, index: number, self: any[]) =>
+                  index ===
+                  self.findIndex(
+                    (n: any) =>
+                      n.message?.trim().toLowerCase() ===
+                      notif.message?.trim().toLowerCase(),
+                  ),
+              );
+
               const unreadNotifs = activeNotifs.filter(
                 (n: any) => !seenNotifs.includes(n.id),
               );
@@ -318,8 +355,14 @@ export default function Home() {
               setNotificationsCount(unreadNotifs.length);
               setNotificationsList(activeNotifs);
             }
-          })
-          .catch((err) => console.error("Bildirim hatası:", err));
+          } catch (err) {
+            console.error("Bildirimler çekilemedi:", err);
+          }
+        };
+
+        fetchNotifications();
+        // 10 saniyede bir gizlice güncelle
+        interval = setInterval(fetchNotifications, 10000);
 
         window.addEventListener("notificationsSeen", () =>
           setNotificationsCount(0),
@@ -329,10 +372,12 @@ export default function Home() {
       }
     }
 
-    return () =>
+    return () => {
+      if (interval) clearInterval(interval);
       window.removeEventListener("notificationsSeen", () =>
         setNotificationsCount(0),
       );
+    };
   }, []);
 
   useEffect(() => {
@@ -760,6 +805,7 @@ export default function Home() {
 
               {user ? (
                 <div className="flex items-center gap-2 sm:gap-4 relative">
+                  {/* 🚀 ORİJİNAL İNCE KALP İKONU */}
                   <Link
                     href="/favorites"
                     className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
@@ -781,6 +827,7 @@ export default function Home() {
                   </Link>
 
                   <div className="relative shrink-0">
+                    {/* 🚀 ORİJİNAL İNCE ZİL İKONU */}
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                       className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
@@ -823,12 +870,13 @@ export default function Home() {
                               Şu an hiç bildirimin yok.
                             </div>
                           ) : (
-                            notificationsList.map((notif: any) => {
+                            notificationsList.slice(0, 5).map((notif: any) => {
                               let icon = <Bell className="w-5 h-5" />;
                               let bg = "bg-blue-50";
                               let text = "text-blue-500";
                               const msgLower =
                                 notif.message?.toLowerCase() || "";
+
                               if (
                                 msgLower.includes("beğen") ||
                                 msgLower.includes("favori")
@@ -863,6 +911,16 @@ export default function Home() {
                                 notif.message,
                               );
 
+                              // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
+                              let dropDate = "Yeni";
+                              if (notif.createdAt) {
+                                const utcDate = notif.createdAt.endsWith("Z")
+                                  ? notif.createdAt
+                                  : `${notif.createdAt}Z`;
+                                const dObj = new Date(utcDate);
+                                dropDate = `${dObj.toLocaleDateString("tr-TR")} • ${dObj.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
+                              }
+
                               return (
                                 <div
                                   key={notif.id}
@@ -878,11 +936,7 @@ export default function Home() {
                                       {formattedMessage}
                                     </p>
                                     <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                      {notif.createdAt
-                                        ? new Date(
-                                            notif.createdAt,
-                                          ).toLocaleDateString("tr-TR")
-                                        : "Yeni"}
+                                      {dropDate}
                                     </p>
                                   </div>
                                 </div>
@@ -903,9 +957,9 @@ export default function Home() {
 
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold hover:bg-blue-700 shadow-sm transition-all"
+                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
                   >
-                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs shrink-0">
+                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
                       👤
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
@@ -1030,7 +1084,7 @@ export default function Home() {
                 onClick={handleSearchSubmit}
               >
                 <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör
+                  Tüm sonuçları gör &rarr;
                 </span>
               </div>
             </div>

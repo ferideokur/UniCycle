@@ -18,6 +18,7 @@ import {
   UserPlus,
   UserCheck,
   Search,
+  ArrowLeft,
 } from "lucide-react";
 
 // 🇹🇷 Türkçe İyelik Eki Bulucu
@@ -47,6 +48,28 @@ const formatName = (name: string) => {
     .split(" ")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
+};
+
+// 🧹 BİLDİRİM TEMİZLEYİCİ
+const cleanNotification = (msg: string) => {
+  if (!msg) return "";
+  let text = msg
+    .replace(/[💭💬🗨️]/g, "")
+    .replace(/\[.*?\]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (text.includes(",")) {
+    const parts = text.split(",");
+    return `${formatName(parts[0].trim())}, ${parts.slice(1).join(",").trim()}`;
+  }
+
+  if (text.toLowerCase().includes("sana bir mesaj gönderdi")) {
+    const namePart = text.replace(/sana bir mesaj gönderdi\.?/i, "").trim();
+    return `${formatName(namePart)} sana bir mesaj gönderdi.`;
+  }
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
 };
 
 export default function PublicProfilePage() {
@@ -83,6 +106,7 @@ export default function PublicProfilePage() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+    let interval: any;
 
     if (storedUser) {
       try {
@@ -94,11 +118,13 @@ export default function PublicProfilePage() {
         );
         if (followMemory === "true") setIsFollowing(true);
 
-        fetch(
-          `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
-        )
-          .then((res) => res.json())
-          .then((data) => {
+        const fetchNotifications = async () => {
+          try {
+            const res = await fetch(
+              `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
+            );
+            const data = await res.json();
+
             if (Array.isArray(data)) {
               const deletedNotifs = JSON.parse(
                 localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
@@ -106,17 +132,57 @@ export default function PublicProfilePage() {
               const seenNotifs = JSON.parse(
                 localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
               );
-              const activeNotifs = data
-                .filter((n: any) => !deletedNotifs.includes(n.id))
-                .reverse();
+
+              // 1. Silinmemiş olanları al
+              let activeNotifs = data.filter(
+                (n: any) => !deletedNotifs.includes(n.id),
+              );
+
+              // 2. 🚀 KESİN SIRALAMA: Yeniden Eskiye (En Yeni En Üstte)
+              activeNotifs.sort((a: any, b: any) => {
+                const dateA = a.createdAt
+                  ? new Date(
+                      a.createdAt.endsWith("Z")
+                        ? a.createdAt
+                        : `${a.createdAt}Z`,
+                    ).getTime()
+                  : 0;
+                const dateB = b.createdAt
+                  ? new Date(
+                      b.createdAt.endsWith("Z")
+                        ? b.createdAt
+                        : `${b.createdAt}Z`,
+                    ).getTime()
+                  : 0;
+                return dateB - dateA;
+              });
+
+              // 3. 🚀 DB'DEKİ İKİZLERİ GİZLE (Büyük/Küçük Harf Duyarsız)
+              activeNotifs = activeNotifs.filter(
+                (notif: any, index: number, self: any[]) =>
+                  index ===
+                  self.findIndex(
+                    (n: any) =>
+                      n.message?.trim().toLowerCase() ===
+                      notif.message?.trim().toLowerCase(),
+                  ),
+              );
+
               const unreadNotifs = activeNotifs.filter(
                 (n: any) => !seenNotifs.includes(n.id),
               );
+
               setNotificationsCount(unreadNotifs.length);
               setNotificationsList(activeNotifs);
             }
-          })
-          .catch((err) => console.error("Bildirimler çekilemedi:", err));
+          } catch (err) {
+            console.error("Bildirimler çekilemedi:", err);
+          }
+        };
+
+        fetchNotifications();
+        // 10 saniyede bir gizlice güncelle
+        interval = setInterval(fetchNotifications, 10000);
       } catch (e) {
         console.error(e);
       }
@@ -154,6 +220,10 @@ export default function PublicProfilePage() {
       }
     };
     fetchData();
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [id]);
 
   useEffect(() => {
@@ -295,8 +365,8 @@ export default function PublicProfilePage() {
       );
       showToast(
         newFollowState
-          ? `✨ ${formattedUserName} takip edildi!`
-          : `💔 ${formattedUserName} takipten çıkıldı.`,
+          ? `${formattedUserName} takip edildi!`
+          : `${formattedUserName} takipten çıkıldı.`,
       );
 
       if (newFollowState) {
@@ -566,11 +636,12 @@ export default function PublicProfilePage() {
                             </div>
                           ) : (
                             notificationsList.slice(0, 5).map((notif: any) => {
-                              let icon = <MessageCircle className="w-5 h-5" />;
-                              let bg = "bg-green-50";
-                              let text = "text-green-500";
+                              let icon = <Bell className="w-5 h-5" />;
+                              let bg = "bg-blue-50";
+                              let text = "text-blue-500";
                               const msgLower =
                                 notif.message?.toLowerCase() || "";
+
                               if (
                                 msgLower.includes("beğen") ||
                                 msgLower.includes("favori")
@@ -580,6 +651,14 @@ export default function PublicProfilePage() {
                                 );
                                 bg = "bg-red-50";
                                 text = "text-red-500";
+                              } else if (
+                                msgLower.includes("mesaj") ||
+                                msgLower.includes("yorum") ||
+                                msgLower.includes("soru")
+                              ) {
+                                icon = <MessageCircle className="w-5 h-5" />;
+                                bg = "bg-green-50";
+                                text = "text-green-500";
                               } else if (msgLower.includes("takip")) {
                                 icon = <UserPlus className="w-5 h-5" />;
                                 bg = "bg-pink-50";
@@ -593,12 +672,19 @@ export default function PublicProfilePage() {
                                 text = "text-orange-500";
                               }
 
-                              // 🚀 YENİ: BİLDİRİMDEKİ İSİMLERİ BÜYÜT
-                              const parts = notif.message.split(",");
-                              const formattedMessage =
-                                parts.length > 1
-                                  ? `${formatName(parts[0])},${parts.slice(1).join(",")}`
-                                  : formatName(notif.message);
+                              const formattedMessage = cleanNotification(
+                                notif.message,
+                              );
+
+                              // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
+                              let dropDate = "Yeni";
+                              if (notif.createdAt) {
+                                const utcDate = notif.createdAt.endsWith("Z")
+                                  ? notif.createdAt
+                                  : `${notif.createdAt}Z`;
+                                const dObj = new Date(utcDate);
+                                dropDate = `${dObj.toLocaleDateString("tr-TR")} • ${dObj.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
+                              }
 
                               return (
                                 <div
@@ -615,11 +701,7 @@ export default function PublicProfilePage() {
                                       {formattedMessage}
                                     </p>
                                     <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                      {notif.createdAt
-                                        ? new Date(
-                                            notif.createdAt,
-                                          ).toLocaleDateString("tr-TR")
-                                        : "Yeni"}
+                                      {dropDate}
                                     </p>
                                   </div>
                                 </div>
@@ -767,7 +849,7 @@ export default function PublicProfilePage() {
                 onClick={handleSearchSubmit}
               >
                 <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör{" "}
+                  Tüm sonuçları gör &rarr;
                 </span>
               </div>
             </div>
@@ -775,13 +857,14 @@ export default function PublicProfilePage() {
         </div>
       </header>
 
-      {/* 🔙 GERİ DÖN */}
+      {/* 🔙 ZARİF GERİ DÖN YAPISI */}
       <div className="max-w-[800px] mx-auto w-full px-4 sm:px-0 mt-4 sm:mt-6 mb-6">
         <button
           onClick={() => router.back()}
-          className="font-bold text-slate-500 hover:text-blue-600 flex items-center gap-2 text-xs sm:text-sm"
+          className="font-bold text-slate-500 hover:text-[#20B2AA] transition-colors flex items-center gap-1 text-[11px] sm:text-sm shrink-0 group"
         >
-          &larr; Geri Dön
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />{" "}
+          Geri Dön
         </button>
       </div>
 

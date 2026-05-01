@@ -99,12 +99,42 @@ export default function ListingDetailPage() {
           const seenNotifs = JSON.parse(
             localStorage.getItem(`seenNotifs_${userId}`) || "[]",
           );
-          const activeNotifs = data
-            .filter((n: any) => !deletedNotifs.includes(n.id))
-            .reverse();
+
+          // 1. Silinmemiş olanları al
+          let activeNotifs = data.filter(
+            (n: any) => !deletedNotifs.includes(n.id),
+          );
+
+          // 2. 🚀 KESİN SIRALAMA: Yeniden Eskiye (En Yeni En Üstte)
+          activeNotifs.sort((a: any, b: any) => {
+            const dateA = a.createdAt
+              ? new Date(
+                  a.createdAt.endsWith("Z") ? a.createdAt : `${a.createdAt}Z`,
+                ).getTime()
+              : 0;
+            const dateB = b.createdAt
+              ? new Date(
+                  b.createdAt.endsWith("Z") ? b.createdAt : `${b.createdAt}Z`,
+                ).getTime()
+              : 0;
+            return dateB - dateA;
+          });
+
+          // 3. 🚀 DB'DEKİ İKİZLERİ GİZLE (Büyük/Küçük Harf Duyarsız)
+          activeNotifs = activeNotifs.filter(
+            (notif: any, index: number, self: any[]) =>
+              index ===
+              self.findIndex(
+                (n: any) =>
+                  n.message?.trim().toLowerCase() ===
+                  notif.message?.trim().toLowerCase(),
+              ),
+          );
+
           const unreadNotifs = activeNotifs.filter(
             (n: any) => !seenNotifs.includes(n.id),
           );
+
           setNotificationsCount(unreadNotifs.length);
           setNotificationsList(activeNotifs);
         }
@@ -121,12 +151,30 @@ export default function ListingDetailPage() {
         localStorage.getItem(`likes_${parsedUser.email}`) || "[]",
       );
       setIsLiked(likes.includes(Number(id)));
+
+      // İlk bildirim çekimi
       updateNotificationCount(parsedUser.id);
+
+      // 10 saniyede bir bildirimleri güncelle
+      const interval = setInterval(() => {
+        updateNotificationCount(parsedUser.id);
+      }, 10000);
+
       window.addEventListener("notificationsSeen", () =>
         setNotificationsCount(0),
       );
-    }
 
+      // Component unmount olduğunda interval'i ve event listener'ı temizle
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener("notificationsSeen", () =>
+          setNotificationsCount(0),
+        );
+      };
+    }
+  }, [id]);
+
+  useEffect(() => {
     fetch("https://unicycle-api.onrender.com/api/products")
       .then((res) => res.json())
       .then((data) => {
@@ -140,11 +188,6 @@ export default function ListingDetailPage() {
         console.error("Hata:", err);
         setLoading(false);
       });
-
-    return () =>
-      window.removeEventListener("notificationsSeen", () =>
-        setNotificationsCount(0),
-      );
   }, [id]);
 
   const fetchLikeCount = async () => {
@@ -201,7 +244,7 @@ export default function ListingDetailPage() {
             const allProducts = await prodRes.json();
             if (Array.isArray(allProducts)) {
               const matchedProduct = allProducts.find(
-                (p) => p.id.toString() === query.toString(),
+                (p: any) => p.id.toString() === query.toString(),
               );
               if (matchedProduct) {
                 combined = [{ type: "product", item: matchedProduct }];
@@ -441,7 +484,10 @@ export default function ListingDetailPage() {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
-    const date = new Date(dateString);
+
+    // Yorumlar için saat düzeltmesi
+    const utcDate = dateString.endsWith("Z") ? dateString : `${dateString}Z`;
+    const date = new Date(utcDate);
     return (
       date.toLocaleDateString("tr-TR") +
       " " +
@@ -677,10 +723,10 @@ export default function ListingDetailPage() {
                               Şu an hiç bildirimin yok.
                             </div>
                           ) : (
-                            notificationsList.map((notif: any) => {
-                              let icon = <MessageCircle className="w-5 h-5" />;
-                              let bg = "bg-green-50";
-                              let text = "text-green-500";
+                            notificationsList.slice(0, 5).map((notif: any) => {
+                              let icon = <Bell className="w-5 h-5" />;
+                              let bg = "bg-blue-50";
+                              let text = "text-blue-500";
                               const msgLower =
                                 notif.message?.toLowerCase() || "";
 
@@ -693,6 +739,14 @@ export default function ListingDetailPage() {
                                 );
                                 bg = "bg-red-50";
                                 text = "text-red-500";
+                              } else if (
+                                msgLower.includes("mesaj") ||
+                                msgLower.includes("yorum") ||
+                                msgLower.includes("soru")
+                              ) {
+                                icon = <MessageCircle className="w-5 h-5" />;
+                                bg = "bg-green-50";
+                                text = "text-green-500";
                               } else if (msgLower.includes("takip")) {
                                 icon = <UserPlus className="w-5 h-5" />;
                                 bg = "bg-pink-50";
@@ -710,6 +764,16 @@ export default function ListingDetailPage() {
                                 notif.message,
                               );
 
+                              // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
+                              let dropDate = "Yeni";
+                              if (notif.createdAt) {
+                                const utcDate = notif.createdAt.endsWith("Z")
+                                  ? notif.createdAt
+                                  : `${notif.createdAt}Z`;
+                                const dObj = new Date(utcDate);
+                                dropDate = `${dObj.toLocaleDateString("tr-TR")} • ${dObj.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
+                              }
+
                               return (
                                 <div
                                   key={notif.id}
@@ -725,11 +789,7 @@ export default function ListingDetailPage() {
                                       {formattedMessage}
                                     </p>
                                     <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                      {notif.createdAt
-                                        ? new Date(
-                                            notif.createdAt,
-                                          ).toLocaleDateString("tr-TR")
-                                        : "Yeni"}
+                                      {dropDate}
                                     </p>
                                   </div>
                                 </div>
@@ -757,6 +817,7 @@ export default function ListingDetailPage() {
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
                   </Link>
+
                   <button
                     onClick={handleLogout}
                     className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"

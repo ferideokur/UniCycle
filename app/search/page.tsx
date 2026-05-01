@@ -82,16 +82,20 @@ function SearchContent() {
   // Kullanıcı ve Bildirimleri Yükle
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+    let interval: any;
+
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
         setCurrentUser(parsedUser);
 
-        fetch(
-          `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
-        )
-          .then((res) => res.json())
-          .then((data) => {
+        const fetchNotifications = async () => {
+          try {
+            const res = await fetch(
+              `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
+            );
+            const data = await res.json();
+
             if (Array.isArray(data)) {
               const deletedNotifs = JSON.parse(
                 localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
@@ -99,21 +103,72 @@ function SearchContent() {
               const seenNotifs = JSON.parse(
                 localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
               );
-              const activeNotifs = data
-                .filter((n: any) => !deletedNotifs.includes(n.id))
-                .reverse();
+
+              // 1. Silinmemiş olanları al
+              let activeNotifs = data.filter(
+                (n: any) => !deletedNotifs.includes(n.id),
+              );
+
+              // 2. 🚀 KESİN SIRALAMA: Yeniden Eskiye (En Yeni En Üstte)
+              activeNotifs.sort((a: any, b: any) => {
+                const dateA = a.createdAt
+                  ? new Date(
+                      a.createdAt.endsWith("Z")
+                        ? a.createdAt
+                        : `${a.createdAt}Z`,
+                    ).getTime()
+                  : 0;
+                const dateB = b.createdAt
+                  ? new Date(
+                      b.createdAt.endsWith("Z")
+                        ? b.createdAt
+                        : `${b.createdAt}Z`,
+                    ).getTime()
+                  : 0;
+                return dateB - dateA;
+              });
+
+              // 3. 🚀 DB'DEKİ İKİZLERİ GİZLE (Büyük/Küçük Harf Duyarsız)
+              activeNotifs = activeNotifs.filter(
+                (notif: any, index: number, self: any[]) =>
+                  index ===
+                  self.findIndex(
+                    (n: any) =>
+                      n.message?.trim().toLowerCase() ===
+                      notif.message?.trim().toLowerCase(),
+                  ),
+              );
+
               const unreadNotifs = activeNotifs.filter(
                 (n: any) => !seenNotifs.includes(n.id),
               );
+
               setNotificationsCount(unreadNotifs.length);
               setNotificationsList(activeNotifs);
             }
-          })
-          .catch((err) => console.error("Bildirimler çekilemedi:", err));
+          } catch (err) {
+            console.error("Bildirimler çekilemedi:", err);
+          }
+        };
+
+        fetchNotifications();
+        // 10 saniyede bir gizlice güncelle
+        interval = setInterval(fetchNotifications, 10000);
+
+        window.addEventListener("notificationsSeen", () =>
+          setNotificationsCount(0),
+        );
       } catch (e) {
         console.error(e);
       }
     }
+
+    return () => {
+      if (interval) clearInterval(interval);
+      window.removeEventListener("notificationsSeen", () =>
+        setNotificationsCount(0),
+      );
+    };
   }, []);
 
   // 🚀 ANA ARAMA İŞLEMİ (Sayfa Ortası - ID Destekli)
@@ -495,7 +550,7 @@ function SearchContent() {
                               Şu an hiç bildirimin yok.
                             </div>
                           ) : (
-                            notificationsList.map((notif: any) => {
+                            notificationsList.slice(0, 5).map((notif: any) => {
                               let icon = <Bell className="w-5 h-5" />;
                               let bg = "bg-blue-50";
                               let text = "text-blue-500";
@@ -536,6 +591,16 @@ function SearchContent() {
                                 notif.message,
                               );
 
+                              // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
+                              let dropDate = "Yeni";
+                              if (notif.createdAt) {
+                                const utcDate = notif.createdAt.endsWith("Z")
+                                  ? notif.createdAt
+                                  : `${notif.createdAt}Z`;
+                                const dObj = new Date(utcDate);
+                                dropDate = `${dObj.toLocaleDateString("tr-TR")} • ${dObj.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
+                              }
+
                               return (
                                 <div
                                   key={notif.id}
@@ -551,11 +616,7 @@ function SearchContent() {
                                       {formattedMessage}
                                     </p>
                                     <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                      {notif.createdAt
-                                        ? new Date(
-                                            notif.createdAt,
-                                          ).toLocaleDateString("tr-TR")
-                                        : "Yeni"}
+                                      {dropDate}
                                     </p>
                                   </div>
                                 </div>
@@ -703,7 +764,7 @@ function SearchContent() {
                 onClick={handleSearchSubmit}
               >
                 <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör
+                  Tüm sonuçları gör &rarr;
                 </span>
               </div>
             </div>
@@ -867,21 +928,26 @@ function SearchContent() {
       )}
 
       {/* 🌊 FOOTER (PREMIUM) */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 sm:mt-16 rounded-t-[3rem] shadow-sm w-full">
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 rounded-t-[3rem] shadow-sm w-full">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-2">
+          <div className="col-span-1 md:col-span-2 text-center md:text-left">
             <div className="mb-4">
               <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
                 Uni<span className="text-[#20B2AA]">Cycle</span>
               </span>
             </div>
-            <p className="text-sm font-medium text-slate-500 max-w-sm">
+
+            <p className="text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
               öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
             </p>
           </div>
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
+
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-4 text-base">
+              Platform
+            </h4>
+
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
@@ -896,6 +962,7 @@ function SearchContent() {
                   Nasıl Çalışır?
                 </button>
               </li>
+
               <li>
                 <button
                   onClick={() =>
@@ -909,6 +976,7 @@ function SearchContent() {
                   Güvenlik İpuçları
                 </button>
               </li>
+
               <li>
                 <button
                   onClick={() =>
@@ -924,8 +992,12 @@ function SearchContent() {
               </li>
             </ul>
           </div>
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
+
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-4 text-base">
+              İletişim
+            </h4>
+
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
@@ -940,6 +1012,7 @@ function SearchContent() {
                   Destek Merkezi
                 </button>
               </li>
+
               <li>
                 <button
                   onClick={() =>
@@ -953,6 +1026,7 @@ function SearchContent() {
                   Bize Ulaşın
                 </button>
               </li>
+
               <li>
                 <button
                   onClick={() =>
@@ -969,6 +1043,7 @@ function SearchContent() {
             </ul>
           </div>
         </div>
+
         <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>

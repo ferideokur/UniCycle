@@ -76,20 +76,17 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      window.location.href = "/login";
-      return;
-    }
-
+    if (!storedUser) return;
     const parsedUser = JSON.parse(storedUser);
-    setUser(parsedUser);
+    setUser(parsedUser); // Kullanıcıyı state'e atamayı unutmayalım
 
-    // Bildirimleri Çek
-    fetch(
-      `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
-    )
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch(
+          `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
+        );
+        const data = await res.json();
+
         if (Array.isArray(data)) {
           const deletedNotifs = JSON.parse(
             localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
@@ -97,41 +94,57 @@ export default function FavoritesPage() {
           const seenNotifs = JSON.parse(
             localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
           );
-          const activeNotifs = data
-            .filter((n: any) => !deletedNotifs.includes(n.id))
-            .reverse();
+
+          // 1. Silinmemiş olanları al
+          let activeNotifs = data.filter(
+            (n: any) => !deletedNotifs.includes(n.id),
+          );
+
+          // 2. 🚀 KESİN SIRALAMA: Yeniden Eskiye (En Yeni En Üstte)
+          activeNotifs.sort((a: any, b: any) => {
+            const dateA = a.createdAt
+              ? new Date(
+                  a.createdAt.endsWith("Z") ? a.createdAt : `${a.createdAt}Z`,
+                ).getTime()
+              : 0;
+            const dateB = b.createdAt
+              ? new Date(
+                  b.createdAt.endsWith("Z") ? b.createdAt : `${b.createdAt}Z`,
+                ).getTime()
+              : 0;
+            return dateB - dateA;
+          });
+
+          // 3. 🚀 DB'DEKİ İKİZLERİ GİZLE (Büyük/Küçük Harf Duyarsız)
+          activeNotifs = activeNotifs.filter(
+            (notif: any, index: number, self: any[]) =>
+              index ===
+              self.findIndex(
+                (n: any) =>
+                  n.message?.trim().toLowerCase() ===
+                  notif.message?.trim().toLowerCase(),
+              ),
+          );
+
           const unreadNotifs = activeNotifs.filter(
             (n: any) => !seenNotifs.includes(n.id),
           );
+
           setNotificationsCount(unreadNotifs.length);
           setNotificationsList(activeNotifs);
         }
-      })
-      .catch((err) => console.error("Bildirimler çekilemedi:", err));
+      } catch (err) {
+        console.error("Bildirimler çekilemedi:", err);
+      }
+    };
 
-    const likesKey = `likes_${parsedUser.email}`;
-    const likedIds = JSON.parse(localStorage.getItem(likesKey) || "[]");
+    fetchNotifications();
+    // 10 saniyede bir gizlice güncelle
+    const interval = setInterval(fetchNotifications, 10000);
 
-    if (likedIds.length === 0) {
-      setIsLoading(false);
-      return;
-    }
+    setIsLoading(false); // UI hatası vermesin diye loading'i kapatalım
 
-    fetch("https://unicycle-api.onrender.com/api/products")
-      .then((res) => res.json())
-      .then((allProducts) => {
-        if (Array.isArray(allProducts)) {
-          const favProducts = allProducts.filter((p: any) =>
-            likedIds.includes(p.id),
-          );
-          setFavorites(favProducts.reverse());
-        }
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        console.error("Favoriler çekilirken hata:", err);
-        setIsLoading(false);
-      });
+    return () => clearInterval(interval);
   }, []);
 
   // 🚀 Premium Arama Motoru
@@ -367,7 +380,7 @@ export default function FavoritesPage() {
                     onClick={handleSearchSubmit}
                   >
                     <span className="text-xs font-black text-blue-600">
-                      Tüm sonuçları gör{" "}
+                      Tüm sonuçları gör
                     </span>
                   </div>
                 </div>
@@ -447,7 +460,7 @@ export default function FavoritesPage() {
                               Şu an hiç bildirimin yok.
                             </div>
                           ) : (
-                            notificationsList.map((notif: any) => {
+                            notificationsList.slice(0, 5).map((notif: any) => {
                               let icon = <Bell className="w-5 h-5" />;
                               let bg = "bg-blue-50";
                               let text = "text-blue-500";
@@ -484,10 +497,19 @@ export default function FavoritesPage() {
                                 text = "text-orange-500";
                               }
 
-                              // 🚀 YENİ: AÇILIR MENÜ BİLDİRİMLERİ BURADA TEMİZLENİYOR
                               const formattedMessage = cleanNotification(
                                 notif.message,
                               );
+
+                              // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
+                              let dropDate = "Yeni";
+                              if (notif.createdAt) {
+                                const utcDate = notif.createdAt.endsWith("Z")
+                                  ? notif.createdAt
+                                  : `${notif.createdAt}Z`;
+                                const dObj = new Date(utcDate);
+                                dropDate = `${dObj.toLocaleDateString("tr-TR")} • ${dObj.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
+                              }
 
                               return (
                                 <div
@@ -504,11 +526,7 @@ export default function FavoritesPage() {
                                       {formattedMessage}
                                     </p>
                                     <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                      {notif.createdAt
-                                        ? new Date(
-                                            notif.createdAt,
-                                          ).toLocaleDateString("tr-TR")
-                                        : "Yeni"}
+                                      {dropDate}
                                     </p>
                                   </div>
                                 </div>
