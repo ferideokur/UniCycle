@@ -724,7 +724,7 @@ export default function Home() {
                   className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
                 />
                 <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none" />
-                <button type="submit" className="hidden">
+                <button type="submit" aria-label="Arama Yap" className="hidden">
                   Ara
                 </button>
               </form>
@@ -814,6 +814,7 @@ export default function Home() {
                     href="/favorites"
                     className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                     title="Favorilerim"
+                    aria-label="Favorilerim"
                   >
                     <svg
                       className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
@@ -836,6 +837,7 @@ export default function Home() {
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                       className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                       title="Bildirimler"
+                      aria-label="Bildirimleri Aç"
                     >
                       <svg
                         className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
@@ -973,6 +975,7 @@ export default function Home() {
                     onClick={handleLogout}
                     className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
                     title="Çıkış Yap"
+                    aria-label="Çıkış Yap"
                   >
                     <span className="hidden sm:block font-bold text-sm">
                       Çıkış
@@ -1023,7 +1026,7 @@ export default function Home() {
               onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <button type="submit" className="hidden">
+            <button type="submit" aria-label="Arama Yap" className="hidden">
               Ara
             </button>
           </form>
@@ -1296,6 +1299,7 @@ export default function Home() {
             <div className="relative">
               <button
                 onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
+                aria-label="Filtreleme Menüsünü Aç"
                 className={`flex items-center gap-2.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-sm border transition-all font-bold text-sm ${isFilterMenuOpen ? "bg-blue-600 text-white border-blue-600 shadow-md" : "bg-white text-slate-700 border-slate-200 hover:border-blue-600 hover:text-blue-600"}`}
               >
                 <svg
@@ -1327,6 +1331,7 @@ export default function Home() {
 
                     <button
                       onClick={() => setIsFilterMenuOpen(false)}
+                      aria-label="Filtre Menüsünü Kapat"
                       className="text-slate-400 hover:text-red-500 font-bold"
                     >
                       ✕
@@ -1339,6 +1344,7 @@ export default function Home() {
                     </label>
 
                     <select
+                      aria-label="Kampüs Seçimi"
                       className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-600 transition-all cursor-pointer"
                       value={selectedUniversity}
                       onChange={(e) => setSelectedUniversity(e.target.value)}
@@ -1357,6 +1363,7 @@ export default function Home() {
                     </label>
 
                     <select
+                      aria-label="Sıralama Ölçütü Seçimi"
                       className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm font-bold rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-600 transition-all cursor-pointer"
                       value={sortType}
                       onChange={(e) => setSortType(e.target.value)}
@@ -1376,6 +1383,7 @@ export default function Home() {
 
                   <button
                     onClick={() => setIsFilterMenuOpen(false)}
+                    aria-label="Sonuçları Göster"
                     className="w-full mt-5 bg-slate-800 text-white font-bold py-2.5 rounded-xl hover:bg-black transition-colors shadow-sm"
                   >
                     Sonuçları Göster
@@ -1452,7 +1460,7 @@ export default function Home() {
                       {p.photosBase64 && p.photosBase64.length > 0 ? (
                         <img
                           src={p.photosBase64[0]}
-                          alt={p.title}
+                          alt="İlan Resmi"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
                       ) : (
@@ -1475,6 +1483,7 @@ export default function Home() {
 
                       <button
                         onClick={(e) => toggleLike(e, p)}
+                        aria-label="Beğen Butonu"
                         className={`absolute top-2 right-2 sm:top-3 sm:right-3 p-2 sm:p-2.5 rounded-full shadow-md backdrop-blur-md transition-all hover:scale-110 active:scale-95 z-30 ${isLiked ? "bg-red-500/90 text-white" : "bg-white/90 text-gray-400 hover:text-red-500"}`}
                       >
                         <svg
@@ -1551,6 +1560,7 @@ export default function Home() {
 
               <button
                 onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                aria-label="Kapat"
                 className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors"
               >
                 ✕
@@ -1564,6 +1574,7 @@ export default function Home() {
             <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                aria-label="Anladım Butonu"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base"
               >
                 Anladım

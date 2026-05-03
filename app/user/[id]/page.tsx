@@ -877,13 +877,15 @@ export default function PublicProfilePage() {
         <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="h-32 sm:h-48 w-full relative bg-gradient-to-r from-blue-500 to-indigo-600">
             {profileData?.coverImage && (
-              <img
-                src={profileData.coverImage}
-                className="w-full h-full object-cover"
-                style={{
-                  objectPosition: `center ${profileData.coverY || 50}%`,
-                }}
-              />
+              <>
+                <style>{`.dynamic-cover-pos { object-position: center ${profileData.coverY || 50}%; }`}</style>
+                <img
+                  src={profileData.coverImage}
+                  alt="Kapak Fotoğrafı"
+                  title="Kapak Fotoğrafı"
+                  className="w-full h-full object-cover dynamic-cover-pos"
+                />
+              </>
             )}
           </div>
 
@@ -892,6 +894,8 @@ export default function PublicProfilePage() {
               <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-sm overflow-hidden bg-gray-100 flex items-center justify-center shrink-0">
                 <img
                   src={profileData?.profileImage || defaultAvatar}
+                  alt={`${formattedSafeFullName} Profil Fotoğrafı`}
+                  title={`${formattedSafeFullName} Profil Fotoğrafı`}
                   className="w-full h-full object-cover origin-center"
                 />
               </div>
@@ -983,6 +987,8 @@ export default function PublicProfilePage() {
                     {p.photosBase64?.[0] ? (
                       <img
                         src={p.photosBase64[0]}
+                        alt={p.title || "İlan Görseli"}
+                        title={p.title || "İlan Görseli"}
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                       />
                     ) : (

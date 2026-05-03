@@ -479,7 +479,7 @@ export default function ChatBox() {
                     <div className="bg-blue-600 text-white px-4 py-3 flex justify-between items-center shadow-md z-10">
                         {view === 'chat' && activeChat ? (
                             <div className="flex items-center gap-2">
-                                <button onClick={handleBackToInbox} className="text-white hover:text-blue-200 mr-1 font-black text-xl leading-none"> &larr; </button>
+                                <button title="Geri Dön" aria-label="Geri Dön" onClick={handleBackToInbox} className="text-white hover:text-blue-200 mr-1 font-black text-xl leading-none"> &larr; </button>
                                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-sm font-bold border border-white/30 relative shrink-0">
                                     {activeChat.name.charAt(0).toUpperCase()}
                                     <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-white rounded-full ${isUserOnline ? 'bg-green-400' : 'bg-red-500'}`}></span>
@@ -492,7 +492,7 @@ export default function ChatBox() {
                         ) : (
                             <h3 className="font-bold text-base flex items-center gap-2"> 💬 Mesajlarım </h3>
                         )}
-                        <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white transition-colors text-xl font-bold leading-none shrink-0">✕</button>
+                        <button title="Kapat" aria-label="Kapat" onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white transition-colors text-xl font-bold leading-none shrink-0">✕</button>
                     </div>
 
                     <div className="flex-1 bg-slate-50 flex flex-col relative custom-scrollbar overflow-hidden">
@@ -508,7 +508,6 @@ export default function ChatBox() {
                                     </div>
                                 ) : (
                                     messages.map((msg) => (
-                                        // 🚀 MESAJ BALONCUKLARINI YAN YANA DİZEN KISIM GÜNCELLENDİ (flex-row-reverse vb.)
                                         <div key={msg.id} className={`group flex flex-col w-full ${msg.isMine ? 'items-end' : 'items-start'}`}>
                                             <div className={`flex items-end gap-2 max-w-[85%] ${msg.isMine ? 'flex-row-reverse' : 'flex-row'}`}>
                                                 
@@ -519,8 +518,8 @@ export default function ChatBox() {
                                                 
                                                 {/* Aksiyon Butonları (Sil / Yanıtla) */}
                                                 <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5 pb-1 shrink-0">
-                                                    <button onClick={() => handleReplyClick(msg)} className="text-blue-400 hover:text-blue-600 text-xs" title="Yanıtla">↩️</button>
-                                                    {msg.isMine && <button onClick={() => handleDeleteMessage(msg.id)} className="text-red-400 hover:text-red-600 text-xs" title="Mesajı Sil">🗑️</button>}
+                                                    <button title="Yanıtla" aria-label="Yanıtla" onClick={() => handleReplyClick(msg)} className="text-blue-400 hover:text-blue-600 text-xs">↩️</button>
+                                                    {msg.isMine && <button title="Mesajı Sil" aria-label="Mesajı Sil" onClick={() => handleDeleteMessage(msg.id)} className="text-red-400 hover:text-red-600 text-xs">🗑️</button>}
                                                 </div>
 
                                             </div>
@@ -556,7 +555,7 @@ export default function ChatBox() {
                                                     )}
                                                 </div>
                                             </div>
-                                            <button onClick={(e) => handleDeleteConversation(chat.id, e)} className="absolute right-4 opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-opacity bg-white hover:bg-red-50 rounded-full shadow-sm border border-slate-100" title="Sohbeti Sil">
+                                            <button title="Sohbeti Sil" aria-label="Sohbeti Sil" onClick={(e) => handleDeleteConversation(chat.id, e)} className="absolute right-4 opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-600 transition-opacity bg-white hover:bg-red-50 rounded-full shadow-sm border border-slate-100">
                                                 🗑️
                                             </button>
                                         </div>
@@ -572,7 +571,7 @@ export default function ChatBox() {
                                 <div className="bg-slate-50 border-l-4 border-blue-500 mx-3 mt-3 p-2.5 rounded-r-md relative shadow-sm">
                                     <span className="font-bold text-blue-600 text-xs block mb-0.5">{replyTo.name}</span>
                                     <p className="text-slate-600 text-xs truncate pr-5">{replyTo.text}</p>
-                                    <button onClick={() => setReplyTo(null)} className="absolute top-2 right-2 text-slate-400 hover:text-slate-600" title="Alıntıyı İptal Et">✕</button>
+                                    <button title="Alıntıyı İptal Et" aria-label="Alıntıyı İptal Et" onClick={() => setReplyTo(null)} className="absolute top-2 right-2 text-slate-400 hover:text-slate-600">✕</button>
                                 </div>
                             )}
 
@@ -586,7 +585,7 @@ export default function ChatBox() {
                                     onChange={(e) => setChatInput(e.target.value)} 
                                     autoComplete="off"
                                 />
-                                <button type="submit" disabled={!chatInput.trim()} className="w-10 h-10 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-full flex items-center justify-center transition-colors shrink-0 shadow-sm">
+                                <button title="Mesaj Gönder" aria-label="Mesaj Gönder" type="submit" disabled={!chatInput.trim()} className="w-10 h-10 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-full flex items-center justify-center transition-colors shrink-0 shadow-sm">
                                     <svg className="w-4 h-4 ml-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                                 </button>
                             </form>
@@ -594,7 +593,7 @@ export default function ChatBox() {
                     )}
                 </div>
             ) : (
-                <button onClick={() => setIsOpen(true)} className="relative bg-blue-600 text-white w-14 h-14 rounded-full shadow-[0_5px_20px_rgba(37,99,235,0.4)] flex items-center justify-center hover:bg-blue-700 hover:scale-110 transition-all text-2xl group">
+                <button title="Sohbeti Aç" aria-label="Sohbeti Aç" onClick={() => setIsOpen(true)} className="relative bg-blue-600 text-white w-14 h-14 rounded-full shadow-[0_5px_20px_rgba(37,99,235,0.4)] flex items-center justify-center hover:bg-blue-700 hover:scale-110 transition-all text-2xl group">
                     <svg className="w-6 h-6 sm:w-7 sm:h-7 group-hover:animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
                     </svg>

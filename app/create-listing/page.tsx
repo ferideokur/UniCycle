@@ -217,7 +217,7 @@ export default function CreateListingPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(listingPayload),
-        },
+        }
       );
 
       if (response.ok) {
@@ -327,7 +327,7 @@ export default function CreateListingPage() {
                     >
                       <img
                         src={photoUrl}
-                        alt={`Ürün ${index + 1}`}
+                        alt={`Ürün Görseli ${index + 1}`}
                         className="w-full h-full object-cover rounded-xl sm:rounded-2xl"
                       />
                       {index === 0 && (
@@ -337,6 +337,8 @@ export default function CreateListingPage() {
                       )}
                       <button
                         type="button"
+                        title="Fotoğrafı Sil"
+                        aria-label="Fotoğrafı Sil"
                         onClick={() => removePhoto(index)}
                         className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 bg-red-500 text-white w-6 h-6 sm:w-8 sm:h-8 rounded-full font-bold shadow-md hover:bg-red-600 hover:scale-110 transition-all z-10 flex items-center justify-center opacity-100 lg:opacity-0 group-hover:opacity-100 text-xs sm:text-base"
                       >
@@ -360,6 +362,8 @@ export default function CreateListingPage() {
                 </div>
                 <input
                   type="file"
+                  title="Fotoğraf Yükle"
+                  aria-label="Fotoğraf Yükle"
                   accept="image/*"
                   hidden
                   ref={fileInputRef}
@@ -391,6 +395,8 @@ export default function CreateListingPage() {
                       Kategori *
                     </label>
                     <select
+                      title="Kategori Seçimi"
+                      aria-label="Kategori Seçimi"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
                       className="w-full bg-slate-50 rounded-xl sm:rounded-2xl py-3 sm:py-4 px-3 sm:px-4 outline-none font-bold text-slate-800 border border-slate-200 cursor-pointer appearance-none text-xs sm:text-sm"
@@ -419,6 +425,8 @@ export default function CreateListingPage() {
                       Kullanım Durumu *
                     </label>
                     <select
+                      title="Kullanım Durumu Seçimi"
+                      aria-label="Kullanım Durumu Seçimi"
                       value={condition}
                       onChange={(e) => setCondition(e.target.value)}
                       className="w-full bg-slate-50 rounded-xl sm:rounded-2xl py-3 sm:py-4 px-3 sm:px-4 outline-none font-bold text-slate-800 border border-slate-200 cursor-pointer appearance-none text-xs sm:text-sm"
@@ -535,7 +543,7 @@ export default function CreateListingPage() {
                       İlan Kaydediliyor...
                     </>
                   ) : (
-                    "İlanı Yayına Al "
+                    "İlanı Yayına Al"
                   )}
                 </button>
               </div>

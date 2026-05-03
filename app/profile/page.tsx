@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import toast, { Toaster } from "react-hot-toast"; 
 import {
   MapPin,
   Heart,
@@ -13,9 +14,14 @@ import {
   Trash2,
   Search,
   Bell,
+  Crown,
+  ShieldAlert,
+  AlertTriangle,
+  X,
+  CheckCircle,
+  XCircle
 } from "lucide-react";
 
-// 🚀 İsimleri her yerde büyük harfle başlatan formül
 const formatName = (name: string) => {
   if (!name) return "";
   return name
@@ -24,7 +30,6 @@ const formatName = (name: string) => {
     .join(" ");
 };
 
-// 🧹 BİLDİRİM TEMİZLEYİCİ
 const cleanNotification = (msg: string) => {
   if (!msg) return "";
   let text = msg
@@ -52,21 +57,20 @@ export default function UserProfilePage() {
     fullName: string;
     email: string;
     university?: string;
+    role?: string; 
   } | null>(null);
 
   const [listings, setListings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Profil Güncelleme State'leri
   const [isEditing, setIsEditing] = useState(false);
   const [bio, setBio] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [coverImage, setCoverImage] = useState<string | null>(null);
-  const [coverY, setCoverY] = useState(50); // Kapak fotoğrafı dikey pozisyonu
+  const [coverY, setCoverY] = useState(50); 
   const [isDraggingCover, setIsDraggingCover] = useState(false);
 
-  // 🚀 Premium Navbar State'leri
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [liveResults, setLiveResults] = useState<
@@ -76,23 +80,64 @@ export default function UserProfilePage() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notificationsList, setNotificationsList] = useState<any[]>([]);
 
-  // 📜 Footer Bilgi Modalı State'leri
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    type: "account" | "listing" | null;
+    itemId: number | null;
+    title: string;
+    desc: string;
+    buttonText: string;
+  }>({
+    isOpen: false, type: null, itemId: null, title: "", desc: "", buttonText: ""
+  });
+
   const [infoModal, setInfoModal] = useState<{
     isOpen: boolean;
     title: string;
     content: string;
   }>({ isOpen: false, title: "", content: "" });
+  
   const openInfoModal = (title: string, content: string) =>
     setInfoModal({ isOpen: true, title, content });
 
+  const notify = (msg: string, type: "success" | "error") => {
+    toast.custom((t) => (
+      <div className={`${t.visible ? 'animate-in fade-in slide-in-from-bottom-4' : 'animate-out fade-out slide-out-to-right-4'} max-w-sm w-full bg-white shadow-xl rounded-2xl pointer-events-auto flex items-center p-3 gap-3 border border-slate-200 relative group`}>
+        {type === "success" ? (
+          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+            <CheckCircle className="w-5 h-5 text-emerald-600" />
+          </div>
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <XCircle className="w-5 h-5 text-red-600" />
+          </div>
+        )}
+        <p className="flex-1 text-sm font-bold text-slate-800 leading-snug pr-10">{msg}</p>
+        
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toast.remove(t.id);
+          }}
+          className="absolute top-1/2 -translate-y-1/2 right-2 p-2 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all z-50 focus:outline-none cursor-pointer"
+          title="Kapat"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+    ), { duration: 4000 });
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (!storedUser) return;
+    if (!storedUser) {
+      window.location.href = "/login";
+      return;
+    }
     const parsedUser = JSON.parse(storedUser);
+    setUser(parsedUser); 
 
-    setUser(parsedUser); // Sayfa yenilendiğinde user objesini dolduralım ki null hatası olmasın
-
-    // Kayıtlı profil verilerini çek
     const savedProfile = localStorage.getItem(`profile_${parsedUser.email}`);
     if (savedProfile) {
       const parsedProfile = JSON.parse(savedProfile);
@@ -102,7 +147,12 @@ export default function UserProfilePage() {
       setCoverY(parsedProfile.coverY || 50);
     }
 
-    // Kullanıcının ilanlarını çek
+    const cachedListings = localStorage.getItem(`listings_${parsedUser.id}`);
+    if (cachedListings) {
+      setListings(JSON.parse(cachedListings));
+      setIsLoading(false); 
+    }
+
     fetch("https://unicycle-api.onrender.com/api/products")
       .then((res) => res.json())
       .then((allProducts) => {
@@ -110,12 +160,15 @@ export default function UserProfilePage() {
           const userProducts = allProducts.filter(
             (p: any) => p.user && p.user.id === parsedUser.id,
           );
-          setListings(userProducts.sort((a: any, b: any) => b.id - a.id));
+          const sortedListings = userProducts.sort((a: any, b: any) => b.id - a.id);
+          setListings(sortedListings);
+          localStorage.setItem(`listings_${parsedUser.id}`, JSON.stringify(sortedListings));
         }
-        setIsLoading(false);
       })
       .catch((err) => {
         console.error(err);
+      })
+      .finally(() => {
         setIsLoading(false);
       });
 
@@ -123,56 +176,27 @@ export default function UserProfilePage() {
       try {
         const res = await fetch(
           `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
-          {
-            cache: "no-store",
-            headers: { "Cache-Control": "no-cache" },
-          },
+          { cache: "no-store", headers: { "Cache-Control": "no-cache" } }
         );
         const data = await res.json();
 
         if (Array.isArray(data)) {
-          const deletedNotifs = JSON.parse(
-            localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
-          );
-          const seenNotifs = JSON.parse(
-            localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
-          );
+          const deletedNotifs = JSON.parse(localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]");
+          const seenNotifs = JSON.parse(localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]");
 
-          // 1. Silinmemiş olanları al
-          let activeNotifs = data.filter(
-            (n: any) => !deletedNotifs.includes(n.id),
-          );
+          let activeNotifs = data.filter((n: any) => !deletedNotifs.includes(n.id));
 
-          // 2. 🚀 KESİN SIRALAMA: Yeniden Eskiye (En Yeni En Üstte)
           activeNotifs.sort((a: any, b: any) => {
-            const dateA = a.createdAt
-              ? new Date(
-                  a.createdAt.endsWith("Z") ? a.createdAt : `${a.createdAt}Z`,
-                ).getTime()
-              : 0;
-            const dateB = b.createdAt
-              ? new Date(
-                  b.createdAt.endsWith("Z") ? b.createdAt : `${b.createdAt}Z`,
-                ).getTime()
-              : 0;
+            const dateA = a.createdAt ? new Date(a.createdAt.endsWith("Z") ? a.createdAt : `${a.createdAt}Z`).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt.endsWith("Z") ? b.createdAt : `${b.createdAt}Z`).getTime() : 0;
             return dateB - dateA;
           });
 
-          // 3. 🚀 DB'DEKİ İKİZLERİ GİZLE (Büyük/Küçük Harf Duyarsız)
-          activeNotifs = activeNotifs.filter(
-            (notif: any, index: number, self: any[]) =>
-              index ===
-              self.findIndex(
-                (n: any) =>
-                  n.message?.trim().toLowerCase() ===
-                  notif.message?.trim().toLowerCase(),
-              ),
+          activeNotifs = activeNotifs.filter((notif: any, index: number, self: any[]) =>
+            index === self.findIndex((n: any) => n.message?.trim().toLowerCase() === notif.message?.trim().toLowerCase())
           );
 
-          const unreadNotifs = activeNotifs.filter(
-            (n: any) => !seenNotifs.includes(n.id),
-          );
-
+          const unreadNotifs = activeNotifs.filter((n: any) => !seenNotifs.includes(n.id));
           setNotificationsCount(unreadNotifs.length);
           setNotificationsList(activeNotifs);
         }
@@ -182,12 +206,10 @@ export default function UserProfilePage() {
     };
 
     fetchNotifications();
-    // 10 saniyede bir gizlice güncelle
     const interval = setInterval(fetchNotifications, 10000);
     return () => clearInterval(interval);
   }, []);
 
-  // 🚀 Premium Arama Motoru
   useEffect(() => {
     const fetchLive = async () => {
       if (searchTerm.trim().length < 1) {
@@ -196,64 +218,37 @@ export default function UserProfilePage() {
       }
       try {
         const isUserSearch = searchTerm.startsWith("@");
-        const isIdSearch =
-          searchTerm.startsWith("#") ||
-          (!isNaN(Number(searchTerm.trim())) && searchTerm.trim() !== "");
+        const isIdSearch = searchTerm.startsWith("#") || (!isNaN(Number(searchTerm.trim())) && searchTerm.trim() !== "");
 
         let query = searchTerm.trim();
         if (isUserSearch) query = searchTerm.substring(1).trim();
         if (searchTerm.startsWith("#")) query = searchTerm.substring(1).trim();
-
         if (!query) return;
 
         let combined: any[] = [];
         if (isUserSearch) {
-          const res = await fetch(
-            `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
-          );
-          if (res.ok)
-            combined = (await res.json()).map((u: any) => ({
-              type: "user",
-              item: u,
-            }));
+          const res = await fetch(`https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`);
+          if (res.ok) combined = (await res.json()).map((u: any) => ({ type: "user", item: u }));
         } else if (isIdSearch && !isNaN(Number(query))) {
-          const prodRes = await fetch(
-            `https://unicycle-api.onrender.com/api/products`,
-          );
+          const prodRes = await fetch(`https://unicycle-api.onrender.com/api/products`);
           if (prodRes.ok) {
             const allProducts = await prodRes.json();
             if (Array.isArray(allProducts)) {
-              const matchedProduct = allProducts.find(
-                (p: any) => p.id.toString() === query.toString(),
-              );
-              if (matchedProduct)
-                combined = [{ type: "product", item: matchedProduct }];
+              const matchedProduct = allProducts.find((p: any) => p.id.toString() === query.toString());
+              if (matchedProduct) combined = [{ type: "product", item: matchedProduct }];
             }
           }
         } else {
-          const res = await fetch(
-            `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`,
-          );
-          if (res.ok)
-            combined = (await res.json()).map((p: any) => ({
-              type: "product",
-              item: p,
-            }));
+          const res = await fetch(`https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`);
+          if (res.ok) combined = (await res.json()).map((p: any) => ({ type: "product", item: p }));
         }
 
-        const uniqueLive = combined.filter(
-          (v: any, i: number, a: any[]) =>
-            a.findIndex((v2: any) => {
-              if (v.type === "user" && v2.type === "user")
-                return (
-                  v2.item.id === v.item.id ||
-                  (v2.item.fullName &&
-                    v.item.fullName &&
-                    v2.item.fullName.toLowerCase() ===
-                      v.item.fullName.toLowerCase())
-                );
-              return v2.type === v.type && v2.item.id === v.item.id;
-            }) === i,
+        const uniqueLive = combined.filter((v: any, i: number, a: any[]) =>
+          a.findIndex((v2: any) => {
+            if (v.type === "user" && v2.type === "user")
+              return v2.item.id === v.item.id || (v2.item.fullName && v.item.fullName && v2.item.fullName.toLowerCase() === v.item.fullName.toLowerCase());
+            return v2.type === v.type && v2.item.id === v.item.id;
+          }) === i
         );
 
         setLiveResults(uniqueLive);
@@ -276,66 +271,93 @@ export default function UserProfilePage() {
   const handleLogout = async () => {
     if (user) {
       try {
-        await fetch(
-          `https://unicycle-api.onrender.com/api/users/${user.id}/logout`,
-          { method: "POST" },
-        );
+        await fetch(`https://unicycle-api.onrender.com/api/users/${user.id}/logout`, { method: "POST" });
       } catch (e) {}
     }
-    localStorage.removeItem("user");
+    localStorage.clear(); 
     setUser(null);
     window.location.href = "/";
   };
 
-  // 🚀 HESAP SİLME FONKSİYONU
-  const handleDeleteAccount = async () => {
-    if (
-      !window.confirm(
-        "Hesabınızı silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve tüm ilanlarınız silinir!",
-      )
-    ) {
-      return;
-    }
-
-    if (!user) return;
-
-    try {
-      const res = await fetch(
-        `https://unicycle-api.onrender.com/api/users/${user.id}`,
-        { method: "DELETE" },
-      );
-
-      if (res.ok) {
-        alert("Hesabınız başarıyla silindi. Sizi özleyeceğiz! 🥺");
-        localStorage.removeItem("user");
-        localStorage.removeItem(`profile_${user.email}`);
-        window.location.href = "/";
-      } else {
-        alert("Hesap silinirken bir hata oluştu. Lütfen tekrar deneyin.");
-      }
-    } catch (error) {
-      console.error("Hesap silme başarısız:", error);
-      alert("Sunucuyla bağlantı kurulamadı.");
-    }
+  const openAccountDeleteModal = () => {
+    setConfirmModal({
+      isOpen: true,
+      type: "account",
+      itemId: null,
+      title: "Üyeliği İptal Et 🚨",
+      desc: "Hesabınızı silmek istediğinize emin misiniz? Bu işlem kesinlikle geri alınamaz ve tüm ilanlarınız, mesajlarınız kalıcı olarak yok edilir.",
+      buttonText: "Hesabımı Sil"
+    });
   };
 
-  // 🚀 GERÇEK VERİTABANI KAYIT FONKSİYONU
+  const openListingDeleteModal = (e: React.MouseEvent, id: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setConfirmModal({
+      isOpen: true,
+      type: "listing",
+      itemId: id,
+      title: "İlanı Sil 🗑️",
+      desc: "Bu ilanı silmek istediğinize emin misiniz? Bu işlem kesinlikle geri alınamaz.",
+      buttonText: "İlanı Sil"
+    });
+  };
+
+  const executeConfirmAction = async () => {
+    const { type, itemId } = confirmModal;
+
+    if (type === "account") {
+      if (!user || !user.id) return; 
+      try {
+        const res = await fetch(`https://unicycle-api.onrender.com/api/users/${user.id}`, { method: "DELETE" });
+        if (res.ok) {
+          notify("Hesabınız başarıyla silindi. Sizi özleyeceğiz! 🥺", "success");
+          localStorage.clear();
+          setTimeout(() => window.location.href = "/", 2000);
+        } else {
+          notify("Hesap silinirken bir hata oluştu. Lütfen tekrar deneyin.", "error");
+        }
+      } catch (error) {
+        notify("Sunucuyla bağlantı kurulamadı.", "error");
+      }
+    } else if (type === "listing" && itemId !== null) {
+      try {
+        const res = await fetch(`https://unicycle-api.onrender.com/api/products/${itemId}`, { method: "DELETE" });
+        if (res.ok) {
+          setListings((prev) => prev.filter((listing) => listing.id !== itemId));
+          notify("İlan başarıyla silindi! 🗑️", "success");
+          
+          if (user && user.id) { 
+             const cachedListings = localStorage.getItem(`listings_${user.id}`);
+             if (cachedListings) {
+               const parsed = JSON.parse(cachedListings);
+               localStorage.setItem(`listings_${user.id}`, JSON.stringify(parsed.filter((l: any) => l.id !== itemId)));
+             }
+          }
+        }
+      } catch (error) {
+        notify("Bir hata oluştu, lütfen tekrar deneyin.", "error");
+      }
+    }
+
+    setConfirmModal({ ...confirmModal, isOpen: false });
+  };
+
   const handleSaveProfile = async () => {
-    if (!user) return;
+    if (!user || !user.id) return; 
 
     try {
-      // Backend'e göndereceğimiz paket
       const updateData = {
         bio: bio,
-        profileImage: profileImage, // Base64 uzun metin
-        coverImage: coverImage, // Base64 uzun metin
+        profileImage: profileImage, 
+        coverImage: coverImage, 
         coverY: coverY,
       };
 
       const res = await fetch(
         `https://unicycle-api.onrender.com/api/users/${user.id}`,
         {
-          method: "PUT", // veya PATCH (Backend tasarımına göre)
+          method: "PUT", 
           headers: {
             "Content-Type": "application/json",
           },
@@ -345,17 +367,15 @@ export default function UserProfilePage() {
 
       if (res.ok) {
         setIsEditing(false);
-        alert("Profil başarıyla veritabanına kaydedildi! 🎉");
+        localStorage.setItem(`profile_${user.email}`, JSON.stringify({
+            bio, profileImage, coverImage, coverY
+        }));
+        notify("Profil başarıyla kaydedildi! 🎉", "success");
       } else {
-        // Eğer backend 400 veya 500'lü bir hata dönerse
-        alert(
-          "Kaydetme başarısız oldu. Backend bu verileri eksik bulmuş olabilir.",
-        );
-        console.error("Backend yanıtı:", await res.text());
+        notify("Kaydetme başarısız oldu. Backend bu verileri eksik bulmuş olabilir.", "error");
       }
     } catch (error) {
-      console.error("Güncelleme hatası:", error);
-      alert("Sunucuya bağlanılamadı. İnternetini veya API'yi kontrol et.");
+      notify("Sunucuya bağlanılamadı. İnternetini veya API'yi kontrol et.", "error");
     }
   };
 
@@ -377,38 +397,63 @@ export default function UserProfilePage() {
   const handleDeleteListing = async (e: React.MouseEvent, id: number) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!window.confirm("Bu ilanı silmek istediğinize emin misiniz?")) return;
-
-    try {
-      const res = await fetch(
-        `https://unicycle-api.onrender.com/api/products/${id}`,
-        { method: "DELETE" },
-      );
-      if (res.ok) {
-        setListings((prev) => prev.filter((listing) => listing.id !== id));
-        alert("İlan başarıyla silindi!");
-      }
-    } catch (error) {
-      console.error("Silme işlemi başarısız:", error);
-      alert("Bir hata oluştu, lütfen tekrar deneyin.");
-    }
+    openListingDeleteModal(e, id);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-bold text-slate-500">
-        <div className="animate-spin text-4xl sm:text-5xl">⏳</div>
-      </div>
-    );
-  }
+  if (!user) return null;
 
-  const safeFullName = user?.fullName || "Kullanıcı";
+  const safeFullName = user.fullName || "Kullanıcı";
   const formattedSafeFullName = formatName(safeFullName);
   const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(formattedSafeFullName)}&background=20B2AA&color=fff&size=256`;
+  const isAdmin = user.email === "ferideokur343@gmail.com" || user.role === "ADMIN";
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans relative w-full overflow-x-hidden flex flex-col">
-      {/* 🚀 ÜST MENÜ NAVBAR (Premium İkiz) */}
+      <Toaster position="bottom-right" reverseOrder={false} />
+
+      {/* 🚀🚀 PROFESYONEL ONAY KUTUSU (MODAL) 🚀🚀 */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 z-[99999] bg-slate-900/60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-sm flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 relative">
+            
+            <button 
+             aria-label="Kapat"
+             onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+             className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none"
+             >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="p-6 sm:p-8 text-center mt-2">
+              <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-yellow-500">
+                <AlertTriangle className="w-8 h-8 text-black" strokeWidth={2.5} />
+              </div>
+              <h3 className="text-xl font-black text-slate-800 mb-2">
+                {confirmModal.title}
+              </h3>
+              <p className="text-sm font-medium text-slate-500 leading-relaxed">
+                {confirmModal.desc}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3 p-4 sm:p-6 bg-slate-50 border-t border-slate-100">
+              <button
+                onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                className="flex-1 px-4 py-3 rounded-xl font-black text-black bg-white border border-slate-300 hover:bg-slate-100 transition-colors shadow-sm focus:outline-none"
+              >
+                İptal Et
+              </button>
+              <button
+                onClick={executeConfirmAction}
+                className="flex-1 px-4 py-3 rounded-xl font-black text-white transition-all shadow-md focus:outline-none focus:ring-4 bg-orange-500 hover:bg-orange-600 focus:ring-orange-500/30"
+              >
+                {confirmModal.buttonText}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
         <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
@@ -431,7 +476,6 @@ export default function UserProfilePage() {
               </Link>
             </div>
 
-            {/* ✨ PREMIUM ARAMA ÇUBUĞU */}
             <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
               <form
                 onSubmit={handleSearchSubmit}
@@ -534,7 +578,6 @@ export default function UserProfilePage() {
               </Link>
 
               <div className="flex items-center gap-2 sm:gap-4 relative">
-                {/* 🚀 ORİJİNAL İNCE KALP İKONU */}
                 <Link
                   href="/favorites"
                   className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
@@ -556,7 +599,6 @@ export default function UserProfilePage() {
                 </Link>
 
                 <div className="relative shrink-0">
-                  {/* 🚀 ORİJİNAL İNCE ZİL İKONU */}
                   <button
                     onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                     className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
@@ -638,7 +680,6 @@ export default function UserProfilePage() {
                               notif.message,
                             );
 
-                            // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
                             let dropDate = "Yeni";
                             if (notif.createdAt) {
                               const utcDate = notif.createdAt.endsWith("Z")
@@ -815,11 +856,14 @@ export default function UserProfilePage() {
         <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
           <div className="h-32 sm:h-48 w-full relative bg-gradient-to-r from-blue-600 to-indigo-600 overflow-hidden group">
             {coverImage && (
-              <img
-                src={coverImage}
-                className="w-full h-full object-cover transition-transform duration-300"
-                style={{ objectPosition: `center ${coverY}%` }}
-              />
+              <>
+                <style>{`.dynamic-cover-pos { object-position: center ${coverY}%; }`}</style>
+                <img
+                  src={coverImage}
+                  alt="Kapak Fotoğrafı"
+                  className="w-full h-full object-cover transition-transform duration-300 dynamic-cover-pos"
+                />
+              </>
             )}
 
             {isEditing && (
@@ -834,7 +878,6 @@ export default function UserProfilePage() {
                       onChange={(e) => handleImageUpload(e, "cover")}
                     />
                   </label>
-                  {/* 🚀 KAPAK FOTOĞRAFI KALDIR BUTONU */}
                   {coverImage && (
                     <button
                       onClick={() => setCoverImage(null)}
@@ -864,6 +907,7 @@ export default function UserProfilePage() {
               <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100 relative group shrink-0">
                 <img
                   src={profileImage || defaultAvatar}
+                  alt={`${formattedSafeFullName} profil fotoğrafı`}
                   className="w-full h-full object-cover"
                 />
                 {isEditing && (
@@ -877,7 +921,6 @@ export default function UserProfilePage() {
                         onChange={(e) => handleImageUpload(e, "profile")}
                       />
                     </label>
-                    {/* 🚀 PROFİL FOTOĞRAFI KALDIR BUTONU */}
                     {profileImage && (
                       <button
                         onClick={() => setProfileImage(null)}
@@ -890,29 +933,53 @@ export default function UserProfilePage() {
                 )}
               </div>
 
-              {isEditing ? (
-                <button
-                  onClick={handleSaveProfile}
-                  className="bg-green-600 hover:bg-green-700 text-white font-black py-2 px-6 rounded-full text-sm transition-all shadow-md hover:scale-105 active:scale-95"
-                >
-                  Kaydet
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold py-2 px-6 rounded-full text-sm transition-colors shadow-sm"
-                >
-                  Düzenle
-                </button>
-              )}
+              <div className="flex items-center gap-2 sm:gap-3">
+                {isAdmin && !isEditing && (
+                  <Link
+                    href="/admin"
+                    className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-black text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 py-2 px-3 sm:px-4 rounded-full transition-colors shadow-sm"
+                    title="Yönetim Paneli"
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Admin Paneli</span>
+                    <span className="sm:hidden">Admin</span>
+                  </Link>
+                )}
+
+                {isEditing ? (
+                  <button
+                    onClick={handleSaveProfile}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-black py-2 px-6 rounded-full text-sm transition-all shadow-md hover:scale-105 active:scale-95 border border-blue-600"
+                  >
+                    Kaydet
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold py-2 px-6 rounded-full text-sm transition-colors shadow-sm"
+                  >
+                    Düzenle
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="text-left">
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
-                {formattedSafeFullName}
-              </h1>
-              <p className="text-sm font-bold text-slate-400 mt-0.5">
-                @{user?.fullName.split(" ")[0].toLowerCase()}
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
+                  {formattedSafeFullName}
+                </h1>
+                
+                {isAdmin && (
+                  <span className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-600 border border-indigo-200 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider shadow-sm">
+                    <Crown className="w-4 h-4" />
+                    Admin
+                  </span>
+                )}
+              </div>
+              
+              <p className="text-sm font-bold text-slate-400 mt-1">
+                {user?.email}
               </p>
 
               <p className="text-xs sm:text-lg font-bold text-gray-600 mt-2">
@@ -929,10 +996,9 @@ export default function UserProfilePage() {
                     rows={3}
                     maxLength={150}
                   />
-                  {/* 🚀 HESABI SİL BUTONU (Sadece Düzenleme Modunda Açık) */}
                   <div className="mt-4 border-t border-red-50 pt-4 flex justify-end">
                     <button
-                      onClick={handleDeleteAccount}
+                      onClick={openAccountDeleteModal}
                       className="text-red-500 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors"
                     >
                       <Trash2 size={16} /> Hesabımı Kalıcı Olarak Sil
@@ -957,7 +1023,10 @@ export default function UserProfilePage() {
             </span>
           </h2>
 
-          {listings.length === 0 ? (
+          {/* 🚀 EKRANI HİÇ KİLİTLEMEYEN, ŞEFFAF BEKLEME - ANINDA AÇILIR 🚀 */}
+          {isLoading && listings.length === 0 ? (
+            <div className="min-h-[200px] w-full"></div>
+          ) : listings.length === 0 ? (
             <div className="text-center py-16 bg-slate-50 rounded-3xl border border-dashed border-slate-300">
               <span className="text-5xl block mb-4">📭</span>
               <h3 className="text-xl font-bold text-slate-600 mb-2">
@@ -985,6 +1054,7 @@ export default function UserProfilePage() {
                     {p.photosBase64?.[0] ? (
                       <img
                         src={p.photosBase64[0]}
+                        alt={p.title || "İlan Fotoğrafı"}
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                       />
                     ) : (

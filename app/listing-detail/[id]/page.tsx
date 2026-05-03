@@ -601,7 +601,8 @@ export default function ListingDetailPage() {
                           result.item.photosBase64.length > 0 ? (
                           <img
                             src={result.item.photosBase64[0]}
-                            alt="ürün"
+                            alt="Ürün görseli"
+                            title="Ürün görseli"
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -762,7 +763,6 @@ export default function ListingDetailPage() {
                                 notif.message,
                               );
 
-                              // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
                               let dropDate = "Yeni";
                               if (notif.createdAt) {
                                 const utcDate = notif.createdAt.endsWith("Z")
@@ -895,7 +895,8 @@ export default function ListingDetailPage() {
                       result.item.photosBase64.length > 0 ? (
                       <img
                         src={result.item.photosBase64[0]}
-                        alt="ürün"
+                        alt="Ürün görseli"
+                        title="Ürün görseli"
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -1003,7 +1004,8 @@ export default function ListingDetailPage() {
                       <img
                         src={photo}
                         className="w-full h-full object-cover"
-                        alt={`Foto ${index}`}
+                        alt={`İlan Fotoğrafı ${index}`}
+                        title={`İlan Fotoğrafı ${index}`}
                       />
                     </button>
                   ))}
@@ -1045,8 +1047,11 @@ export default function ListingDetailPage() {
                     placeholder="Satıcıya bir soru sor..."
                     className="w-full bg-slate-50 border border-slate-200 rounded-full py-2.5 sm:py-3.5 pl-4 sm:pl-5 pr-12 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] font-medium text-sm text-slate-700 shadow-inner"
                   />
+                  {/* 🚀 DÜZELTME BURADA: title ve aria-label eklendi */}
                   <button
                     type="submit"
+                    title="Yorumu Gönder"
+                    aria-label="Yorumu Gönder"
                     disabled={isSubmittingComment || !newComment.trim()}
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[#20B2AA] hover:text-teal-700 disabled:text-slate-300 transition-colors"
                   >
