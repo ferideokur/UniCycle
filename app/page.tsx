@@ -228,6 +228,7 @@ export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(""); // 🚀 YENİ EKLENDİ: Hataları yakalamak için
   const router = useRouter();
 
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
@@ -263,22 +264,37 @@ export default function Home() {
   };
 
   const fetchAllListings = async () => {
+    // 🚀 CACHE BUSTER (HAFIZAYI İPTAL ETTİK)
     setIsLoading(true);
+    setFetchError(""); // Hataları sıfırla
     try {
       let url = "https://unicycle-api.onrender.com/api/products";
       if (selectedUniversity !== "Tüm Üniversiteler")
         url += `?university=${encodeURIComponent(selectedUniversity)}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        cache: "no-store", 
+        headers: { 
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0"
+        }
+      });
+      
       if (response.ok) {
         const data = await response.json();
         if (Array.isArray(data)) {
           data.sort((a: any, b: any) => b.id - a.id);
           setProducts(data);
         }
+      } else {
+        // Eğer Java bağlanır ama veriyi vermezse:
+        setFetchError("Java sunucusu ilanları vermeyi reddetti (Durum Kodu: " + response.status + ")");
       }
     } catch (error) {
       console.error("Java bağlanılamadı", error);
+      // Eğer Java'ya hiç ulaşılamazsa (CORS Hatası gibi):
+      setFetchError("Java API'sine hiç bağlanılamadı! Muhtemelen CORS hatası alıyorsunuz.");
     } finally {
       setIsLoading(false);
     }
@@ -317,12 +333,10 @@ export default function Home() {
                 localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
               );
 
-              // 1. Silinmemiş olanları al
               let activeNotifs = data.filter(
                 (n: any) => !deletedNotifs.includes(n.id),
               );
 
-              // 2. 🚀 KESİN SIRALAMA: Yeniden Eskiye (En Yeni En Üstte)
               activeNotifs.sort((a: any, b: any) => {
                 const dateA = a.createdAt
                   ? new Date(
@@ -341,7 +355,6 @@ export default function Home() {
                 return dateB - dateA;
               });
 
-              // 3. 🚀 DB'DEKİ İKİZLERİ GİZLE (Büyük/Küçük Harf Duyarsız)
               activeNotifs = activeNotifs.filter(
                 (notif: any, index: number, self: any[]) =>
                   index ===
@@ -365,7 +378,6 @@ export default function Home() {
         };
 
         fetchNotifications();
-        // 10 saniyede bir gizlice güncelle
         interval = setInterval(fetchNotifications, 10000);
 
         window.addEventListener("notificationsSeen", () =>
@@ -808,7 +820,6 @@ export default function Home() {
 
               {user ? (
                 <div className="flex items-center gap-2 sm:gap-4 relative">
-                  {/* 🚀 ORİJİNAL İNCE KALP İKONU */}
                   <Link
                     href="/favorites"
                     className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
@@ -831,7 +842,6 @@ export default function Home() {
                   </Link>
 
                   <div className="relative shrink-0">
-                    {/* 🚀 ORİJİNAL İNCE ZİL İKONU */}
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                       className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
@@ -916,7 +926,6 @@ export default function Home() {
                                 notif.message,
                               );
 
-                              // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
                               let dropDate = "Yeni";
                               if (notif.createdAt) {
                                 const utcDate = notif.createdAt.endsWith("Z")
@@ -1392,7 +1401,34 @@ export default function Home() {
             </div>
           </div>
 
-          {isLoading ? (
+          {/* 🚀 EĞER HATA VARSA SİNSİ GİBİ GİZLEMEYİP EKRANA BASACAK KISIM */}
+          {fetchError ? (
+            <div className="w-full bg-red-50 p-8 sm:p-12 rounded-3xl sm:rounded-[3rem] border border-red-200 text-center shadow-sm mt-4 animate-in zoom-in-95">
+              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-6 shadow-inner">
+                🚨
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-red-700 mb-3">
+                Kritik Bağlantı Hatası!
+              </h3>
+              <p className="text-red-600 font-bold text-sm sm:text-base mb-6">
+                {fetchError}
+              </p>
+              <div className="bg-white p-5 rounded-2xl text-left border border-red-100 shadow-sm inline-block max-w-2xl mx-auto">
+                <p className="text-slate-800 font-black text-sm mb-2 border-b pb-2">Olası Sebepler & Çözüm:</p>
+                <ul className="text-slate-600 text-xs sm:text-sm font-medium space-y-2 list-disc pl-4">
+                  <li>
+                    Java (Backend) projenizdeki <span className="font-bold text-blue-600">ProductController.java</span> dosyanızın en üstüne <b>@CrossOrigin</b> kodunu eklemeyi unutmuş olabilirsiniz.
+                  </li>
+                  <li>
+                    Render üzerindeki sunucunuz uyku modunda kalmış veya tamamen çökmüş olabilir.
+                  </li>
+                </ul>
+                <code className="block bg-slate-800 text-green-400 p-3 rounded-lg text-[10px] sm:text-xs mt-4 select-all shadow-inner overflow-x-auto">
+                  @CrossOrigin(origins = &#123;"https://uni-cycle-seven.vercel.app", "http://localhost:3000"&#125;)
+                </code>
+              </div>
+            </div>
+          ) : isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mt-4">
               {[...Array(8)].map((_, i) => (
                 <div

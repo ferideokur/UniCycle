@@ -38,7 +38,6 @@ export default function AdminDashboard() {
     isOpen: false, type: null, userId: null, title: "", desc: "", buttonText: ""
   });
 
-  // KESİN ÇALIŞAN, ANINDA KAPATAN BİLDİRİM FONKSİYONU
   const notify = (msg: string, type: "success" | "error") => {
     toast.custom((t) => (
       <div className={`${t.visible ? 'animate-in fade-in slide-in-from-bottom-4' : 'hidden'} max-w-sm w-full bg-white shadow-xl rounded-2xl pointer-events-auto flex items-center p-3 gap-3 border border-slate-200 relative`}>
@@ -69,14 +68,13 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    // 🚀🚀 HIZLANDIRMA: Önbellekte veri varsa ANINDA ekrana bas, bekletme! 🚀🚀
     const cachedPending = localStorage.getItem("admin_pendingUsers");
     const cachedActive = localStorage.getItem("admin_activeUsers");
     
     if (cachedPending || cachedActive) {
       if (cachedPending) setPendingUsers(JSON.parse(cachedPending));
       if (cachedActive) setActiveUsers(JSON.parse(cachedActive));
-      setIsLoading(false); // Veri varsa anında göster
+      setIsLoading(false);
     }
 
     const fetchUsers = async () => {
@@ -91,7 +89,7 @@ export default function AdminDashboard() {
           const pendingData = await pendingRes.json();
           const pUsers = Array.isArray(pendingData) ? pendingData : [];
           setPendingUsers(pUsers);
-          localStorage.setItem("admin_pendingUsers", JSON.stringify(pUsers)); // Arka planda kaydet
+          localStorage.setItem("admin_pendingUsers", JSON.stringify(pUsers));
         }
 
         let combinedUsers: any[] = [];
@@ -107,9 +105,9 @@ export default function AdminDashboard() {
         }
 
         setActiveUsers(combinedUsers);
-        localStorage.setItem("admin_activeUsers", JSON.stringify(combinedUsers)); // Arka planda kaydet
+        localStorage.setItem("admin_activeUsers", JSON.stringify(combinedUsers));
       } catch (error) {
-        console.error("Kullanıcılar çekilirken hata:", error);
+        console.error(error);
       } finally {
         setIsLoading(false);
       }
@@ -231,7 +229,6 @@ export default function AdminDashboard() {
     <main className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans p-4 sm:p-8 relative">
       <Toaster position="bottom-right" reverseOrder={false} />
 
-      {/* PROFESYONEL ONAY KUTUSU (MODAL) */}
       {confirmModal.isOpen && (
         <div className="fixed inset-0 z-[99999] bg-slate-900/60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl w-full max-w-sm flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 relative">
@@ -274,10 +271,10 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* BELGE GÖRÜNTÜLEME PENCERESİ (MODAL) */}
+      {/* 🚀 GERÇEKTEN DÜZELTİLMİŞ KİBAR BELGE GÖRÜNTÜLEYİCİ 🚀 */}
       {docModal.isOpen && (
         <div className="fixed inset-0 z-[99999] bg-slate-900/80 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100">
             <div className="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
               <h3 className="font-black text-slate-800 flex items-center gap-2 text-lg">
                 <FileText className="w-6 h-6 text-[#20B2AA]" />
@@ -292,18 +289,21 @@ export default function AdminDashboard() {
               </button>
             </div>
             
-            <div className="flex-1 overflow-auto p-4 bg-slate-200/50 flex items-center justify-center min-h-[50vh]">
+            {/* O devasa siyah kutuyu ve zoraki yükseklikleri sildik! */}
+            <div className="p-2 bg-white overflow-auto">
               {docModal.url.startsWith("data:application/pdf") ? (
                 <iframe 
                   src={docModal.url} 
-                  className="w-full h-[70vh] rounded-xl shadow-sm border border-slate-200 bg-white" 
+                  className="w-full rounded-xl border border-slate-100 shadow-inner" 
                   title="PDF Görüntüleyici"
+                  style={{ height: '70vh' }}
                 />
               ) : (
                 <img 
                   src={docModal.url} 
                   alt="Öğrenci Belgesi" 
-                  className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-md border border-slate-200 bg-white" 
+                  className="w-full h-auto rounded-xl shadow-inner border border-slate-100 object-contain"
+                  style={{ maxHeight: '75vh' }}
                 />
               )}
             </div>
@@ -344,7 +344,6 @@ export default function AdminDashboard() {
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm min-h-[400px]">
-          {/* 🚀 KUM SAATİ SİLİNDİ, YERİNE ANINDA AÇILAN ZARİF İSKELET YÜKLEYİCİ EKLENDİ 🚀 */}
           {isLoading ? (
             <div className="w-full p-4 animate-pulse">
               <div className="h-10 bg-slate-100 rounded-lg mb-4 w-full"></div>
@@ -381,20 +380,15 @@ export default function AdminDashboard() {
                             <td className="px-6 py-4 text-center">
                               <button 
                                 onClick={async () => {
-                                  // 🚀🚀 DOĞRUDAN VERİTABANINDAN ÇEKME TAKTİĞİ 🚀🚀
                                   try {
                                     const res = await fetch(`https://unicycle-api.onrender.com/api/users/${user.id}`);
                                     if (!res.ok) throw new Error("Ağ hatası");
                                     const fullUser = await res.json();
                                     
-                                    console.log("Sunucudan Gelen Detaylar:", fullUser);
-
-                                    // Bildiğimiz tüm isimleri dene
                                     let docUrl = fullUser.documentBase64 || fullUser.documentUrl || fullUser.docUrl || 
                                                  fullUser.studentDocument || fullUser.studentCertificate || 
                                                  fullUser.studentCardBase64 || fullUser.document || fullUser.file || fullUser.image;
                                     
-                                    // Bulamadıysa uzun şifreli metinleri (Base64) otomatik tara
                                     if (!docUrl) {
                                       for (const key in fullUser) {
                                         if (typeof fullUser[key] === 'string' && fullUser[key].length > 500) {
@@ -405,9 +399,8 @@ export default function AdminDashboard() {
                                     }
 
                                     if(docUrl) {
-                                      // Eksik formatları tamamla ve PDF/Resim ayrımını yap
                                       if (!docUrl.startsWith('http') && !docUrl.startsWith('data:')) {
-                                        if (docUrl.startsWith('JVBERi0')) { // PDF dosyasının gizli imzası
+                                        if (docUrl.startsWith('JVBERi0')) { 
                                             docUrl = 'data:application/pdf;base64,' + docUrl;
                                         } else {
                                             docUrl = 'data:image/jpeg;base64,' + docUrl;
