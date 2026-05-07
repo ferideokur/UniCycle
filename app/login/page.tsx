@@ -108,6 +108,20 @@ const translateBackendMessage = (msg: string) => {
   return "İşlem başarısız oldu. Lütfen bilgilerinizi kontrol edin.";
 };
 
+// 🚀🚀 SİHİRLİ DOSYA ÇEVİRİCİ: Resmi Java'nın okuyabileceği Base64 metnine çevirir!
+const convertToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const fileReader = new FileReader();
+    fileReader.readAsDataURL(file);
+    fileReader.onload = () => {
+      resolve(fileReader.result as string);
+    };
+    fileReader.onerror = (error) => {
+      reject(error);
+    };
+  });
+};
+
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -164,7 +178,7 @@ export default function AuthPage() {
     }
   };
 
-  // 🚀 ADIM 1: MAİLE KOD GÖNDERME (GERÇEK BACKEND BAĞLANTISI)
+  // 🚀 ADIM 1: MAİLE KOD GÖNDERME
   const handleSendCode = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -185,7 +199,7 @@ export default function AuthPage() {
 
       setMessageType("success");
       setMessage("Doğrulama kodu e-postanıza gönderildi!");
-      setForgotPasswordStep(2); // E-posta doğruysa ve mail atıldıysa 2. aşamaya geç!
+      setForgotPasswordStep(2);
     } catch (error: any) {
       setMessageType("error");
       
@@ -199,7 +213,7 @@ export default function AuthPage() {
     }
   };
 
-  // 🚀 ADIM 2: KODU DOĞRULAYIP YENİ ŞİFREYİ KAYDETME (GERÇEK BACKEND BAĞLANTISI)
+  // 🚀 ADIM 2: KODU DOĞRULAYIP YENİ ŞİFREYİ KAYDETME
   const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -291,10 +305,29 @@ export default function AuthPage() {
       }
 
       try {
+        // 🚀🚀 BELGEYİ JAVA'NIN ANLAYACAĞI DİLE ÇEVİRİYORUZ 🚀🚀
+        let base64Document = "";
+        try {
+          base64Document = await convertToBase64(studentDoc);
+        } catch (error) {
+          setMessageType("error");
+          setMessage("Belge yüklenirken bir sorun oluştu, lütfen tekrar deneyin.");
+          setIsLoading(false);
+          return;
+        }
+
         const response = await fetch("https://unicycle-api.onrender.com/api/users/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ fullName, email, password, phone, university: finalUniversity }),
+            // 🚀 BÜYÜK DÜZELTME: documentBase64 artık Java'ya gidiyor!
+            body: JSON.stringify({ 
+                fullName, 
+                email, 
+                password, 
+                phone, 
+                university: finalUniversity,
+                documentBase64: base64Document 
+            }),
         });
 
         const text = await response.text();
@@ -314,6 +347,7 @@ export default function AuthPage() {
         setIsLoading(false);
       }
     } else {
+      // GİRİŞ YAPMA İŞLEMİ
       try {
         const response = await fetch("https://unicycle-api.onrender.com/api/users/login", {
             method: "POST",

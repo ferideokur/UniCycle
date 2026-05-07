@@ -380,12 +380,45 @@ export default function AdminDashboard() {
                             <td className="px-6 py-4 text-slate-600 font-semibold">{user.university || user.uni}</td>
                             <td className="px-6 py-4 text-center">
                               <button 
-                                onClick={() => {
-                                  const docUrl = user.documentUrl || user.docUrl;
-                                  if(docUrl) {
-                                    setDocModal({isOpen: true, url: docUrl});
-                                  } else {
-                                    notify("Bu kullanıcının belgesi sisteme yüklenmemiş.", "error");
+                                onClick={async () => {
+                                  // 🚀🚀 DOĞRUDAN VERİTABANINDAN ÇEKME TAKTİĞİ 🚀🚀
+                                  try {
+                                    const res = await fetch(`https://unicycle-api.onrender.com/api/users/${user.id}`);
+                                    if (!res.ok) throw new Error("Ağ hatası");
+                                    const fullUser = await res.json();
+                                    
+                                    console.log("Sunucudan Gelen Detaylar:", fullUser);
+
+                                    // Bildiğimiz tüm isimleri dene
+                                    let docUrl = fullUser.documentBase64 || fullUser.documentUrl || fullUser.docUrl || 
+                                                 fullUser.studentDocument || fullUser.studentCertificate || 
+                                                 fullUser.studentCardBase64 || fullUser.document || fullUser.file || fullUser.image;
+                                    
+                                    // Bulamadıysa uzun şifreli metinleri (Base64) otomatik tara
+                                    if (!docUrl) {
+                                      for (const key in fullUser) {
+                                        if (typeof fullUser[key] === 'string' && fullUser[key].length > 500) {
+                                          docUrl = fullUser[key];
+                                          break;
+                                        }
+                                      }
+                                    }
+
+                                    if(docUrl) {
+                                      // Eksik formatları tamamla ve PDF/Resim ayrımını yap
+                                      if (!docUrl.startsWith('http') && !docUrl.startsWith('data:')) {
+                                        if (docUrl.startsWith('JVBERi0')) { // PDF dosyasının gizli imzası
+                                            docUrl = 'data:application/pdf;base64,' + docUrl;
+                                        } else {
+                                            docUrl = 'data:image/jpeg;base64,' + docUrl;
+                                        }
+                                      }
+                                      setDocModal({isOpen: true, url: docUrl});
+                                    } else {
+                                      notify("Veritabanında bu kullanıcıya ait bir belge bulunamadı.", "error");
+                                    }
+                                  } catch (error) {
+                                    notify("Belge sunucudan indirilirken hata oluştu.", "error");
                                   }
                                 }}
                                 className="inline-flex items-center justify-center w-32 gap-1.5 text-[#20B2AA] hover:text-teal-700 bg-[#20B2AA]/10 hover:bg-[#20B2AA]/20 px-3 py-1.5 rounded-lg font-bold transition-colors text-xs cursor-pointer"

@@ -86,7 +86,6 @@ export default function ListingDetailPage() {
     setInfoModal({ isOpen: true, title, content });
   };
 
-  // 🚀 VERCEL CACHE SORUNUNU ÇÖZEN BİLDİRİM FONKSİYONU
   const updateNotificationCount = (userId: number) => {
     fetch(
       `https://unicycle-api.onrender.com/api/interaction/notifications/${userId}`,
@@ -175,13 +174,25 @@ export default function ListingDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    // Ürünleri çekerken de cache engelliyoruz
+    // ⚡ YILDIRIM HIZI: Ana sayfadan kaydedilen hafızadan anında ürünü çek!
+    const cachedData = sessionStorage.getItem("unicycle_all_products");
+    if (cachedData) {
+      const parsed = JSON.parse(cachedData);
+      const found = parsed.find((p: any) => p.id.toString() === id);
+      if (found) {
+        setProduct(found);
+        setLoading(false); // SKELETON'U (Gri Kutuları) ANINDA YOK ET!
+      }
+    }
+
+    // Arka planda veriyi tazele (kullanıcı hissetmez)
     fetch("https://unicycle-api.onrender.com/api/products", {
       cache: "no-store",
       headers: { "Cache-Control": "no-cache" },
     })
       .then((res) => res.json())
       .then((data) => {
+        sessionStorage.setItem("unicycle_all_products", JSON.stringify(data)); // Hafızayı güncelle
         const foundProduct = data.find((p: any) => p.id.toString() === id);
         setProduct(foundProduct);
         setLoading(false);
@@ -209,7 +220,6 @@ export default function ListingDetailPage() {
     }
   };
 
-  // 🚀 Premium Arama Motoru
   useEffect(() => {
     const fetchLive = async () => {
       if (searchTerm.trim().length < 1) {
@@ -493,39 +503,17 @@ export default function ListingDetailPage() {
     );
   };
 
-  if (loading)
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-        <div className="animate-spin text-4xl sm:text-5xl">⏳</div>
-      </div>
-    );
-  if (!product)
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
-        <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
-          İlan bulunamadı!
-        </h2>
-        <Link
-          href="/"
-          className="mt-4 text-blue-600 font-bold hover:underline text-sm sm:text-base"
-        >
-          Ana Sayfaya Dön
-        </Link>
-      </div>
-    );
-
-  const photos =
-    product.photosBase64?.length > 0
-      ? product.photosBase64
-      : ["https://via.placeholder.com/800x600?text=Fotograf+Yok"];
-  const sellerName = formatName(product.user?.fullName || "Bilinmeyen Satıcı");
+  const photos = product?.photosBase64?.length > 0
+    ? product.photosBase64
+    : ["https://via.placeholder.com/800x600?text=Yukleniyor"];
+  const sellerName = formatName(product?.user?.fullName || "Yükleniyor...");
   const isOwner =
     currentUser &&
-    product.user &&
+    product?.user &&
     Number(currentUser.id) === Number(product.user.id);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans relative w-full overflow-x-hidden flex flex-col">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans relative w-full overflow-x-hidden flex flex-col">
       {toastMessage && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-slate-800 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-full shadow-2xl font-bold animate-in fade-in slide-in-from-top-5 text-xs sm:text-sm whitespace-nowrap">
           {toastMessage}
@@ -573,7 +561,7 @@ export default function ListingDetailPage() {
                   className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
                 />
                 <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none" />
-                <button type="submit" className="hidden">
+                <button type="submit" aria-label="Arama Yap" className="hidden">
                   Ara
                 </button>
               </form>
@@ -663,6 +651,7 @@ export default function ListingDetailPage() {
                     href="/favorites"
                     className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                     title="Favorilerim"
+                    aria-label="Favorilerim"
                   >
                     <svg
                       className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
@@ -684,6 +673,7 @@ export default function ListingDetailPage() {
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                       className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                       title="Bildirimler"
+                      aria-label="Bildirimleri Aç"
                     >
                       <svg
                         className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
@@ -820,6 +810,7 @@ export default function ListingDetailPage() {
                     onClick={handleLogout}
                     className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
                     title="Çıkış Yap"
+                    aria-label="Çıkış Yap"
                   >
                     <span className="hidden sm:block font-bold text-sm">
                       Çıkış
@@ -870,7 +861,7 @@ export default function ListingDetailPage() {
               onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <button type="submit" className="hidden">
+            <button type="submit" aria-label="Arama Yap" className="hidden">
               Ara
             </button>
           </form>
@@ -895,8 +886,7 @@ export default function ListingDetailPage() {
                       result.item.photosBase64.length > 0 ? (
                       <img
                         src={result.item.photosBase64[0]}
-                        alt="Ürün görseli"
-                        title="Ürün görseli"
+                        alt="ürün"
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -944,8 +934,19 @@ export default function ListingDetailPage() {
         </div>
       </header>
 
-      {/* 🖥️ ANA DÜZEN */}
-      <div className="max-w-[1200px] mx-auto mt-4 sm:mt-8 px-4 sm:px-6 w-full flex-1">
+      {/* 📱 YENİ: MOBİL İÇİN YÜZEN İLAN VER BUTONU */}
+      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
+        <Link
+          href="/create-listing"
+          className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20"
+        >
+          <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
+        </Link>
+      </div>
+
+      {/* 🖥️ ANA DÜZEN VE YÜKLEME EKRANI (KUM SAATİ YERİNE ŞIK SKELETON) */}
+      <div className="max-w-[1200px] mx-auto mt-4 sm:mt-8 px-4 sm:px-6 w-full flex-1 pb-24 sm:pb-32">
+        
         {/* 🔙 ZARİF BREADCRUMB VE GERİ DÖN YAPISI */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm font-semibold text-slate-400 overflow-hidden whitespace-nowrap flex-1">
@@ -957,17 +958,22 @@ export default function ListingDetailPage() {
             </Link>
             <ChevronRight size={14} className="shrink-0 text-slate-300" />
 
-            <Link
-              href={`/search?q=${encodeURIComponent(product.category)}`}
-              className="text-slate-600 hover:text-[#20B2AA] transition-colors shrink-0 cursor-pointer border-b border-transparent hover:border-[#20B2AA]"
-            >
-              {product.category}
-            </Link>
-
-            <ChevronRight size={14} className="shrink-0 text-slate-300" />
-            <span className="text-slate-800 truncate max-w-[120px] sm:max-w-[200px]">
-              {product.title}
-            </span>
+            {product ? (
+              <>
+                <Link
+                  href={`/search?q=${encodeURIComponent(product.category)}`}
+                  className="text-slate-600 hover:text-[#20B2AA] transition-colors shrink-0 cursor-pointer border-b border-transparent hover:border-[#20B2AA]"
+                >
+                  {product.category}
+                </Link>
+                <ChevronRight size={14} className="shrink-0 text-slate-300" />
+                <span className="text-slate-800 truncate max-w-[120px] sm:max-w-[200px]">
+                  {product.title}
+                </span>
+              </>
+            ) : loading ? (
+               <div className="h-4 w-24 bg-slate-200 rounded-md animate-pulse"></div>
+            ) : null}
           </div>
           <button
             onClick={() => router.back()}
@@ -978,302 +984,344 @@ export default function ListingDetailPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
-          {/* Sol Kolon */}
-          <div className="lg:col-span-8 space-y-4 sm:space-y-6">
-            <div className="bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
-              <div className="w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[4/3] bg-slate-50 rounded-xl sm:rounded-2xl overflow-hidden relative flex items-center justify-center border border-slate-100">
-                <img
-                  src={photos[activeImageIndex]}
-                  alt={product.title}
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              {photos.length > 1 && (
-                <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4 overflow-x-auto pb-2 custom-scrollbar">
-                  {photos.map((photo: string, index: number) => (
-                    <button
-                      key={index}
-                      onClick={() => setActiveImageIndex(index)}
-                      className={`relative w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 shrink-0 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all ${
-                        activeImageIndex === index
-                          ? "border-blue-600 shadow-md scale-105"
-                          : "border-transparent hover:border-blue-300 opacity-70 hover:opacity-100"
-                      }`}
-                    >
-                      <img
-                        src={photo}
-                        className="w-full h-full object-cover"
-                        alt={`İlan Fotoğrafı ${index}`}
-                        title={`İlan Fotoğrafı ${index}`}
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
+        {/* Yükleniyor Ekranı - Kum Saati Yerine Skeleton Loading */}
+        {loading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 animate-pulse">
+            <div className="lg:col-span-8 space-y-4 sm:space-y-6">
+              <div className="w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[4/3] bg-slate-200 rounded-2xl sm:rounded-3xl border border-slate-100"></div>
+              <div className="w-full h-32 bg-slate-200 rounded-2xl sm:rounded-3xl border border-slate-100"></div>
+              <div className="w-full h-40 bg-slate-200 rounded-2xl sm:rounded-3xl border border-slate-100"></div>
             </div>
-            <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
-              <h3 className="text-lg sm:text-xl font-black text-slate-800 mb-3 sm:mb-4 border-b pb-3 sm:pb-4">
-                İlan Açıklaması
-              </h3>
-              <p className="text-sm sm:text-base text-slate-600 leading-relaxed whitespace-pre-wrap font-medium">
-                {product.description || "Satıcı henüz bir açıklama girmemiş."}
-              </p>
-            </div>
-            <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
-              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b pb-3 sm:pb-4">
-                <MessageSquare className="text-blue-500 w-5 h-5 sm:w-6 sm:h-6" />
-                <h3 className="text-lg sm:text-xl font-black text-slate-800">
-                  Soru ve Yorumlar
-                </h3>
-                <span className="bg-blue-100 text-blue-600 font-bold px-2 py-0.5 rounded-full text-xs sm:text-sm">
-                  {comments.length}
-                </span>
-              </div>
-              <form
-                onSubmit={handleAddComment}
-                className="mb-6 sm:mb-8 flex gap-2 sm:gap-3"
-              >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-black shrink-0 text-base sm:text-lg">
-                  {currentUser
-                    ? formatName(currentUser.fullName).charAt(0)
-                    : "U"}
-                </div>
-                <div className="flex-1 relative">
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Satıcıya bir soru sor..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-full py-2.5 sm:py-3.5 pl-4 sm:pl-5 pr-12 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] font-medium text-sm text-slate-700 shadow-inner"
-                  />
-                  {/* 🚀 DÜZELTME BURADA: title ve aria-label eklendi */}
-                  <button
-                    type="submit"
-                    title="Yorumu Gönder"
-                    aria-label="Yorumu Gönder"
-                    disabled={isSubmittingComment || !newComment.trim()}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[#20B2AA] hover:text-teal-700 disabled:text-slate-300 transition-colors"
-                  >
-                    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
-                </div>
-              </form>
-              <div className="space-y-3 sm:space-y-4">
-                {comments.length === 0 ? (
-                  <p className="text-center text-slate-400 font-medium py-3 sm:py-4 text-xs sm:text-sm">
-                    Henüz yorum yapılmamış. İlk soruyu sen sor!
-                  </p>
-                ) : (
-                  comments.map((comment) => {
-                    const commentUser = formatName(
-                      comment.user?.fullName || "Bilinmeyen Kullanıcı",
-                    );
-                    const canDelete =
-                      currentUser &&
-                      (currentUser.id === comment.user?.id || isOwner);
-                    return (
-                      <div
-                        key={comment.id}
-                        className="flex gap-2 sm:gap-4 group relative"
-                      >
-                        <Link
-                          href={
-                            comment.user?.id ? `/user/${comment.user.id}` : "#"
-                          }
-                          className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center font-bold shrink-0 mt-0.5 sm:mt-1 text-xs sm:text-base hover:bg-blue-100 hover:text-blue-600 transition-colors"
-                        >
-                          {commentUser.charAt(0)}
-                        </Link>
-
-                        <div className="flex-1 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl rounded-tl-none border border-slate-100">
-                          <div className="flex justify-between items-center mb-1">
-                            <div className="flex items-center gap-1.5 sm:gap-2 font-bold text-slate-800 text-xs sm:text-sm capitalize">
-                              <Link
-                                href={
-                                  comment.user?.id
-                                    ? `/user/${comment.user.id}`
-                                    : "#"
-                                }
-                                className="hover:text-blue-600 hover:underline transition-colors"
-                              >
-                                {commentUser}
-                              </Link>
-
-                              {comment.user?.id === product.user?.id && (
-                                <span className="bg-[#20B2AA]/10 text-[#20B2AA] text-[8px] sm:text-[9px] px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                  Satıcı
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[9px] sm:text-xs font-semibold text-slate-400">
-                              {formatDate(comment.createdAt)}
-                            </span>
-                          </div>
-                          <p className="text-slate-600 text-xs sm:text-sm font-medium">
-                            {comment.text}
-                          </p>
-                        </div>
-                        {canDelete && (
-                          <button
-                            onClick={() => handleDeleteComment(comment.id)}
-                            className="absolute top-1 sm:top-2 right-[-5px] sm:right-[-10px] opacity-100 lg:opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 bg-white px-2 py-1 rounded-md shadow-sm border border-red-100 text-[10px] sm:text-xs font-bold transition-all"
-                          >
-                            Sil
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
+            <div className="lg:col-span-4 space-y-4 sm:space-y-6">
+              <div className="w-full h-64 bg-slate-200 rounded-2xl sm:rounded-3xl border border-slate-100"></div>
+              <div className="w-full h-32 bg-slate-200 rounded-2xl sm:rounded-3xl border border-slate-100"></div>
             </div>
           </div>
-
-          {/* Sağ Kolon */}
-          <div className="lg:col-span-4 space-y-4 sm:space-y-6">
-            <div className="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
-              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 leading-tight mb-3 sm:mb-4">
-                {product.title}
-              </h1>
-              <div className="mb-4 sm:mb-6">
-                {product.priceType === "fiyat" && (
-                  <div className="text-3xl sm:text-4xl font-black text-blue-600">
-                    {product.price}{" "}
-                    <span className="text-xl sm:text-2xl text-blue-400">₺</span>
-                  </div>
-                )}
-                {product.priceType === "takas" && (
-                  <div className="text-2xl sm:text-3xl font-black text-purple-600 flex items-center gap-2">
-                    🤝 Takasa Açık
-                  </div>
-                )}
-                {product.priceType === "ucretsiz" && (
-                  <div className="text-2xl sm:text-3xl font-black text-green-600 flex items-center gap-2">
-                    🎁 Ücretsiz
+        ) : !product ? (
+          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm">
+            <span className="text-6xl mb-4">🕵️‍♀️</span>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
+              İlan bulunamadı!
+            </h2>
+            <p className="text-slate-500 mt-2">Bu ilan silinmiş veya yayından kaldırılmış olabilir.</p>
+            <Link
+              href="/"
+              className="mt-6 text-blue-600 bg-blue-50 px-6 py-3 rounded-full font-bold hover:bg-blue-600 hover:text-white transition-colors"
+            >
+              Ana Sayfaya Dön
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
+            {/* Sol Kolon */}
+            <div className="lg:col-span-8 space-y-4 sm:space-y-6">
+              <div className="bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
+                <div className="w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[4/3] bg-slate-50 rounded-xl sm:rounded-2xl overflow-hidden relative flex items-center justify-center border border-slate-100">
+                  <img
+                    src={photos[activeImageIndex]}
+                    alt={product.title}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                {photos.length > 1 && (
+                  <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4 overflow-x-auto pb-2 custom-scrollbar">
+                    {photos.map((photo: string, index: number) => (
+                      <button
+                        key={index}
+                        onClick={() => setActiveImageIndex(index)}
+                        className={`relative w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 shrink-0 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all ${
+                          activeImageIndex === index
+                            ? "border-blue-600 shadow-md scale-105"
+                            : "border-transparent hover:border-blue-300 opacity-70 hover:opacity-100"
+                        }`}
+                      >
+                        <img
+                          src={photo}
+                          className="w-full h-full object-cover"
+                          alt={`İlan Fotoğrafı ${index}`}
+                          title={`İlan Fotoğrafı ${index}`}
+                        />
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
-              <div className="space-y-3 sm:space-y-4 border-t border-slate-100 pt-4 sm:pt-6 mb-6 sm:mb-8">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
-                    Kategori
-                  </span>
-                  <Link
-                    href={`/search?q=${encodeURIComponent(product.category)}`}
-                    className="text-slate-800 font-bold bg-slate-100 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm hover:bg-blue-100 hover:text-blue-700 transition-colors"
-                  >
-                    {product.category}
-                  </Link>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
-                    Durum
-                  </span>
-                  <span className="text-slate-800 font-bold bg-slate-100 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm">
-                    {product.itemCondition || "Belirtilmemiş"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
-                    İlan No
-                  </span>
-                  <span className="text-slate-400 font-bold text-xs sm:text-sm select-all">
-                    #{product.id}
-                  </span>
-                </div>
+              <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
+                <h3 className="text-lg sm:text-xl font-black text-slate-800 mb-3 sm:mb-4 border-b pb-3 sm:pb-4">
+                  İlan Açıklaması
+                </h3>
+                <p className="text-sm sm:text-base text-slate-600 leading-relaxed whitespace-pre-wrap font-medium">
+                  {product.description || "Satıcı henüz bir açıklama girmemiş."}
+                </p>
               </div>
-              <div className="flex flex-row gap-2 sm:gap-3 mt-4">
-                <div
-                  onClick={handleLikeToggle}
-                  className={`flex-[3] flex rounded-xl overflow-hidden border transition-all duration-300 shadow-sm cursor-pointer hover:shadow-md group ${
-                    isLiked
-                      ? "border-red-200"
-                      : "border-slate-200 hover:border-red-300"
-                  }`}
+              <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
+                <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b pb-3 sm:pb-4">
+                  <MessageSquare className="text-blue-500 w-5 h-5 sm:w-6 sm:h-6" />
+                  <h3 className="text-lg sm:text-xl font-black text-slate-800">
+                    Soru ve Yorumlar
+                  </h3>
+                  <span className="bg-blue-100 text-blue-600 font-bold px-2 py-0.5 rounded-full text-xs sm:text-sm">
+                    {comments.length}
+                  </span>
+                </div>
+                <form
+                  onSubmit={handleAddComment}
+                  className="mb-6 sm:mb-8 flex gap-2 sm:gap-3"
                 >
-                  <div
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 sm:py-3.5 text-xs sm:text-sm font-bold transition-colors ${
-                      isLiked
-                        ? "bg-red-50 text-red-600 border-r border-red-200"
-                        : "bg-white text-slate-600 border-r border-slate-100 group-hover:bg-red-50"
-                    }`}
-                  >
-                    <Heart
-                      className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:scale-110 ${
-                        isLiked
-                          ? "fill-current text-red-500"
-                          : "text-slate-400 group-hover:text-red-400"
-                      }`}
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-black shrink-0 text-base sm:text-lg">
+                    {currentUser
+                      ? formatName(currentUser.fullName).charAt(0)
+                      : "U"}
+                  </div>
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Satıcıya bir soru sor..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-full py-2.5 sm:py-3.5 pl-4 sm:pl-5 pr-12 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] font-medium text-sm text-slate-700 shadow-inner"
                     />
-                    <span className="tracking-wide whitespace-nowrap">
-                      {isLiked ? "Favorilerde" : "Favoriye Al"}
+                    <button
+                      type="submit"
+                      title="Yorumu Gönder"
+                      aria-label="Yorumu Gönder"
+                      disabled={isSubmittingComment || !newComment.trim()}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[#20B2AA] hover:text-teal-700 disabled:text-slate-300 transition-colors"
+                    >
+                      <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                  </div>
+                </form>
+                <div className="space-y-3 sm:space-y-4">
+                  {comments.length === 0 ? (
+                    <p className="text-center text-slate-400 font-medium py-3 sm:py-4 text-xs sm:text-sm">
+                      Henüz yorum yapılmamış. İlk soruyu sen sor!
+                    </p>
+                  ) : (
+                    comments.map((comment) => {
+                      const commentUser = formatName(
+                        comment.user?.fullName || "Bilinmeyen Kullanıcı",
+                      );
+                      const canDelete =
+                        currentUser &&
+                        (currentUser.id === comment.user?.id || isOwner);
+                      return (
+                        <div
+                          key={comment.id}
+                          className="flex gap-2 sm:gap-4 group relative"
+                        >
+                          <Link
+                            href={
+                              comment.user?.id ? `/user/${comment.user.id}` : "#"
+                            }
+                            className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center font-bold shrink-0 mt-0.5 sm:mt-1 text-xs sm:text-base hover:bg-blue-100 hover:text-blue-600 transition-colors"
+                          >
+                            {commentUser.charAt(0)}
+                          </Link>
+
+                          <div className="flex-1 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl rounded-tl-none border border-slate-100">
+                            <div className="flex justify-between items-center mb-1">
+                              <div className="flex items-center gap-1.5 sm:gap-2 font-bold text-slate-800 text-xs sm:text-sm capitalize">
+                                <Link
+                                  href={
+                                    comment.user?.id
+                                      ? `/user/${comment.user.id}`
+                                      : "#"
+                                  }
+                                  className="hover:text-blue-600 hover:underline transition-colors"
+                                >
+                                  {commentUser}
+                                </Link>
+
+                                {comment.user?.id === product.user?.id && (
+                                  <span className="bg-[#20B2AA]/10 text-[#20B2AA] text-[8px] sm:text-[9px] px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                    Satıcı
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[9px] sm:text-xs font-semibold text-slate-400">
+                                {formatDate(comment.createdAt)}
+                              </span>
+                            </div>
+                            <p className="text-slate-600 text-xs sm:text-sm font-medium">
+                              {comment.text}
+                            </p>
+                          </div>
+                          {canDelete && (
+                            <button
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="absolute top-1 sm:top-2 right-[-5px] sm:right-[-10px] opacity-100 lg:opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 bg-white px-2 py-1 rounded-md shadow-sm border border-red-100 text-[10px] sm:text-xs font-bold transition-all"
+                            >
+                              Sil
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Sağ Kolon */}
+            <div className="lg:col-span-4 space-y-4 sm:space-y-6">
+              <div className="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
+                <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 leading-tight mb-3 sm:mb-4">
+                  {product.title}
+                </h1>
+                <div className="mb-4 sm:mb-6">
+                  {product.priceType === "fiyat" && (
+                    <div className="text-3xl sm:text-4xl font-black text-blue-600">
+                      {product.price}{" "}
+                      <span className="text-xl sm:text-2xl text-blue-400">₺</span>
+                    </div>
+                  )}
+                  {product.priceType === "takas" && (
+                    <div className="text-2xl sm:text-3xl font-black text-purple-600 flex items-center gap-2">
+                      🤝 Takasa Açık
+                    </div>
+                  )}
+                  {product.priceType === "ucretsiz" && (
+                    <div className="text-2xl sm:text-3xl font-black text-green-600 flex items-center gap-2">
+                      🎁 Ücretsiz
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-3 sm:space-y-4 border-t border-slate-100 pt-4 sm:pt-6 mb-6 sm:mb-8">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
+                      Kategori
+                    </span>
+                    <Link
+                      href={`/search?q=${encodeURIComponent(product.category)}`}
+                      className="text-slate-800 font-bold bg-slate-100 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                    >
+                      {product.category}
+                    </Link>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
+                      Durum
+                    </span>
+                    <span className="text-slate-800 font-bold bg-slate-100 px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm">
+                      {product.itemCondition || "Belirtilmemiş"}
                     </span>
                   </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 font-bold text-xs sm:text-sm uppercase tracking-wider">
+                      İlan No
+                    </span>
+                    <span className="text-slate-400 font-bold text-xs sm:text-sm select-all">
+                      #{product.id}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-row gap-2 sm:gap-3 mt-4">
                   <div
-                    className={`flex items-center justify-center px-3 sm:px-5 font-black text-xs sm:text-sm tabular-nums transition-colors ${
+                    onClick={handleLikeToggle}
+                    className={`flex-[3] flex rounded-xl overflow-hidden border transition-all duration-300 shadow-sm cursor-pointer hover:shadow-md group ${
                       isLiked
-                        ? "bg-red-500 text-white"
-                        : "bg-slate-50 text-slate-500"
+                        ? "border-red-200"
+                        : "border-slate-200 hover:border-red-300"
                     }`}
                   >
-                    {likeCount}
+                    <div
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 sm:py-3.5 text-xs sm:text-sm font-bold transition-colors ${
+                        isLiked
+                          ? "bg-red-50 text-red-600 border-r border-red-200"
+                          : "bg-white text-slate-600 border-r border-slate-100 group-hover:bg-red-50"
+                      }`}
+                    >
+                      <Heart
+                        className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:scale-110 ${
+                          isLiked
+                            ? "fill-current text-red-500"
+                            : "text-slate-400 group-hover:text-red-400"
+                        }`}
+                      />
+                      <span className="tracking-wide whitespace-nowrap">
+                        {isLiked ? "Favorilerde" : "Favoriye Al"}
+                      </span>
+                    </div>
+                    <div
+                      className={`flex items-center justify-center px-3 sm:px-5 font-black text-xs sm:text-sm tabular-nums transition-colors ${
+                        isLiked
+                          ? "bg-red-500 text-white"
+                          : "bg-slate-50 text-slate-500"
+                      }`}
+                    >
+                      {likeCount}
+                    </div>
                   </div>
+                  <button
+                    onClick={handleShare}
+                    className="flex-[2] bg-white hover:bg-slate-50 text-slate-600 font-bold py-3 sm:py-3.5 rounded-xl flex items-center justify-center gap-2 text-xs sm:text-sm border border-slate-200 transition-all shadow-sm hover:shadow-md"
+                  >
+                    <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+                    <span className="whitespace-nowrap">Paylaş</span>
+                  </button>
                 </div>
-                <button
-                  onClick={handleShare}
-                  className="flex-[2] bg-white hover:bg-slate-50 text-slate-600 font-bold py-3 sm:py-3.5 rounded-xl flex items-center justify-center gap-2 text-xs sm:text-sm border border-slate-200 transition-all shadow-sm hover:shadow-md"
-                >
-                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-                  <span className="whitespace-nowrap">Paylaş</span>
-                </button>
               </div>
-            </div>
-            <div className="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
-              <Link
-                href={`/user/${product.user?.id}`}
-                className="flex items-center gap-3 sm:gap-4 group border-b border-slate-100 pb-4 sm:pb-6 mb-4 sm:mb-6 hover:bg-slate-50 p-2 sm:p-3 -mx-2 sm:-mx-3 rounded-2xl transition-all cursor-pointer"
-              >
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl sm:text-2xl font-black shadow-inner group-hover:scale-105 transition-transform shrink-0">
-                  {sellerName.charAt(0)}
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-base sm:text-lg font-extrabold text-slate-800 capitalize group-hover:text-[#20B2AA] transition-colors line-clamp-1">
-                    {sellerName}
-                  </h3>
-                  <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-slate-400 mt-0.5 sm:mt-1">
-                    <ShieldCheck
-                      size={14}
-                      className="text-[#20B2AA] sm:w-4 sm:h-4"
-                    />{" "}
-                    Kampüs Onaylı
-                  </div>
-                </div>
-              </Link>
-              {isOwner ? (
-                <div className="w-full bg-green-50 text-green-700 font-black py-3 sm:py-4 rounded-xl border border-green-200 flex items-center justify-center gap-2 text-xs sm:text-sm shadow-sm">
-                  Bu senin ilanın
-                </div>
-              ) : (
-                <button
-                  onClick={handleMessageClick}
-                  className="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-3 sm:py-4 rounded-xl shadow-lg transition-transform hover:scale-[1.02] active:scale-95 text-sm sm:text-base"
+              <div className="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
+                <Link
+                  href={`/user/${product.user?.id}`}
+                  className="flex items-center gap-3 sm:gap-4 group border-b border-slate-100 pb-4 sm:pb-6 mb-4 sm:mb-6 hover:bg-slate-50 p-2 sm:p-3 -mx-2 sm:-mx-3 rounded-2xl transition-all cursor-pointer"
                 >
-                  Satıcıya Mesaj Gönder
-                </button>
-              )}
-              <div className="mt-3 sm:mt-4 text-center text-[10px] sm:text-xs font-bold text-slate-400 flex items-center justify-center gap-1 sm:gap-2">
-                <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                {product.university ||
-                  product.user?.university ||
-                  "Üniversite Belirtilmemiş"}
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl sm:text-2xl font-black shadow-inner group-hover:scale-105 transition-transform shrink-0">
+                    {sellerName.charAt(0)}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-base sm:text-lg font-extrabold text-slate-800 capitalize group-hover:text-[#20B2AA] transition-colors line-clamp-1">
+                      {sellerName}
+                    </h3>
+                    <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-slate-400 mt-0.5 sm:mt-1">
+                      <ShieldCheck
+                        size={14}
+                        className="text-[#20B2AA] sm:w-4 sm:h-4"
+                      />{" "}
+                      Kampüs Onaylı
+                    </div>
+                  </div>
+                </Link>
+                {isOwner ? (
+                  <div className="w-full bg-green-50 text-green-700 font-black py-3 sm:py-4 rounded-xl border border-green-200 flex items-center justify-center gap-2 text-xs sm:text-sm shadow-sm">
+                    Bu senin ilanın
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleMessageClick}
+                    className="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-3 sm:py-4 rounded-xl shadow-lg transition-transform hover:scale-[1.02] active:scale-95 text-sm sm:text-base"
+                  >
+                    Satıcıya Mesaj Gönder
+                  </button>
+                )}
+                <div className="mt-3 sm:mt-4 text-center text-[10px] sm:text-xs font-bold text-slate-400 flex items-center justify-center gap-1 sm:gap-2">
+                  <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  {product.university ||
+                    product.user?.university ||
+                    "Üniversite Belirtilmemiş"}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* 📜 FOOTER BİLGİ POP-UP'I (MODAL) */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            /* Yatay menüler için alt kaydırma çubuğunu gizler */
+            .custom-scrollbar::-webkit-scrollbar { height: 0px; width: 6px; } 
+            @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { width: 8px; } } 
+            
+            /* Bildirimler gibi dikey alanlar için şık kaydırma çubuğu tasarımı */
+            .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; } 
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+          `,
+        }}
+      />
+
       {infoModal.isOpen && (
         <div className="fixed inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
@@ -1281,19 +1329,24 @@ export default function ListingDetailPage() {
               <h2 className="text-lg sm:text-xl font-black text-slate-800">
                 {infoModal.title}
               </h2>
+
               <button
                 onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                aria-label="Kapat"
                 className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors"
               >
                 ✕
               </button>
             </div>
+
             <div className="p-6 sm:p-8 text-sm sm:text-base text-slate-600 font-medium whitespace-pre-wrap leading-relaxed max-h-[60vh] overflow-y-auto custom-scrollbar">
               {infoModal.content}
             </div>
+
             <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                aria-label="Anladım Butonu"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base"
               >
                 Anladım
@@ -1303,22 +1356,28 @@ export default function ListingDetailPage() {
         </div>
       )}
 
-      {/* 🌊 FOOTER (PREMIUM) */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 sm:mt-16 rounded-t-[3rem] shadow-sm w-full">
+      {/* 🌊 FOOTER (PREMIUM) - Üstünde Boşluk Garantili Spacer Div Eklendi */}
+      <div className="h-24 sm:h-32 w-full shrink-0"></div>
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full shrink-0">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-2">
+          <div className="col-span-1 md:col-span-2 text-center md:text-left">
             <div className="mb-4">
               <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
                 Uni<span className="text-[#20B2AA]">Cycle</span>
               </span>
             </div>
-            <p className="text-sm font-medium text-slate-500 max-w-sm">
+
+            <p className="text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
               öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
             </p>
           </div>
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
+
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-4 text-base">
+              Platform
+            </h4>
+
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
@@ -1333,6 +1392,7 @@ export default function ListingDetailPage() {
                   Nasıl Çalışır?
                 </button>
               </li>
+
               <li>
                 <button
                   onClick={() =>
@@ -1346,6 +1406,7 @@ export default function ListingDetailPage() {
                   Güvenlik İpuçları
                 </button>
               </li>
+
               <li>
                 <button
                   onClick={() =>
@@ -1361,15 +1422,19 @@ export default function ListingDetailPage() {
               </li>
             </ul>
           </div>
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
+
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-4 text-base">
+              İletişim
+            </h4>
+
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
                   onClick={() =>
                     openInfoModal(
                       "Destek Merkezi",
-                      "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin.",
+                      "Yaşadığın bir sorun mu var?\n\nEkibimize unicycledestek@gmail.com adresinden ulaşabilirsin.",
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -1377,12 +1442,13 @@ export default function ListingDetailPage() {
                   Destek Merkezi
                 </button>
               </li>
+
               <li>
                 <button
                   onClick={() =>
                     openInfoModal(
                       "Bize Ulaşın",
-                      "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67",
+                      "📍 Adres:\nPiri Reis Üniversitesi Deniz Kampüsü\nPostane Mahallesi, Eflatun Sokak No:8\n34940 Tuzla / İstanbul\n\n✉️ E-posta: unicycledestek@gmail.com",
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -1390,6 +1456,7 @@ export default function ListingDetailPage() {
                   Bize Ulaşın
                 </button>
               </li>
+
               <li>
                 <button
                   onClick={() =>
@@ -1406,24 +1473,11 @@ export default function ListingDetailPage() {
             </ul>
           </div>
         </div>
+
         <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>
-
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
-        @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-        .desktop-search { display: none; }
-        .mobile-search { display: block; }
-        @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }
-      `,
-        }}
-      />
     </div>
   );
 }

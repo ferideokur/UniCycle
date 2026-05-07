@@ -11,7 +11,7 @@ import {
   Package,
   UserPlus,
   Search,
-} from "lucide-react"; // 🚀 YENİ: Search İkonu Eklendi
+} from "lucide-react";
 
 // 🎓 ÜNİVERSİTE LİSTESİ
 const UNIVERSITIES = [
@@ -638,7 +638,6 @@ export default function Home() {
   };
 
   const filteredProducts = products.filter((p: any) => {
-    // 🚀 YENİ: Hem başlıkta kelime arar hem de ID ile tam eşleşme arar
     const searchClean = searchTerm.trim().toLowerCase();
     const searchId = searchClean.replace("#", "");
 
@@ -675,8 +674,8 @@ export default function Home() {
   });
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] pb-20 font-sans w-full overflow-x-hidden flex flex-col relative">
-      {/* 🚀 ÜST MENÜ NAVBAR (Premium İkiz) */}
+    <main className="min-h-screen bg-[#F8FAFC] pb-0 font-sans w-full overflow-x-hidden flex flex-col relative">
+      {/* 🚀 ÜST MENÜ NAVBAR */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
         <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
@@ -792,7 +791,7 @@ export default function Home() {
                     onClick={handleSearchSubmit}
                   >
                     <span className="text-xs font-black text-blue-600">
-                      Tüm sonuçları gör
+                      Tüm sonuçları gör{" "}
                     </span>
                   </div>
                 </div>
@@ -1099,7 +1098,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* 📱 YENİ: MOBİL İÇİN YÜZEN İLAN VER BUTONU (Ortalanmış FAB) */}
+      {/* 📱 YENİ: MOBİL İÇİN YÜZEN İLAN VER BUTONU */}
       <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
         <Link
           href="/create-listing"
@@ -1109,7 +1108,7 @@ export default function Home() {
         </Link>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8 flex gap-8 items-start w-full">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8 flex gap-8 items-start w-full flex-1">
         <aside className="w-72 hidden lg:block sticky top-28 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
           <h3 className="font-black text-lg text-slate-800 mb-5 pl-2">
             Kategoriler
@@ -1171,7 +1170,7 @@ export default function Home() {
           </ul>
         </aside>
 
-        <section className="flex-1 min-w-0 w-full">
+        <section className="flex-1 min-w-0 w-full pb-24 sm:pb-32">
           <div className="block lg:hidden bg-white -mx-4 px-4 py-5 mb-4 border-b border-slate-100 shadow-sm">
             <div className="flex justify-between overflow-x-auto custom-scrollbar gap-4">
               {QUICK_LINKS.map((link, idx) => (
@@ -1454,6 +1453,7 @@ export default function Home() {
                   <Link
                     href={`/listing-detail/${p.id}`}
                     key={p.id}
+                    prefetch={true}
                     className="group bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 border border-slate-100 flex flex-col cursor-pointer w-full h-full relative z-10"
                   >
                     <div className="aspect-[4/5] relative overflow-hidden bg-slate-100">
@@ -1584,8 +1584,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* 🌊 FOOTER (PREMIUM) */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 rounded-t-[3rem] shadow-sm w-full">
+      {/* 🌊 FOOTER (PREMIUM) - Üstünde Boşluk Garantili Spacer Div Eklendi */}
+      <div className="h-24 sm:h-32 w-full shrink-0"></div>
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full shrink-0">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2 text-center md:text-left">
             <div className="mb-4">
@@ -1661,7 +1662,7 @@ export default function Home() {
                   onClick={() =>
                     openInfoModal(
                       "Destek Merkezi",
-                      "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin.",
+                      "Yaşadığın bir sorun mu var?\n\nEkibimize unicycledestek@gmail.com adresinden ulaşabilirsin.",
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -1675,7 +1676,7 @@ export default function Home() {
                   onClick={() =>
                     openInfoModal(
                       "Bize Ulaşın",
-                      "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67",
+                      "📍 Adres:\nPiri Reis Üniversitesi Deniz Kampüsü\nPostane Mahallesi, Eflatun Sokak No:8\n34940 Tuzla / İstanbul\n\n✉️ E-posta: unicycledestek@gmail.com",
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
