@@ -132,6 +132,24 @@ export default function AdminDashboard() {
           localStorage.setItem("admin_activeUsers", JSON.stringify(newActive));
           
           notify(`${userToApprove.fullName || "Kullanıcı"} başarıyla onaylandı! ✅`, "success"); 
+
+          // 🚀 İŞTE BURASI YENİ EKLENDİ: ONAY MAİLİNİ VERCEL'E FIRLATIYORUZ 🚀
+          try {
+            if (userToApprove.email) {
+              await fetch('/api/mail', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  email: userToApprove.email,
+                  type: 'approve' // Type'ı approve gönderiyoruz ki hoş geldin tasarımı gitsin
+                })
+              });
+            }
+          } catch (mailError) {
+            // Eğer mail atarken anlık bir kopma olursa admin paneli çökmesin diye hatayı yutuyoruz.
+            console.error("Arka planda mail gönderilirken hata oluştu:", mailError);
+          }
+          // 🚀 YENİ EKLENEN KISIM BİTTİ 🚀
         }
       }
     } catch (error) {
