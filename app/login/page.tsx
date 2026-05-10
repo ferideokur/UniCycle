@@ -17,10 +17,9 @@ import {
   Upload,
   KeyRound,
   ArrowRight,
-  X // 🚀 Kapatma ikonu
+  X 
 } from "lucide-react";
 
-// Türkiye'deki Üniversiteler Listesi
 const UNIVERSITIES = [
   "Acıbadem Üniversitesi", "Akdeniz Üniversitesi", "Anadolu Üniversitesi",
   "Ankara Üniversitesi", "Atatürk Üniversitesi", "Bahçeşehir Üniversitesi",
@@ -179,7 +178,6 @@ export default function AuthPage() {
     }
   };
 
-  // 🚀 BURASI GÜNCELLENDİ: MAİL İŞİNİ VERCEL'E YAPTIRAN SİSTEM
   const handleSendCode = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validateForm()) return; 
@@ -189,7 +187,6 @@ export default function AuthPage() {
     setMessage("E-posta adresiniz kontrol ediliyor ve kod gönderiliyor...");
 
     try {
-      // 1. Backend'den Kodu Al (Artık çökmeyecek çünkü mail atmıyor, sadece kod üretiyor)
       const response = await fetch(`https://unicycle-api.onrender.com/api/users/forgot-password?email=${encodeURIComponent(email)}`, { 
         method: "POST",
         headers: { "Accept": "application/json" }
@@ -200,13 +197,12 @@ export default function AuthPage() {
       }
 
       const data = await response.json();
-      const { otp, fullName } = data; // Backend'in gizlice verdiği kodu yakaladık!
+      const generatedOtp = data.otp; 
 
-      // 2. Maili Vercel (Frontend) Üzerinden Fırlat!
       const mailResponse = await fetch('/api/mail', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp, fullName })
+        body: JSON.stringify({ email, otp: generatedOtp })
       });
 
       if (!mailResponse.ok) {
@@ -214,11 +210,11 @@ export default function AuthPage() {
       }
 
       setMessageType("success");
-      setMessage("Doğrulama kodu e-postanıza başarıyla gönderildi!");
-      setForgotPasswordStep(2);
+      setMessage("Doğrulama maili e-postanıza başarıyla gönderildi!");
+      setForgotPasswordStep(2); 
     } catch (error: any) {
       setMessageType("error");
-      setMessage(error.message);
+      setMessage(error.message || "Bilinmeyen bir hata oluştu.");
     } finally {
       setIsLoading(false);
     }

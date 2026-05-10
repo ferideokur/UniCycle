@@ -1,34 +1,41 @@
-import { NextResponse } from 'next/server';
-// @ts-ignore
 import nodemailer from 'nodemailer';
+import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { email, otp, fullName } = body;
+    const { email, otp } = await req.json();
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'unicycledestek@gmail.com',
-        pass: 'cikeatsrwgokaicc'
-      }
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS, 
+      },
     });
 
-    const mailOptions = {
-      from: '"UniCycle Destek" <unicycledestek@gmail.com>',
+    await transporter.sendMail({
+      from: `"UniCycle Destek" <${process.env.GMAIL_USER}>`,
       to: email,
-      subject: 'UniCycle - Şifre Sıfırlama Kodu',
-      html: `<div style="text-align:center; padding: 20px; font-family: Arial, sans-serif;">
-               <h2>Merhaba ${fullName},</h2>
-               <p>Şifrenizi sıfırlamak için doğrulama kodunuz:</p>
-               <h1 style="color:#20B2AA; letter-spacing: 5px; font-size: 36px;">${otp}</h1>
-             </div>`
-    };
+      subject: 'UniCycle - Şifre Sıfırlama Kodunuz',
+      html: `
+        <div style="font-family: Arial, sans-serif; text-align: center; padding: 30px; background-color: #f8fafc; border-radius: 10px;">
+          <h2 style="color: #0f2e36;">Şifre Sıfırlama Talebi</h2>
+          <p style="color: #475569; font-size: 16px;">Merhaba,</p>
+          <p style="color: #475569; font-size: 16px;">Şifrenizi sıfırlamak için 6 haneli doğrulama kodunuz aşağıdadır:</p>
+          
+          <div style="margin: 30px 0; padding: 20px; background-color: white; border-radius: 8px; border: 2px dashed #20B2AA; display: inline-block;">
+            <h1 style="color: #20B2AA; font-size: 40px; margin: 0; letter-spacing: 8px;">${otp}</h1>
+          </div>
+          
+          <p style="color: #94a3b8; font-size: 13px;">Bu kodu kimseyle paylaşmayın. Eğer bu talebi siz yapmadıysanız, bu e-postayı görmezden gelebilirsiniz.</p>
+        </div>
+      `,
+    });
 
-    await transporter.sendMail(mailOptions);
-    return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ message: 'Mail başarıyla gönderildi!' }, { status: 200 });
+    
+  } catch (error) {
+    console.error("Mail Hatası:", error);
+    return NextResponse.json({ error: 'Mail gönderilemedi.' }, { status: 500 });
   }
 }
