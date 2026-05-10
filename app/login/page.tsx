@@ -179,7 +179,7 @@ export default function AuthPage() {
     }
   };
 
-  // 🚀 BURASI GÜNCELLENDİ: MAİL İSTEĞİ EN SAĞLAM HALE GETİRİLDİ
+  // 🚀 BURASI GÜNCELLENDİ: MAİL İŞİNİ VERCEL'E YAPTIRAN SİSTEM
   const handleSendCode = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validateForm()) return; 
@@ -189,44 +189,41 @@ export default function AuthPage() {
     setMessage("E-posta adresiniz kontrol ediliyor ve kod gönderiliyor...");
 
     try {
+      // 1. Backend'den Kodu Al (Artık çökmeyecek çünkü mail atmıyor, sadece kod üretiyor)
       const response = await fetch(`https://unicycle-api.onrender.com/api/users/forgot-password?email=${encodeURIComponent(email)}`, { 
         method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json"
-        }
+        headers: { "Accept": "application/json" }
       });
       
-      if (response.status === 404 || response.status === 400) {
-        throw new Error("NOT_FOUND");
-      }
-      // EĞER JAVA 500 HATASI VERİRSE ÖZEL YAKALAYALIM Kİ SEBEBİNİ BİLELİM
-      if (response.status === 500) {
-        throw new Error("SERVER_500");
-      }
       if (!response.ok) {
-        throw new Error("SERVER_ERROR");
+        throw new Error("Bu e-posta adresine ait kayıtlı bir hesap bulunamadı!");
+      }
+
+      const data = await response.json();
+      const { otp, fullName } = data; // Backend'in gizlice verdiği kodu yakaladık!
+
+      // 2. Maili Vercel (Frontend) Üzerinden Fırlat!
+      const mailResponse = await fetch('/api/mail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp, fullName })
+      });
+
+      if (!mailResponse.ok) {
+        throw new Error("Mail gönderilemedi. Vercel sunucusunda hata oluştu.");
       }
 
       setMessageType("success");
-      setMessage("Doğrulama kodu e-postanıza gönderildi!");
+      setMessage("Doğrulama kodu e-postanıza başarıyla gönderildi!");
       setForgotPasswordStep(2);
     } catch (error: any) {
       setMessageType("error");
-      
-      if (error.message === "NOT_FOUND") {
-        setMessage("Bu e-posta adresine ait kayıtlı bir hesap bulunamadı!");
-      } else if (error.message === "SERVER_500") {
-        setMessage("Java (Backend) çöktü! Gmail güvenliği veya şifreniz mail atılmasını engelliyor.");
-      } else {
-        setMessage("Mail gönderilemedi. Sunucunuzun (Backend) çalıştığından emin olun.");
-      }
+      setMessage(error.message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 🚀 BURASI GÜNCELLENDİ: ŞİFRE SIFIRLAMA İSTEĞİ EN SAĞLAM HALE GETİRİLDİ
   const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validateForm()) return;
