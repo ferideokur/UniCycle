@@ -228,7 +228,7 @@ export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(""); // 🚀 YENİ EKLENDİ: Hataları yakalamak için
+  const [fetchError, setFetchError] = useState(""); 
   const router = useRouter();
 
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
@@ -238,10 +238,12 @@ export default function Home() {
   const [sortType, setSortType] = useState("En Yeni");
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
 
+  // 🚀 User tipine "status" alanını ekledik ki TypeScript kızmasın
   const [user, setUser] = useState<{
     id: number;
     fullName: string;
     email: string;
+    status?: string; 
   } | null>(null);
 
   const [likedProducts, setLikedProducts] = useState<number[]>([]);
@@ -264,9 +266,8 @@ export default function Home() {
   };
 
   const fetchAllListings = async () => {
-    // 🚀 CACHE BUSTER (HAFIZAYI İPTAL ETTİK)
     setIsLoading(true);
-    setFetchError(""); // Hataları sıfırla
+    setFetchError(""); 
     try {
       let url = "https://unicycle-api.onrender.com/api/products";
       if (selectedUniversity !== "Tüm Üniversiteler")
@@ -288,12 +289,10 @@ export default function Home() {
           setProducts(data);
         }
       } else {
-        // Eğer Java bağlanır ama veriyi vermezse:
         setFetchError("Java sunucusu ilanları vermeyi reddetti (Durum Kodu: " + response.status + ")");
       }
     } catch (error) {
       console.error("Java bağlanılamadı", error);
-      // Eğer Java'ya hiç ulaşılamazsa (CORS Hatası gibi):
       setFetchError("Java API'sine hiç bağlanılamadı! Muhtemelen CORS hatası alıyorsunuz.");
     } finally {
       setIsLoading(false);
@@ -642,8 +641,14 @@ export default function Home() {
   const bannerData = getBannerContent();
 
   const handleBannerClick = () => {
-    if (bannerData.link) router.push(bannerData.link);
-    else {
+    if (bannerData.link) {
+      // 🚀 YENİ EKLENDİ: Banner'daki butona basarsa da pasifse uyar!
+      if (bannerData.link === "/create-listing" && (!user || user.status !== "ACTIVE")) {
+        alert("İlan verebilmek için hesabınızın yöneticiler tarafından onaylanması ve aktif olması gerekmektedir.");
+        return;
+      }
+      router.push(bannerData.link);
+    } else {
       setExpandedGroup(bannerData.filterGroup || null);
       setActiveFilter(bannerData.filterItem || "TÜMÜ");
     }
@@ -811,12 +816,16 @@ export default function Home() {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              <Link
-                href="/create-listing"
-                className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
-              >
-                <span className="text-xl">+</span> İlan Ver
-              </Link>
+              
+              {/* 🚀 YENİ: SADECE AKTİF KULLANICILAR MASAÜSTÜNDE "İLAN VER" GÖRÜR */}
+              {user && user.status === "ACTIVE" && (
+                <Link
+                  href="/create-listing"
+                  className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
+                >
+                  <span className="text-xl">+</span> İlan Ver
+                </Link>
+              )}
 
               {user ? (
                 <div className="flex items-center gap-2 sm:gap-4 relative">
@@ -1107,15 +1116,17 @@ export default function Home() {
         </div>
       </header>
 
-      {/* 📱 YENİ: MOBİL İÇİN YÜZEN İLAN VER BUTONU */}
-      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
-        <Link
-          href="/create-listing"
-          className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20"
-        >
-          <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
-        </Link>
-      </div>
+      {/* 🚀 YENİ: SADECE AKTİF KULLANICILAR MOBİLDE "İLAN VER" BUTONU GÖRÜR */}
+      {user && user.status === "ACTIVE" && (
+        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
+          <Link
+            href="/create-listing"
+            className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20"
+          >
+            <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
+          </Link>
+        </div>
+      )}
 
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8 flex gap-8 items-start w-full flex-1">
         <aside className="w-72 hidden lg:block sticky top-28 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
@@ -1473,12 +1484,20 @@ export default function Home() {
                 İlk adımı sen atmaya ne dersin?
               </p>
 
-              <Link
-                href="/create-listing"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-black py-3 sm:py-4 px-8 sm:px-10 rounded-xl sm:rounded-2xl transition shadow-xl shadow-blue-200 inline-block hover:-translate-y-1 text-sm sm:text-base"
-              >
-                Hemen İlan Ver
-              </Link>
+              {/* 🚀 YENİ: BURADAKİ BOŞ EKRAN BUTONU DA KORUMA ALTINA ALINDI */}
+              {user && user.status === "ACTIVE" ? (
+                <Link
+                  href="/create-listing"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-black py-3 sm:py-4 px-8 sm:px-10 rounded-xl sm:rounded-2xl transition shadow-xl shadow-blue-200 inline-block hover:-translate-y-1 text-sm sm:text-base"
+                >
+                  Hemen İlan Ver
+                </Link>
+              ) : (
+                <div className="text-xs sm:text-sm font-bold text-slate-500 mt-4 bg-slate-50 py-3 px-6 rounded-xl inline-block border border-slate-100">
+                  İlan verebilmek için hesabınızın yöneticiler tarafından onaylanması gerekmektedir.
+                </div>
+              )}
+
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">

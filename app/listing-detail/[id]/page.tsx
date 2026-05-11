@@ -20,7 +20,6 @@ import {
   Search,
 } from "lucide-react";
 
-// 🚀 İsimleri Javascript içinde her yerde büyük harfle başlatan formül
 const formatName = (name: string) => {
   if (!name) return "";
   return name
@@ -29,7 +28,6 @@ const formatName = (name: string) => {
     .join(" ");
 };
 
-// 🧹 BİLDİRİM TEMİZLEYİCİ
 const cleanNotification = (msg: string) => {
   if (!msg) return "";
   let text = msg
@@ -60,7 +58,13 @@ export default function ListingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [toastMessage, setToastMessage] = useState("");
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  // 🚀 User state'ine status eklendi
+  const [currentUser, setCurrentUser] = useState<{
+    id: number;
+    fullName: string;
+    email: string;
+    status?: string;
+  } | null>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [notificationsCount, setNotificationsCount] = useState(0);
@@ -75,7 +79,6 @@ export default function ListingDetailPage() {
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
-  // 📜 Footer Bilgi Modalı State'leri
   const [infoModal, setInfoModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -174,25 +177,23 @@ export default function ListingDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    // ⚡ YILDIRIM HIZI: Ana sayfadan kaydedilen hafızadan anında ürünü çek!
     const cachedData = sessionStorage.getItem("unicycle_all_products");
     if (cachedData) {
       const parsed = JSON.parse(cachedData);
       const found = parsed.find((p: any) => p.id.toString() === id);
       if (found) {
         setProduct(found);
-        setLoading(false); // SKELETON'U (Gri Kutuları) ANINDA YOK ET!
+        setLoading(false);
       }
     }
 
-    // Arka planda veriyi tazele (kullanıcı hissetmez)
     fetch("https://unicycle-api.onrender.com/api/products", {
       cache: "no-store",
       headers: { "Cache-Control": "no-cache" },
     })
       .then((res) => res.json())
       .then((data) => {
-        sessionStorage.setItem("unicycle_all_products", JSON.stringify(data)); // Hafızayı güncelle
+        sessionStorage.setItem("unicycle_all_products", JSON.stringify(data));
         const foundProduct = data.find((p: any) => p.id.toString() === id);
         setProduct(foundProduct);
         setLoading(false);
@@ -337,6 +338,12 @@ export default function ListingDetailPage() {
 
   const handleMessageClick = () => {
     if (!currentUser) return showToast("🔒 Mesaj atmak için giriş yapmalısın!");
+    
+    // 🚀 GÜVENLİK KONTROLÜ: Pasif/Onaysız kullanıcı mesaj atamaz
+    if (currentUser.status !== "ACTIVE") {
+      return showToast("🚨 Mesaj atmak için hesabınız onaylı ve aktif olmalıdır.");
+    }
+
     if (product && product.user) {
       window.dispatchEvent(
         new CustomEvent("openChatWithContext", {
@@ -430,8 +437,13 @@ export default function ListingDetailPage() {
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser)
-      return showToast("🔒 Yorum yapmak için giriş yapmalısın!");
+    if (!currentUser) return showToast("🔒 Yorum yapmak için giriş yapmalısın!");
+    
+    // 🚀 GÜVENLİK KONTROLÜ: Pasif/Onaysız kullanıcı yorum yazamaz
+    if (currentUser.status !== "ACTIVE") {
+      return showToast("🚨 Yorum yapabilmek için hesabınız onaylı ve aktif olmalıdır.");
+    }
+
     if (newComment.trim() === "") return;
     setIsSubmittingComment(true);
     try {
@@ -589,8 +601,7 @@ export default function ListingDetailPage() {
                           result.item.photosBase64.length > 0 ? (
                           <img
                             src={result.item.photosBase64[0]}
-                            alt="Ürün görseli"
-                            title="Ürün görseli"
+                            alt="ürün"
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -638,12 +649,16 @@ export default function ListingDetailPage() {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              <Link
-                href="/create-listing"
-                className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
-              >
-                <span className="text-xl">+</span> İlan Ver
-              </Link>
+              
+              {/* 🚀 GÜVENLİK DUVARI: SADECE AKTİF KULLANICILAR İLAN VEREBİLİR */}
+              {currentUser && currentUser.status === "ACTIVE" && (
+                <Link
+                  href="/create-listing"
+                  className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
+                >
+                  <span className="text-xl">+</span> İlan Ver
+                </Link>
+              )}
 
               {currentUser ? (
                 <div className="flex items-center gap-2 sm:gap-4 relative">
@@ -934,17 +949,19 @@ export default function ListingDetailPage() {
         </div>
       </header>
 
-      {/* 📱 YENİ: MOBİL İÇİN YÜZEN İLAN VER BUTONU */}
-      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
-        <Link
-          href="/create-listing"
-          className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20"
-        >
-          <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
-        </Link>
-      </div>
+      {/* 🚀 GÜVENLİK DUVARI: SADECE AKTİF KULLANICILAR MOBİLDE "İLAN VER" GÖRÜR */}
+      {currentUser && currentUser.status === "ACTIVE" && (
+        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
+          <Link
+            href="/create-listing"
+            className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20"
+          >
+            <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
+          </Link>
+        </div>
+      )}
 
-      {/* 🖥️ ANA DÜZEN VE YÜKLEME EKRANI (KUM SAATİ YERİNE ŞIK SKELETON) */}
+      {/* 🖥️ ANA DÜZEN VE YÜKLEME EKRANI */}
       <div className="max-w-[1200px] mx-auto mt-4 sm:mt-8 px-4 sm:px-6 w-full flex-1 pb-24 sm:pb-32">
         
         {/* 🔙 ZARİF BREADCRUMB VE GERİ DÖN YAPISI */}
@@ -984,7 +1001,7 @@ export default function ListingDetailPage() {
           </button>
         </div>
 
-        {/* Yükleniyor Ekranı - Kum Saati Yerine Skeleton Loading */}
+        {/* Yükleniyor Ekranı - Skeleton Loading */}
         {loading ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 animate-pulse">
             <div className="lg:col-span-8 space-y-4 sm:space-y-6">

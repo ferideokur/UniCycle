@@ -52,12 +52,14 @@ const cleanNotification = (msg: string) => {
 };
 
 export default function UserProfilePage() {
+  // 🚀 GÜNCELLENDİ: status özelliğini ekledik ki pasif/aktif kontrolü yapabilelim
   const [user, setUser] = useState<{
     id: number;
     fullName: string;
     email: string;
     university?: string;
     role?: string; 
+    status?: string; 
   } | null>(null);
 
   const [listings, setListings] = useState<any[]>([]);
@@ -408,7 +410,7 @@ export default function UserProfilePage() {
   const isAdmin = user.email === "ferideokur343@gmail.com" || user.role === "ADMIN";
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans relative w-full overflow-x-hidden flex flex-col">
+    <div className="min-h-screen bg-[#F8FAFC] pb-0 font-sans relative w-full overflow-x-hidden flex flex-col">
       <Toaster position="bottom-right" reverseOrder={false} />
 
       {/* 🚀🚀 PROFESYONEL ONAY KUTUSU (MODAL) 🚀🚀 */}
@@ -570,12 +572,16 @@ export default function UserProfilePage() {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              <Link
-                href="/create-listing"
-                className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
-              >
-                <span className="text-xl">+</span> İlan Ver
-              </Link>
+              
+              {/* 🚀 GÜVENLİK DUVARI: SADECE AKTİF KULLANICILAR İLAN VEREBİLİR */}
+              {user && user.status === "ACTIVE" && (
+                <Link
+                  href="/create-listing"
+                  className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
+                >
+                  <span className="text-xl">+</span> İlan Ver
+                </Link>
+              )}
 
               <div className="flex items-center gap-2 sm:gap-4 relative">
                 <Link
@@ -851,6 +857,18 @@ export default function UserProfilePage() {
         </div>
       </header>
 
+      {/* 🚀 GÜVENLİK DUVARI: SADECE AKTİF KULLANICILAR MOBİLDE "İLAN VER" GÖRÜR */}
+      {user && user.status === "ACTIVE" && (
+        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
+          <Link
+            href="/create-listing"
+            className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20"
+          >
+            <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
+          </Link>
+        </div>
+      )}
+
       {/* 👤 PROFİL KARTI */}
       <div className="max-w-[800px] mx-auto w-full px-4 sm:px-0 mt-6 sm:mt-10 relative">
         <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
@@ -1023,7 +1041,6 @@ export default function UserProfilePage() {
             </span>
           </h2>
 
-          {/* 🚀 EKRANI HİÇ KİLİTLEMEYEN, ŞEFFAF BEKLEME - ANINDA AÇILIR 🚀 */}
           {isLoading && listings.length === 0 ? (
             <div className="min-h-[200px] w-full"></div>
           ) : listings.length === 0 ? (
@@ -1035,12 +1052,20 @@ export default function UserProfilePage() {
               <p className="text-slate-500 font-medium mb-6">
                 Artık kullanmadığın eşyaları satarak değerlendirmeye ne dersin?
               </p>
-              <Link
-                href="/create-listing"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:-translate-y-1 inline-block"
-              >
-                Hemen İlan Ver
-              </Link>
+              
+              {/* 🚀 GÜVENLİK DUVARI: SADECE AKTİF KULLANICILAR İLAN VEREBİLİR */}
+              {user && user.status === "ACTIVE" ? (
+                <Link
+                  href="/create-listing"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:-translate-y-1 inline-block"
+                >
+                  Hemen İlan Ver
+                </Link>
+              ) : (
+                <div className="text-xs sm:text-sm font-bold text-slate-500 mt-4 bg-white py-3 px-6 rounded-xl inline-block border border-slate-200 shadow-sm">
+                  İlan verebilmek için hesabınızın yöneticiler tarafından onaylanması gerekmektedir.
+                </div>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
@@ -1134,22 +1159,28 @@ export default function UserProfilePage() {
         </div>
       )}
 
-      {/* 🌊 FOOTER (PREMIUM) */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full">
+      {/* 🌊 FOOTER (PREMIUM) - Ana Sayfa ile Tamamen Birebir Oldu */}
+      <div className="h-24 sm:h-32 w-full shrink-0"></div>
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full shrink-0">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-2">
+          <div className="col-span-1 md:col-span-2 text-center md:text-left">
             <div className="mb-4">
               <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
                 Uni<span className="text-[#20B2AA]">Cycle</span>
               </span>
             </div>
-            <p className="text-sm font-medium text-slate-500 max-w-sm">
+
+            <p className="text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
               öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
             </p>
           </div>
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
+
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-4 text-base">
+              Platform
+            </h4>
+
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
@@ -1164,6 +1195,7 @@ export default function UserProfilePage() {
                   Nasıl Çalışır?
                 </button>
               </li>
+
               <li>
                 <button
                   onClick={() =>
@@ -1177,6 +1209,7 @@ export default function UserProfilePage() {
                   Güvenlik İpuçları
                 </button>
               </li>
+
               <li>
                 <button
                   onClick={() =>
@@ -1192,15 +1225,19 @@ export default function UserProfilePage() {
               </li>
             </ul>
           </div>
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
+
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-4 text-base">
+              İletişim
+            </h4>
+
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
                   onClick={() =>
                     openInfoModal(
                       "Destek Merkezi",
-                      "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin.",
+                      "Yaşadığın bir sorun mu var?\n\nEkibimize unicycledestek@gmail.com adresinden ulaşabilirsin.",
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -1208,12 +1245,13 @@ export default function UserProfilePage() {
                   Destek Merkezi
                 </button>
               </li>
+
               <li>
                 <button
                   onClick={() =>
                     openInfoModal(
                       "Bize Ulaşın",
-                      "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67",
+                      "📍 Adres:\nPiri Reis Üniversitesi Deniz Kampüsü\nPostane Mahallesi, Eflatun Sokak No:8\n34940 Tuzla / İstanbul\n\n✉️ E-posta: unicycledestek@gmail.com",
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -1221,6 +1259,7 @@ export default function UserProfilePage() {
                   Bize Ulaşın
                 </button>
               </li>
+
               <li>
                 <button
                   onClick={() =>
@@ -1237,6 +1276,7 @@ export default function UserProfilePage() {
             </ul>
           </div>
         </div>
+
         <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
