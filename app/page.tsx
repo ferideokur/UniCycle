@@ -228,7 +228,7 @@ export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(""); 
+  const [fetchError, setFetchError] = useState("");
   const router = useRouter();
 
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
@@ -243,7 +243,7 @@ export default function Home() {
     id: number;
     fullName: string;
     email: string;
-    status?: string; 
+    status?: string;
   } | null>(null);
 
   const [likedProducts, setLikedProducts] = useState<number[]>([]);
@@ -267,21 +267,21 @@ export default function Home() {
 
   const fetchAllListings = async () => {
     setIsLoading(true);
-    setFetchError(""); 
+    setFetchError("");
     try {
       let url = "https://unicycle-api.onrender.com/api/products";
       if (selectedUniversity !== "Tüm Üniversiteler")
         url += `?university=${encodeURIComponent(selectedUniversity)}`;
 
       const response = await fetch(url, {
-        cache: "no-store", 
-        headers: { 
+        cache: "no-store",
+        headers: {
           "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Pragma": "no-cache",
-          "Expires": "0"
-        }
+          Pragma: "no-cache",
+          Expires: "0",
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         if (Array.isArray(data)) {
@@ -289,11 +289,17 @@ export default function Home() {
           setProducts(data);
         }
       } else {
-        setFetchError("Java sunucusu ilanları vermeyi reddetti (Durum Kodu: " + response.status + ")");
+        setFetchError(
+          "Java sunucusu ilanları vermeyi reddetti (Durum Kodu: " +
+            response.status +
+            ")",
+        );
       }
     } catch (error) {
       console.error("Java bağlanılamadı", error);
-      setFetchError("Java API'sine hiç bağlanılamadı! Muhtemelen CORS hatası alıyorsunuz.");
+      setFetchError(
+        "Java API'sine hiç bağlanılamadı! Muhtemelen CORS hatası alıyorsunuz.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -476,6 +482,14 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim() !== "") {
+      setIsDropdownOpen(false);
+      router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("user");
     setUser(null);
@@ -546,14 +560,6 @@ export default function Home() {
     } else {
       setExpandedGroup(mainCat);
       setActiveFilter(mainCat);
-    }
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim() !== "") {
-      setIsDropdownOpen(false);
-      router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
     }
   };
 
@@ -643,8 +649,13 @@ export default function Home() {
   const handleBannerClick = () => {
     if (bannerData.link) {
       // 🚀 YENİ EKLENDİ: Banner'daki butona basarsa da pasifse uyar!
-      if (bannerData.link === "/create-listing" && (!user || user.status !== "ACTIVE")) {
-        alert("İlan verebilmek için hesabınızın yöneticiler tarafından onaylanması ve aktif olması gerekmektedir.");
+      if (
+        bannerData.link === "/create-listing" &&
+        (!user || user.status !== "ACTIVE")
+      ) {
+        alert(
+          "İlan verebilmek için hesabınızın yöneticiler tarafından onaylanması ve aktif olması gerekmektedir.",
+        );
         return;
       }
       router.push(bannerData.link);
@@ -816,7 +827,6 @@ export default function Home() {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              
               {/* 🚀 YENİ: SADECE AKTİF KULLANICILAR MASAÜSTÜNDE "İLAN VER" GÖRÜR */}
               {user && user.status === "ACTIVE" && (
                 <Link
@@ -1116,14 +1126,14 @@ export default function Home() {
         </div>
       </header>
 
-      {/* 🚀 YENİ: SADECE AKTİF KULLANICILAR MOBİLDE "İLAN VER" BUTONU GÖRÜR */}
+      {/* 📱 YENİ: MOBİL İÇİN YÜZEN İLAN VER BUTONU (Sağ Alt Köşede Şık FAB) */}
       {user && user.status === "ACTIVE" && (
-        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
+        <div className="md:hidden fixed bottom-6 right-4 z-[90]">
           <Link
             href="/create-listing"
-            className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20"
+            className="flex items-center gap-1.5 bg-[#20B2AA] text-white px-4 py-3 rounded-full shadow-[0_4px_20px_rgba(32,178,170,0.5)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20"
           >
-            <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
+            <span className="text-lg leading-none -mt-0.5">+</span> İlan Ver
           </Link>
         </div>
       )}
@@ -1425,17 +1435,27 @@ export default function Home() {
                 {fetchError}
               </p>
               <div className="bg-white p-5 rounded-2xl text-left border border-red-100 shadow-sm inline-block max-w-2xl mx-auto">
-                <p className="text-slate-800 font-black text-sm mb-2 border-b pb-2">Olası Sebepler & Çözüm:</p>
+                <p className="text-slate-800 font-black text-sm mb-2 border-b pb-2">
+                  Olası Sebepler & Çözüm:
+                </p>
                 <ul className="text-slate-600 text-xs sm:text-sm font-medium space-y-2 list-disc pl-4">
                   <li>
-                    Java (Backend) projenizdeki <span className="font-bold text-blue-600">ProductController.java</span> dosyanızın en üstüne <b>@CrossOrigin</b> kodunu eklemeyi unutmuş olabilirsiniz.
+                    Java (Backend) projenizdeki{" "}
+                    <span className="font-bold text-blue-600">
+                      ProductController.java
+                    </span>{" "}
+                    dosyanızın en üstüne <b>@CrossOrigin</b> kodunu eklemeyi
+                    unutmuş olabilirsiniz.
                   </li>
                   <li>
-                    Render üzerindeki sunucunuz uyku modunda kalmış veya tamamen çökmüş olabilir.
+                    Render üzerindeki sunucunuz uyku modunda kalmış veya tamamen
+                    çökmüş olabilir.
                   </li>
                 </ul>
                 <code className="block bg-slate-800 text-green-400 p-3 rounded-lg text-[10px] sm:text-xs mt-4 select-all shadow-inner overflow-x-auto">
-                  @CrossOrigin(origins = &#123;"https://uni-cycle-seven.vercel.app", "http://localhost:3000"&#125;)
+                  @CrossOrigin(origins =
+                  &#123;"https://uni-cycle-seven.vercel.app",
+                  "http://localhost:3000"&#125;)
                 </code>
               </div>
             </div>
@@ -1494,10 +1514,10 @@ export default function Home() {
                 </Link>
               ) : (
                 <div className="text-xs sm:text-sm font-bold text-slate-500 mt-4 bg-slate-50 py-3 px-6 rounded-xl inline-block border border-slate-100">
-                  İlan verebilmek için hesabınızın yöneticiler tarafından onaylanması gerekmektedir.
+                  İlan verebilmek için hesabınızın yöneticiler tarafından
+                  onaylanması gerekmektedir.
                 </div>
               )}
-
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
