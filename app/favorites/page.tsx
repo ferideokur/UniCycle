@@ -46,7 +46,6 @@ const cleanNotification = (msg: string) => {
 };
 
 export default function FavoritesPage() {
-  // 🚀 User tipine "status" alanını ekledik ki TypeScript kızmasın
   const [user, setUser] = useState<{
     id: number;
     fullName: string;
@@ -142,10 +141,8 @@ export default function FavoritesPage() {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
 
-        // İlk bildirim çekimi
         updateNotificationCount(parsedUser.id);
 
-        // 10 saniyede bir bildirimleri güncelle
         interval = setInterval(() => {
           updateNotificationCount(parsedUser.id);
         }, 10000);
@@ -156,7 +153,6 @@ export default function FavoritesPage() {
       }
     }
 
-    // Yükleme animasyonunu bitir
     setIsLoading(false);
 
     return () => {
@@ -165,7 +161,6 @@ export default function FavoritesPage() {
     };
   }, []);
 
-  // 🚀 Premium Arama Motoru
   useEffect(() => {
     const fetchLive = async () => {
       if (searchTerm.trim().length < 1) {
@@ -288,7 +283,7 @@ export default function FavoritesPage() {
 
   return (
     <main className="min-h-screen bg-[#F8FAFC] pb-0 font-sans w-full overflow-x-hidden flex flex-col">
-      {/* 🚀 ÜST MENÜ NAVBAR (Premium İkiz) */}
+      {/* 🚀 ÜST MENÜ NAVBAR */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
         <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
@@ -311,7 +306,6 @@ export default function FavoritesPage() {
               </Link>
             </div>
 
-            {/* ✨ PREMIUM ARAMA ÇUBUĞU (Masaüstü) */}
             <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
               <form
                 onSubmit={handleSearchSubmit}
@@ -406,7 +400,6 @@ export default function FavoritesPage() {
             </div>
 
             <div className="flex items-center justify-end gap-1.5 sm:gap-4 shrink-0">
-              {/* 🚀 YENİ: SADECE AKTİF KULLANICILAR MASAÜSTÜNDE "İLAN VER" GÖRÜR */}
               {user && user.status === "ACTIVE" && (
                 <Link
                   href="/create-listing"
@@ -524,7 +517,6 @@ export default function FavoritesPage() {
                                 notif.message,
                               );
 
-                              // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
                               let dropDate = "Yeni";
                               if (notif.createdAt) {
                                 const utcDate = notif.createdAt.endsWith("Z")
@@ -706,14 +698,14 @@ export default function FavoritesPage() {
         </div>
       </header>
 
-      {/* 📱 YENİ: MOBİL İÇİN YÜZEN İLAN VER BUTONU (Sağ Alt Köşede Şık FAB) */}
+      {/* 📱 MOBİL İÇİN YÜZEN İLAN VER BUTONU (Ortalanmış Şık FAB) */}
       {user && user.status === "ACTIVE" && (
-        <div className="md:hidden fixed bottom-6 right-4 z-[90]">
+        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
           <Link
             href="/create-listing"
-            className="flex items-center gap-1.5 bg-[#20B2AA] text-white px-4 py-3 rounded-full shadow-[0_4px_20px_rgba(32,178,170,0.5)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20"
+            className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20 whitespace-nowrap"
           >
-            <span className="text-lg leading-none -mt-0.5">+</span> İlan Ver
+            <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
           </Link>
         </div>
       )}
@@ -894,26 +886,23 @@ export default function FavoritesPage() {
 
       {/* 🌊 FOOTER (PREMIUM) - Üstünde Boşluk Garantili Spacer Div Eklendi */}
       <div className="h-24 sm:h-32 w-full shrink-0"></div>
-      <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-4 sm:px-6 mt-auto rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full shrink-0">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full shrink-0">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2 text-center md:text-left">
             <div className="mb-4">
               <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
                 Uni<span className="text-[#20B2AA]">Cycle</span>
               </span>
             </div>
-
             <p className="text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
               öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
             </p>
           </div>
-
           <div className="text-center md:text-left">
-            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-base">
+            <h4 className="text-slate-800 font-bold mb-4 text-base">
               Platform
             </h4>
-
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
@@ -928,7 +917,6 @@ export default function FavoritesPage() {
                   Nasıl Çalışır?
                 </button>
               </li>
-
               <li>
                 <button
                   onClick={() =>
@@ -942,7 +930,6 @@ export default function FavoritesPage() {
                   Güvenlik İpuçları
                 </button>
               </li>
-
               <li>
                 <button
                   onClick={() =>
@@ -958,12 +945,10 @@ export default function FavoritesPage() {
               </li>
             </ul>
           </div>
-
           <div className="text-center md:text-left">
-            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-base">
+            <h4 className="text-slate-800 font-bold mb-4 text-base">
               İletişim
             </h4>
-
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
@@ -978,7 +963,6 @@ export default function FavoritesPage() {
                   Destek Merkezi
                 </button>
               </li>
-
               <li>
                 <button
                   onClick={() =>
@@ -992,7 +976,6 @@ export default function FavoritesPage() {
                   Bize Ulaşın
                 </button>
               </li>
-
               <li>
                 <button
                   onClick={() =>
@@ -1009,8 +992,7 @@ export default function FavoritesPage() {
             </ul>
           </div>
         </div>
-
-        <div className="max-w-[1400px] mx-auto mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
+        <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>

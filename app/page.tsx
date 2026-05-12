@@ -1128,7 +1128,7 @@ export default function Home() {
 
       {/* 📱 YENİ: MOBİL İÇİN YÜZEN İLAN VER BUTONU (Sağ Alt Köşede Şık FAB) */}
       {user && user.status === "ACTIVE" && (
-        <div className="md:hidden fixed bottom-6 right-4 z-[90]">
+        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
           <Link
             href="/create-listing"
             className="flex items-center gap-1.5 bg-[#20B2AA] text-white px-4 py-3 rounded-full shadow-[0_4px_20px_rgba(32,178,170,0.5)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20"
