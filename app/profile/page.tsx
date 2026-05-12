@@ -559,7 +559,7 @@ export default function UserProfilePage() {
         </div>
       )}
 
-      {/* 🚀 ÜST MENÜ NAVBAR (Premium İkiz) */}
+      {/* 🚀 ÜST MENÜ NAVBAR */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
         <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
@@ -582,7 +582,6 @@ export default function UserProfilePage() {
               </Link>
             </div>
 
-            {/* ✨ PREMIUM ARAMA ÇUBUĞU (Masaüstü) */}
             <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
               <form
                 onSubmit={handleSearchSubmit}
@@ -677,7 +676,6 @@ export default function UserProfilePage() {
             </div>
 
             <div className="flex items-center justify-end gap-1.5 sm:gap-4 shrink-0">
-              {/* 🚀 SADECE AKTİF KULLANICILARA MASAÜSTÜ İLAN VER BUTONU */}
               {user && user.status === "ACTIVE" && (
                 <Link
                   href="/create-listing"
@@ -968,7 +966,7 @@ export default function UserProfilePage() {
                 onClick={handleSearchSubmit}
               >
                 <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör
+                  Tüm sonuçları gör &rarr;
                 </span>
               </div>
             </div>
@@ -1141,17 +1139,31 @@ export default function UserProfilePage() {
 
         {/* 🛍️ VİTRİNİM */}
         <div className="mt-8 mb-8 bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8">
-          <h2 className="text-lg sm:text-2xl font-black text-slate-800 mb-6 flex items-center gap-2">
-            🛍️ Senin Vitrinin
-            <span className="bg-blue-50 text-blue-600 border border-blue-100 px-3 py-1 rounded-full text-xs font-bold">
-              {listings.length} Ürün
-            </span>
-          </h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg sm:text-2xl font-black text-slate-800 flex items-center gap-2">
+              🛍️ <span className="hidden sm:inline">Senin Vitrinin</span>
+              <span className="sm:hidden">Vitrinim</span>
+              <span className="bg-blue-50 text-blue-600 border border-blue-100 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold">
+                {listings.length} Ürün
+              </span>
+            </h2>
+
+            {/* 🔥 YENİ ŞART EKLENDİ: (listings.length > 0) */}
+            {/* Sadece aktif kullanıcılara, SADECE MOBİLDE ve EĞER EN AZ 1 İLANI VARSA görünecek */}
+            {user && user.status === "ACTIVE" && listings.length > 0 && (
+              <Link
+                href="/create-listing"
+                className="md:hidden flex items-center gap-1.5 bg-[#20B2AA] hover:bg-teal-600 text-white font-bold py-1.5 px-3 rounded-full text-[11px] shadow-[0_4px_14px_rgba(32,178,170,0.25)] hover:shadow-[0_6px_20px_rgba(32,178,170,0.35)] transition-all active:scale-95 shrink-0"
+              >
+                <span className="text-sm leading-none">+</span> İlan Ver
+              </Link>
+            )}
+          </div>
 
           {isLoading && listings.length === 0 ? (
             <div className="min-h-[200px] w-full"></div>
           ) : listings.length === 0 ? (
-            <div className="text-center py-16 bg-slate-50 rounded-3xl border border-dashed border-slate-300">
+            <div className="text-center py-16 bg-slate-50 rounded-3xl border border-dashed border-slate-300 mt-4">
               <span className="text-5xl block mb-4">📭</span>
               <h3 className="text-xl font-bold text-slate-600 mb-2">
                 Henüz ilan vermedin
@@ -1160,7 +1172,6 @@ export default function UserProfilePage() {
                 Artık kullanmadığın eşyaları satarak değerlendirmeye ne dersin?
               </p>
 
-              {/* 🚀 GÜVENLİK DUVARI: SADECE AKTİF KULLANICILAR İLAN VEREBİLİR */}
               {user && user.status === "ACTIVE" ? (
                 <Link
                   href="/create-listing"
@@ -1176,7 +1187,7 @@ export default function UserProfilePage() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-4">
               {listings.map((p) => (
                 <Link
                   href={`/listing-detail/${p.id}`}
