@@ -690,25 +690,13 @@ export default function FavoritesPage() {
                 onClick={handleSearchSubmit}
               >
                 <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör &rarr;
+                  Tüm sonuçları gör
                 </span>
               </div>
             </div>
           )}
         </div>
       </header>
-
-      {/* 📱 MOBİL İÇİN YÜZEN İLAN VER BUTONU (Ortalanmış Şık FAB) */}
-      {user && user.status === "ACTIVE" && (
-        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
-          <Link
-            href="/create-listing"
-            className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20 whitespace-nowrap"
-          >
-            <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
-          </Link>
-        </div>
-      )}
 
       <div className="max-w-[1200px] mx-auto w-full px-4 sm:px-6 lg:px-8 mt-8 sm:mt-12 flex-1">
         <div className="relative overflow-hidden bg-white rounded-[2rem] p-6 sm:p-8 mb-8 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

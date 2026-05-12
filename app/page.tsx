@@ -238,7 +238,6 @@ export default function Home() {
   const [sortType, setSortType] = useState("En Yeni");
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
 
-  // 🚀 User tipine "status" alanını ekledik ki TypeScript kızmasın
   const [user, setUser] = useState<{
     id: number;
     fullName: string;
@@ -648,7 +647,6 @@ export default function Home() {
 
   const handleBannerClick = () => {
     if (bannerData.link) {
-      // 🚀 YENİ EKLENDİ: Banner'daki butona basarsa da pasifse uyar!
       if (
         bannerData.link === "/create-listing" &&
         (!user || user.status !== "ACTIVE")
@@ -732,7 +730,6 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* ✨ PREMIUM ARAMA ÇUBUĞU (Masaüstü) */}
             <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
               <form
                 onSubmit={handleSearchSubmit}
@@ -819,15 +816,15 @@ export default function Home() {
                     onClick={handleSearchSubmit}
                   >
                     <span className="text-xs font-black text-blue-600">
-                      Tüm sonuçları gör{" "}
+                      Tüm sonuçları gör
                     </span>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              {/* 🚀 YENİ: SADECE AKTİF KULLANICILAR MASAÜSTÜNDE "İLAN VER" GÖRÜR */}
+            {/* 🚀 NAVBAR SAĞ KISIM: FAVORİLER İLE BİREBİR AYNI YAPILDI */}
+            <div className="flex items-center justify-end gap-1.5 sm:gap-4 shrink-0">
               {user && user.status === "ACTIVE" && (
                 <Link
                   href="/create-listing"
@@ -838,10 +835,10 @@ export default function Home() {
               )}
 
               {user ? (
-                <div className="flex items-center gap-2 sm:gap-4 relative">
+                <div className="flex items-center gap-1.5 sm:gap-4 relative">
                   <Link
                     href="/favorites"
-                    className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                    className="relative w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                     title="Favorilerim"
                     aria-label="Favorilerim"
                   >
@@ -863,7 +860,7 @@ export default function Home() {
                   <div className="relative shrink-0">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                      className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                      className="relative w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                       title="Bildirimler"
                       aria-label="Bildirimleri Aç"
                     >
@@ -881,13 +878,13 @@ export default function Home() {
                         ></path>
                       </svg>
                       {notificationsCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
+                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 text-white text-[9px] sm:text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
                           {notificationsCount}
                         </span>
                       )}
                     </button>
                     {isNotificationOpen && (
-                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[280px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                           <span className="font-bold text-slate-800">
                             Bildirimler
@@ -990,9 +987,9 @@ export default function Home() {
 
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-1 sm:gap-2 bg-blue-600 text-white px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
                   >
-                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
                       👤
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
@@ -1000,7 +997,7 @@ export default function Home() {
 
                   <button
                     onClick={handleLogout}
-                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
+                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-0.5 sm:ml-2 flex items-center justify-center group"
                     title="Çıkış Yap"
                     aria-label="Çıkış Yap"
                   >
@@ -1008,7 +1005,7 @@ export default function Home() {
                       Çıkış
                     </span>
                     <svg
-                      className="w-[22px] h-[22px] sm:hidden group-hover:scale-110 transition-transform"
+                      className="w-[18px] h-[18px] sm:hidden group-hover:scale-110 transition-transform"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
@@ -1025,7 +1022,7 @@ export default function Home() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center justify-center bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
+                  className="flex items-center justify-center bg-slate-800 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold hover:bg-black transition-colors text-xs sm:text-sm shrink-0"
                 >
                   Giriş Yap
                 </Link>
@@ -1118,7 +1115,7 @@ export default function Home() {
                 onClick={handleSearchSubmit}
               >
                 <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör &rarr;
+                  Tüm sonuçları gör
                 </span>
               </div>
             </div>
@@ -1126,14 +1123,14 @@ export default function Home() {
         </div>
       </header>
 
-      {/* 📱 YENİ: MOBİL İÇİN YÜZEN İLAN VER BUTONU (Sağ Alt Köşede Şık FAB) */}
+      {/* 📱 YENİ: MOBİL İÇİN YÜZEN İLAN VER BUTONU (Ortalanmış Şık FAB) */}
       {user && user.status === "ACTIVE" && (
         <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
           <Link
             href="/create-listing"
-            className="flex items-center gap-1.5 bg-[#20B2AA] text-white px-4 py-3 rounded-full shadow-[0_4px_20px_rgba(32,178,170,0.5)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20"
+            className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20 whitespace-nowrap"
           >
-            <span className="text-lg leading-none -mt-0.5">+</span> İlan Ver
+            <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
           </Link>
         </div>
       )}
@@ -1504,7 +1501,6 @@ export default function Home() {
                 İlk adımı sen atmaya ne dersin?
               </p>
 
-              {/* 🚀 YENİ: BURADAKİ BOŞ EKRAN BUTONU DA KORUMA ALTINA ALINDI */}
               {user && user.status === "ACTIVE" ? (
                 <Link
                   href="/create-listing"
@@ -1610,21 +1606,7 @@ export default function Home() {
         </section>
       </div>
 
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-            /* Yatay menüler için alt kaydırma çubuğunu gizler */
-            .custom-scrollbar::-webkit-scrollbar { height: 0px; width: 6px; } 
-            @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { width: 8px; } } 
-            
-            /* Bildirimler gibi dikey alanlar için şık kaydırma çubuğu tasarımı */
-            .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; } 
-            .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-          `,
-        }}
-      />
-
+      {/* 📜 FOOTER BİLGİ POP-UP'I (MODAL) */}
       {infoModal.isOpen && (
         <div className="fixed inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
@@ -1661,8 +1643,8 @@ export default function Home() {
 
       {/* 🌊 FOOTER (PREMIUM) - Üstünde Boşluk Garantili Spacer Div Eklendi */}
       <div className="h-24 sm:h-32 w-full shrink-0"></div>
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full shrink-0">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+      <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-4 sm:px-6 mt-auto rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full shrink-0">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
           <div className="col-span-1 md:col-span-2 text-center md:text-left">
             <div className="mb-4">
               <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
@@ -1677,7 +1659,7 @@ export default function Home() {
           </div>
 
           <div className="text-center md:text-left">
-            <h4 className="text-slate-800 font-bold mb-4 text-base">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-base">
               Platform
             </h4>
 
@@ -1727,7 +1709,7 @@ export default function Home() {
           </div>
 
           <div className="text-center md:text-left">
-            <h4 className="text-slate-800 font-bold mb-4 text-base">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-base">
               İletişim
             </h4>
 
@@ -1777,10 +1759,29 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
+        <div className="max-w-[1400px] mx-auto mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>
+
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            /* Yatay menüler için alt kaydırma çubuğunu gizler */
+            .custom-scrollbar::-webkit-scrollbar { height: 0px; width: 6px; } 
+            @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { width: 8px; } } 
+            
+            /* Bildirimler gibi dikey alanlar için şık kaydırma çubuğu tasarımı */
+            .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; } 
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+            
+            .desktop-search { display: none; }
+            .mobile-search { display: block; }
+            @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }
+          `,
+        }}
+      />
     </main>
   );
 }

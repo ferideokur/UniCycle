@@ -50,7 +50,13 @@ function SearchContent() {
   const router = useRouter();
   const q = searchParams.get("q") || "";
 
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  // 🚀 User tipine "status" eklendi
+  const [currentUser, setCurrentUser] = useState<{
+    id: number;
+    fullName: string;
+    email: string;
+    status?: string;
+  } | null>(null);
 
   // 🚀 Üst menü arama çubuğu ve açılır menü state'leri
   const [headerSearchTerm, setHeaderSearchTerm] = useState(q);
@@ -196,7 +202,10 @@ function SearchContent() {
 
         if (isUserSearch) {
           const endpoint = `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`;
-          const res = await fetch(endpoint);
+          const res = await fetch(endpoint, {
+            cache: "no-store",
+            headers: { "Cache-Control": "no-cache" },
+          });
           if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data)) {
@@ -211,6 +220,7 @@ function SearchContent() {
           // ✨ EĞER KULLANICI İLAN NO ARATIYORSA:
           const res = await fetch(
             `https://unicycle-api.onrender.com/api/products`,
+            { cache: "no-store", headers: { "Cache-Control": "no-cache" } },
           );
           if (res.ok) {
             const allProducts = await res.json();
@@ -219,7 +229,7 @@ function SearchContent() {
               const exactMatch = allProducts.find(
                 (p) => p.id.toString() === query.toString(),
               );
-              // Başlığında aranan sayı geçenler (Örn: "4" yazınca Playstation 4 de çıksın diye)
+              // Başlığında aranan sayı geçenler
               const titleMatches = allProducts.filter(
                 (p) =>
                   p.title.toLowerCase().includes(query.toLowerCase()) &&
@@ -236,7 +246,10 @@ function SearchContent() {
         } else {
           // Normal metin araması
           const endpoint = `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`;
-          const res = await fetch(endpoint);
+          const res = await fetch(endpoint, {
+            cache: "no-store",
+            headers: { "Cache-Control": "no-cache" },
+          });
           if (res.ok) {
             const data = await res.json();
             setMainResults(Array.isArray(data) ? data : []);
@@ -363,7 +376,7 @@ function SearchContent() {
   const isUserSearchMode = q.startsWith("@");
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans relative w-full overflow-x-hidden flex flex-col">
+    <div className="min-h-screen bg-[#F8FAFC] pb-0 font-sans relative w-full overflow-x-hidden flex flex-col">
       {/* 🚀 ÜST MENÜ NAVBAR (Premium İkiz) */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
         <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -406,7 +419,7 @@ function SearchContent() {
                   className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
                 />
                 <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none" />
-                <button type="submit" className="hidden">
+                <button type="submit" aria-label="Arama Yap" className="hidden">
                   Ara
                 </button>
               </form>
@@ -481,20 +494,24 @@ function SearchContent() {
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              <Link
-                href="/create-listing"
-                className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
-              >
-                <span className="text-xl">+</span> İlan Ver
-              </Link>
+            <div className="flex items-center justify-end gap-1.5 sm:gap-4 shrink-0">
+              {/* 🚀 SADECE AKTİF KULLANICILARA MASAÜSTÜ İLAN VER BUTONU */}
+              {currentUser && currentUser.status === "ACTIVE" && (
+                <Link
+                  href="/create-listing"
+                  className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
+                >
+                  <span className="text-xl">+</span> İlan Ver
+                </Link>
+              )}
 
               {currentUser ? (
-                <div className="flex items-center gap-2 sm:gap-4 relative">
+                <div className="flex items-center gap-1.5 sm:gap-4 relative">
                   <Link
                     href="/favorites"
-                    className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                    className="relative w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                     title="Favorilerim"
+                    aria-label="Favorilerim"
                   >
                     <svg
                       className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
@@ -514,8 +531,9 @@ function SearchContent() {
                   <div className="relative shrink-0">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                      className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                      className="relative w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                       title="Bildirimler"
+                      aria-label="Bildirimleri Aç"
                     >
                       <svg
                         className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
@@ -531,13 +549,13 @@ function SearchContent() {
                         ></path>
                       </svg>
                       {notificationsCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
+                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 text-white text-[9px] sm:text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
                           {notificationsCount}
                         </span>
                       )}
                     </button>
                     {isNotificationOpen && (
-                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[280px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                           <span className="font-bold text-slate-800">
                             Bildirimler
@@ -595,7 +613,6 @@ function SearchContent() {
                                 notif.message,
                               );
 
-                              // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
                               let dropDate = "Yeni";
                               if (notif.createdAt) {
                                 const utcDate = notif.createdAt.endsWith("Z")
@@ -641,9 +658,9 @@ function SearchContent() {
 
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-1 sm:gap-2 bg-blue-600 text-white px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
                   >
-                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
                       👤
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
@@ -651,14 +668,15 @@ function SearchContent() {
 
                   <button
                     onClick={handleLogout}
-                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
+                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-0.5 sm:ml-2 flex items-center justify-center group"
                     title="Çıkış Yap"
+                    aria-label="Çıkış Yap"
                   >
                     <span className="hidden sm:block font-bold text-sm">
                       Çıkış
                     </span>
                     <svg
-                      className="w-[22px] h-[22px] sm:hidden group-hover:scale-110 transition-transform"
+                      className="w-[18px] h-[18px] sm:hidden group-hover:scale-110 transition-transform"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
@@ -675,7 +693,7 @@ function SearchContent() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center justify-center bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
+                  className="flex items-center justify-center bg-slate-800 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold hover:bg-black transition-colors text-xs sm:text-sm shrink-0"
                 >
                   Giriş Yap
                 </Link>
@@ -703,7 +721,7 @@ function SearchContent() {
               onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <button type="submit" className="hidden">
+            <button type="submit" aria-label="Arama Yap" className="hidden">
               Ara
             </button>
           </form>
@@ -776,9 +794,21 @@ function SearchContent() {
         </div>
       </header>
 
+      {/* 📱 SADECE AKTİF KULLANICILARA MOBİL YÜZEN İLAN VER BUTONU (Ortalanmış) */}
+      {currentUser && currentUser.status === "ACTIVE" && (
+        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
+          <Link
+            href="/create-listing"
+            className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20 whitespace-nowrap"
+          >
+            <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
+          </Link>
+        </div>
+      )}
+
       {/* 🔍 ARAMA SONUÇLARI İÇERİĞİ */}
       <main className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
-        {/* 🔙 ZARİF GERİ DÖN VE BAŞLIK YAPISI (Kutular Kaldırıldı) */}
+        {/* 🔙 ZARİF GERİ DÖN VE BAŞLIK YAPISI */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 border-b border-slate-200 pb-4 gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
             <button
@@ -801,9 +831,22 @@ function SearchContent() {
           </div>
         </div>
 
+        {/* 🚀 YENİ: DÖNEN ANİMASYON YERİNE PREMİUM İSKELET (SKELETON) YAPISI */}
         {isLoading ? (
-          <div className="flex justify-center items-center py-20 text-4xl text-slate-300 animate-spin">
-            ⏳
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
+            {[...Array(10)].map((_, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col animate-pulse"
+              >
+                <div className="aspect-[4/5] bg-slate-100 w-full"></div>
+                <div className="p-3 sm:p-5 flex-1 flex flex-col gap-3">
+                  <div className="h-3 bg-slate-200 rounded-full w-2/3"></div>
+                  <div className="h-4 bg-slate-200 rounded-full w-full"></div>
+                  <div className="mt-auto h-5 bg-slate-200 rounded-full w-1/3 pt-2"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : mainResults.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
@@ -911,6 +954,7 @@ function SearchContent() {
               </h2>
               <button
                 onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                aria-label="Kapat"
                 className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors"
               >
                 ✕
@@ -922,6 +966,7 @@ function SearchContent() {
             <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                aria-label="Anladım Butonu"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base"
               >
                 Anladım
@@ -931,27 +976,25 @@ function SearchContent() {
         </div>
       )}
 
-      {/* 🌊 FOOTER (PREMIUM) */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-10 rounded-t-[3rem] shadow-sm w-full">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+      {/* 🌊 FOOTER (PREMIUM) - Üstünde Boşluk Garantili Spacer Div Eklendi */}
+      <div className="h-24 sm:h-32 w-full shrink-0"></div>
+      <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-4 sm:px-6 mt-auto rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full shrink-0">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
           <div className="col-span-1 md:col-span-2 text-center md:text-left">
             <div className="mb-4">
               <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
                 Uni<span className="text-[#20B2AA]">Cycle</span>
               </span>
             </div>
-
             <p className="text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
               öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
             </p>
           </div>
-
           <div className="text-center md:text-left">
-            <h4 className="text-slate-800 font-bold mb-4 text-base">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-base">
               Platform
             </h4>
-
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
@@ -966,7 +1009,6 @@ function SearchContent() {
                   Nasıl Çalışır?
                 </button>
               </li>
-
               <li>
                 <button
                   onClick={() =>
@@ -980,7 +1022,6 @@ function SearchContent() {
                   Güvenlik İpuçları
                 </button>
               </li>
-
               <li>
                 <button
                   onClick={() =>
@@ -996,19 +1037,17 @@ function SearchContent() {
               </li>
             </ul>
           </div>
-
           <div className="text-center md:text-left">
-            <h4 className="text-slate-800 font-bold mb-4 text-base">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-base">
               İletişim
             </h4>
-
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
                   onClick={() =>
                     openInfoModal(
                       "Destek Merkezi",
-                      "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin.",
+                      "Yaşadığın bir sorun mu var?\n\nEkibimize unicycledestek@gmail.com adresinden ulaşabilirsin.",
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -1016,13 +1055,12 @@ function SearchContent() {
                   Destek Merkezi
                 </button>
               </li>
-
               <li>
                 <button
                   onClick={() =>
                     openInfoModal(
                       "Bize Ulaşın",
-                      "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67",
+                      "📍 Adres:\nPiri Reis Üniversitesi Deniz Kampüsü\nPostane Mahallesi, Eflatun Sokak No:8\n34940 Tuzla / İstanbul\n\n✉️ E-posta: unicycledestek@gmail.com",
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -1030,7 +1068,6 @@ function SearchContent() {
                   Bize Ulaşın
                 </button>
               </li>
-
               <li>
                 <button
                   onClick={() =>
@@ -1047,15 +1084,27 @@ function SearchContent() {
             </ul>
           </div>
         </div>
-
-        <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
+        <div className="max-w-[1400px] mx-auto mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>
 
       <style
         dangerouslySetInnerHTML={{
-          __html: `.custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; } @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; } } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; } .desktop-search { display: none; } .mobile-search { display: block; } @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }`,
+          __html: `
+            /* Yatay menüler için alt kaydırma çubuğunu gizler */
+            .custom-scrollbar::-webkit-scrollbar { height: 0px; width: 6px; } 
+            @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { width: 8px; } } 
+            
+            /* Bildirimler gibi dikey alanlar için şık kaydırma çubuğu tasarımı */
+            .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; } 
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+            
+            .desktop-search { display: none; }
+            .mobile-search { display: block; }
+            @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }
+          `,
         }}
       />
     </div>
@@ -1066,8 +1115,24 @@ export default function SearchPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center text-4xl text-slate-300 animate-spin">
-          ⏳
+        <div className="min-h-screen bg-[#F8FAFC] flex flex-col pt-32 px-4 sm:px-8 max-w-[1400px] w-full mx-auto">
+          {/* Sayfa İlk Açıldığındaki Şık İskelet Yükleme (Header arkasında kalacak gibi düşün) */}
+          <div className="w-48 h-10 bg-slate-200 rounded-lg animate-pulse mb-8"></div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
+            {[...Array(10)].map((_, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col animate-pulse"
+              >
+                <div className="aspect-[4/5] bg-slate-100 w-full"></div>
+                <div className="p-3 sm:p-5 flex-1 flex flex-col gap-3">
+                  <div className="h-3 bg-slate-200 rounded-full w-2/3"></div>
+                  <div className="h-4 bg-slate-200 rounded-full w-full"></div>
+                  <div className="mt-auto h-5 bg-slate-200 rounded-full w-1/3 pt-2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       }
     >

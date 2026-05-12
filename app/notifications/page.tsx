@@ -12,6 +12,7 @@ import {
   UserPlus,
   Trash2,
   Search,
+  Loader2,
 } from "lucide-react";
 
 // 🚀 İsimleri her yerde büyük harfle başlatan formül
@@ -53,7 +54,13 @@ const cleanNotification = (msg: string) => {
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [user, setUser] = useState<any>(null);
+  // 🚀 User tipine "status" eklendi
+  const [user, setUser] = useState<{
+    id: number;
+    fullName: string;
+    email: string;
+    status?: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -266,10 +273,10 @@ export default function NotificationsPage() {
     setNotificationsList((prev) => prev.filter((n) => n.id !== id));
 
     const deleted = JSON.parse(
-      localStorage.getItem(`deletedNotifs_${user.id}`) || "[]",
+      localStorage.getItem(`deletedNotifs_${user?.id}`) || "[]",
     );
     localStorage.setItem(
-      `deletedNotifs_${user.id}`,
+      `deletedNotifs_${user?.id}`,
       JSON.stringify([...deleted, id]),
     );
     try {
@@ -293,10 +300,10 @@ export default function NotificationsPage() {
     setNotificationsCount(0);
 
     const deleted = JSON.parse(
-      localStorage.getItem(`deletedNotifs_${user.id}`) || "[]",
+      localStorage.getItem(`deletedNotifs_${user?.id}`) || "[]",
     );
     localStorage.setItem(
-      `deletedNotifs_${user.id}`,
+      `deletedNotifs_${user?.id}`,
       JSON.stringify([...deleted, ...allIds]),
     );
     for (const id of allIds) {
@@ -312,7 +319,7 @@ export default function NotificationsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
-        <div className="animate-spin text-4xl">⏳</div>
+        <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-[#20B2AA] animate-spin" />
       </div>
     );
   }
@@ -361,7 +368,7 @@ export default function NotificationsPage() {
                   className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
                 />
                 <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none" />
-                <button type="submit" className="hidden">
+                <button type="submit" aria-label="Arama Yap" className="hidden">
                   Ara
                 </button>
               </form>
@@ -429,27 +436,31 @@ export default function NotificationsPage() {
                     onClick={handleSearchSubmit}
                   >
                     <span className="text-xs font-black text-blue-600">
-                      Tüm sonuçları gör{" "}
+                      Tüm sonuçları gör
                     </span>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              <Link
-                href="/create-listing"
-                className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
-              >
-                <span className="text-xl">+</span> İlan Ver
-              </Link>
+            <div className="flex items-center justify-end gap-1.5 sm:gap-4 shrink-0">
+              {/* 🚀 SADECE AKTİF KULLANICILARA MASAÜSTÜ İLAN VER BUTONU */}
+              {user && user.status === "ACTIVE" && (
+                <Link
+                  href="/create-listing"
+                  className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
+                >
+                  <span className="text-xl">+</span> İlan Ver
+                </Link>
+              )}
 
               {user ? (
-                <div className="flex items-center gap-2 sm:gap-4 relative">
+                <div className="flex items-center gap-1.5 sm:gap-4 relative">
                   <Link
                     href="/favorites"
-                    className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                    className="relative w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                     title="Favorilerim"
+                    aria-label="Favorilerim"
                   >
                     <svg
                       className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
@@ -469,8 +480,9 @@ export default function NotificationsPage() {
                   <div className="relative shrink-0">
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                      className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                      className="relative w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                       title="Bildirimler"
+                      aria-label="Bildirimleri Aç"
                     >
                       <svg
                         className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
@@ -486,13 +498,13 @@ export default function NotificationsPage() {
                         ></path>
                       </svg>
                       {notificationsCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
+                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 text-white text-[9px] sm:text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
                           {notificationsCount}
                         </span>
                       )}
                     </button>
                     {isNotificationOpen && (
-                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[280px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                           <span className="font-bold text-slate-800">
                             Bildirimler
@@ -509,7 +521,7 @@ export default function NotificationsPage() {
                               Şu an hiç bildirimin yok.
                             </div>
                           ) : (
-                            notificationsList.map((notif: any) => {
+                            notificationsList.slice(0, 5).map((notif: any) => {
                               let icon = <Bell className="w-5 h-5" />;
                               let bg = "bg-blue-50";
                               let text = "text-blue-500";
@@ -550,7 +562,6 @@ export default function NotificationsPage() {
                                 notif.message,
                               );
 
-                              // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
                               let dropDate = "Yeni";
                               if (notif.createdAt) {
                                 const utcDate = notif.createdAt.endsWith("Z")
@@ -596,9 +607,9 @@ export default function NotificationsPage() {
 
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-1 sm:gap-2 bg-blue-600 text-white px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
                   >
-                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
                       👤
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
@@ -606,14 +617,15 @@ export default function NotificationsPage() {
 
                   <button
                     onClick={handleLogout}
-                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
+                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-0.5 sm:ml-2 flex items-center justify-center group"
                     title="Çıkış Yap"
+                    aria-label="Çıkış Yap"
                   >
                     <span className="hidden sm:block font-bold text-sm">
                       Çıkış
                     </span>
                     <svg
-                      className="w-[22px] h-[22px] sm:hidden group-hover:scale-110 transition-transform"
+                      className="w-[18px] h-[18px] sm:hidden group-hover:scale-110 transition-transform"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
@@ -630,7 +642,7 @@ export default function NotificationsPage() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center justify-center bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
+                  className="flex items-center justify-center bg-slate-800 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold hover:bg-black transition-colors text-xs sm:text-sm shrink-0"
                 >
                   Giriş Yap
                 </Link>
@@ -658,7 +670,7 @@ export default function NotificationsPage() {
               onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <button type="submit" className="hidden">
+            <button type="submit" aria-label="Arama Yap" className="hidden">
               Ara
             </button>
           </form>
@@ -723,7 +735,7 @@ export default function NotificationsPage() {
                 onClick={handleSearchSubmit}
               >
                 <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör{" "}
+                  Tüm sonuçları gör &rarr;
                 </span>
               </div>
             </div>
@@ -858,6 +870,7 @@ export default function NotificationsPage() {
               </h2>
               <button
                 onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                aria-label="Kapat"
                 className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors"
               >
                 ✕
@@ -869,6 +882,7 @@ export default function NotificationsPage() {
             <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                aria-label="Anladım Butonu"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base"
               >
                 Anladım
@@ -878,8 +892,9 @@ export default function NotificationsPage() {
         </div>
       )}
 
-      {/* 🌊 FOOTER (PREMIUM) */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full">
+      {/* 🌊 FOOTER (PREMIUM) - Üstünde Boşluk Garantili Spacer Div Eklendi */}
+      <div className="h-24 sm:h-32 w-full shrink-0"></div>
+      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full shrink-0">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="mb-4">
@@ -944,7 +959,7 @@ export default function NotificationsPage() {
                   onClick={() =>
                     openInfoModal(
                       "Destek Merkezi",
-                      "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin.",
+                      "Yaşadığın bir sorun mu var?\n\nEkibimize unicycledestek@gmail.com adresinden ulaşabilirsin.",
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -957,7 +972,7 @@ export default function NotificationsPage() {
                   onClick={() =>
                     openInfoModal(
                       "Bize Ulaşın",
-                      "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67",
+                      "📍 Adres:\nPiri Reis Üniversitesi Deniz Kampüsü\nPostane Mahallesi, Eflatun Sokak No:8\n34940 Tuzla / İstanbul\n\n✉️ E-posta: unicycledestek@gmail.com",
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
