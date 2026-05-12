@@ -338,10 +338,12 @@ export default function ListingDetailPage() {
 
   const handleMessageClick = () => {
     if (!currentUser) return showToast("🔒 Mesaj atmak için giriş yapmalısın!");
-    
+
     // 🚀 GÜVENLİK KONTROLÜ: Pasif/Onaysız kullanıcı mesaj atamaz
     if (currentUser.status !== "ACTIVE") {
-      return showToast("🚨 Mesaj atmak için hesabınız onaylı ve aktif olmalıdır.");
+      return showToast(
+        "🚨 Mesaj atmak için hesabınız onaylı ve aktif olmalıdır.",
+      );
     }
 
     if (product && product.user) {
@@ -437,11 +439,14 @@ export default function ListingDetailPage() {
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser) return showToast("🔒 Yorum yapmak için giriş yapmalısın!");
-    
+    if (!currentUser)
+      return showToast("🔒 Yorum yapmak için giriş yapmalısın!");
+
     // 🚀 GÜVENLİK KONTROLÜ: Pasif/Onaysız kullanıcı yorum yazamaz
     if (currentUser.status !== "ACTIVE") {
-      return showToast("🚨 Yorum yapabilmek için hesabınız onaylı ve aktif olmalıdır.");
+      return showToast(
+        "🚨 Yorum yapabilmek için hesabınız onaylı ve aktif olmalıdır.",
+      );
     }
 
     if (newComment.trim() === "") return;
@@ -515,9 +520,10 @@ export default function ListingDetailPage() {
     );
   };
 
-  const photos = product?.photosBase64?.length > 0
-    ? product.photosBase64
-    : ["https://via.placeholder.com/800x600?text=Yukleniyor"];
+  const photos =
+    product?.photosBase64?.length > 0
+      ? product.photosBase64
+      : ["https://via.placeholder.com/800x600?text=Yukleniyor"];
   const sellerName = formatName(product?.user?.fullName || "Yükleniyor...");
   const isOwner =
     currentUser &&
@@ -649,7 +655,6 @@ export default function ListingDetailPage() {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              
               {/* 🚀 GÜVENLİK DUVARI: SADECE AKTİF KULLANICILAR İLAN VEREBİLİR */}
               {currentUser && currentUser.status === "ACTIVE" && (
                 <Link
@@ -813,9 +818,9 @@ export default function ListingDetailPage() {
 
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-1 sm:gap-2 bg-blue-600 text-white px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
                   >
-                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
                       👤
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
@@ -823,7 +828,7 @@ export default function ListingDetailPage() {
 
                   <button
                     onClick={handleLogout}
-                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
+                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-0.5 sm:ml-2 flex items-center justify-center group"
                     title="Çıkış Yap"
                     aria-label="Çıkış Yap"
                   >
@@ -831,7 +836,7 @@ export default function ListingDetailPage() {
                       Çıkış
                     </span>
                     <svg
-                      className="w-[22px] h-[22px] sm:hidden group-hover:scale-110 transition-transform"
+                      className="w-[18px] h-[18px] sm:hidden group-hover:scale-110 transition-transform"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
@@ -848,7 +853,7 @@ export default function ListingDetailPage() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center justify-center bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
+                  className="flex items-center justify-center bg-slate-800 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold hover:bg-black transition-colors text-xs sm:text-sm shrink-0"
                 >
                   Giriş Yap
                 </Link>
@@ -941,7 +946,7 @@ export default function ListingDetailPage() {
                 onClick={handleSearchSubmit}
               >
                 <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör &rarr;
+                  Tüm sonuçları gör
                 </span>
               </div>
             </div>
@@ -949,21 +954,8 @@ export default function ListingDetailPage() {
         </div>
       </header>
 
-      {/* 🚀 GÜVENLİK DUVARI: SADECE AKTİF KULLANICILAR MOBİLDE "İLAN VER" GÖRÜR */}
-      {currentUser && currentUser.status === "ACTIVE" && (
-        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
-          <Link
-            href="/create-listing"
-            className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20"
-          >
-            <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
-          </Link>
-        </div>
-      )}
-
       {/* 🖥️ ANA DÜZEN VE YÜKLEME EKRANI */}
       <div className="max-w-[1200px] mx-auto mt-4 sm:mt-8 px-4 sm:px-6 w-full flex-1 pb-24 sm:pb-32">
-        
         {/* 🔙 ZARİF BREADCRUMB VE GERİ DÖN YAPISI */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm font-semibold text-slate-400 overflow-hidden whitespace-nowrap flex-1">
@@ -989,7 +981,7 @@ export default function ListingDetailPage() {
                 </span>
               </>
             ) : loading ? (
-               <div className="h-4 w-24 bg-slate-200 rounded-md animate-pulse"></div>
+              <div className="h-4 w-24 bg-slate-200 rounded-md animate-pulse"></div>
             ) : null}
           </div>
           <button
@@ -1020,7 +1012,9 @@ export default function ListingDetailPage() {
             <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
               İlan bulunamadı!
             </h2>
-            <p className="text-slate-500 mt-2">Bu ilan silinmiş veya yayından kaldırılmış olabilir.</p>
+            <p className="text-slate-500 mt-2">
+              Bu ilan silinmiş veya yayından kaldırılmış olabilir.
+            </p>
             <Link
               href="/"
               className="mt-6 text-blue-600 bg-blue-50 px-6 py-3 rounded-full font-bold hover:bg-blue-600 hover:text-white transition-colors"
@@ -1129,7 +1123,9 @@ export default function ListingDetailPage() {
                         >
                           <Link
                             href={
-                              comment.user?.id ? `/user/${comment.user.id}` : "#"
+                              comment.user?.id
+                                ? `/user/${comment.user.id}`
+                                : "#"
                             }
                             className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center font-bold shrink-0 mt-0.5 sm:mt-1 text-xs sm:text-base hover:bg-blue-100 hover:text-blue-600 transition-colors"
                           >
@@ -1190,7 +1186,9 @@ export default function ListingDetailPage() {
                   {product.priceType === "fiyat" && (
                     <div className="text-3xl sm:text-4xl font-black text-blue-600">
                       {product.price}{" "}
-                      <span className="text-xl sm:text-2xl text-blue-400">₺</span>
+                      <span className="text-xl sm:text-2xl text-blue-400">
+                        ₺
+                      </span>
                     </div>
                   )}
                   {product.priceType === "takas" && (

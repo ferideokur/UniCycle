@@ -19,6 +19,7 @@ import {
   UserCheck,
   Search,
   ArrowLeft,
+  Loader2,
 } from "lucide-react";
 
 // 🇹🇷 Türkçe İyelik Eki Bulucu
@@ -80,7 +81,12 @@ export default function PublicProfilePage() {
   const [profileData, setProfileData] = useState<any>({});
   const [listings, setListings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<{
+    id: number;
+    fullName: string;
+    email: string;
+    status?: string;
+  } | null>(null);
 
   const [isFollowing, setIsFollowing] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -395,6 +401,14 @@ export default function PublicProfilePage() {
 
   const handleMessageClick = () => {
     if (!currentUser) return showToast("🔒 Mesaj atmak için giriş yapmalısın!");
+
+    // 🚀 GÜVENLİK KONTROLÜ: Pasif/Onaysız kullanıcı mesaj atamaz
+    if (currentUser.status !== "ACTIVE") {
+      return showToast(
+        "🚨 Mesaj atmak için hesabınız onaylı ve aktif olmalıdır.",
+      );
+    }
+
     if (user) {
       window.dispatchEvent(
         new CustomEvent("openChatWithContext", {
@@ -410,8 +424,8 @@ export default function PublicProfilePage() {
 
   if (isLoading)
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-bold text-slate-500">
-        <div className="animate-spin text-4xl sm:text-5xl">⏳</div>
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+        <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-[#20B2AA] animate-spin" />
       </div>
     );
 
@@ -440,7 +454,7 @@ export default function PublicProfilePage() {
   const isOwner = currentUser && Number(currentUser.id) === Number(id);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-20 font-sans relative w-full overflow-x-hidden flex flex-col">
+    <div className="min-h-screen bg-[#F8FAFC] pb-0 font-sans relative w-full overflow-x-hidden flex flex-col">
       {/* 🌟 BİLDİRİM (TOAST) */}
       {toastMessage && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl font-bold animate-in fade-in slide-in-from-top-5 text-sm whitespace-nowrap">
@@ -489,7 +503,7 @@ export default function PublicProfilePage() {
                   className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
                 />
                 <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none" />
-                <button type="submit" className="hidden">
+                <button type="submit" className="hidden" aria-label="Arama Yap">
                   Ara
                 </button>
               </form>
@@ -557,7 +571,7 @@ export default function PublicProfilePage() {
                     onClick={handleSearchSubmit}
                   >
                     <span className="text-xs font-black text-blue-600">
-                      Tüm sonuçları gör{" "}
+                      Tüm sonuçları gör
                     </span>
                   </div>
                 </div>
@@ -565,20 +579,23 @@ export default function PublicProfilePage() {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              <Link
-                href="/create-listing"
-                className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
-              >
-                <span className="text-xl">+</span> İlan Ver
-              </Link>
+              {/* 🚀 GÜVENLİK DUVARI: SADECE AKTİF KULLANICILAR İLAN VEREBİLİR */}
+              {currentUser && currentUser.status === "ACTIVE" && (
+                <Link
+                  href="/create-listing"
+                  className="hidden md:flex font-black text-[#20B2AA] hover:text-teal-700 items-center gap-1 transition-colors"
+                >
+                  <span className="text-xl">+</span> İlan Ver
+                </Link>
+              )}
 
               {currentUser ? (
                 <div className="flex items-center gap-2 sm:gap-4 relative">
-                  {/* 🚀 ORİJİNAL İNCE KALP İKONU */}
                   <Link
                     href="/favorites"
-                    className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                    className="relative w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                     title="Favorilerim"
+                    aria-label="Favorilerim"
                   >
                     <svg
                       className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
@@ -596,11 +613,11 @@ export default function PublicProfilePage() {
                   </Link>
 
                   <div className="relative shrink-0">
-                    {/* 🚀 ORİJİNAL İNCE ZİL İKONU */}
                     <button
                       onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                      className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                      className="relative w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
                       title="Bildirimler"
+                      aria-label="Bildirimleri Aç"
                     >
                       <svg
                         className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
@@ -616,13 +633,13 @@ export default function PublicProfilePage() {
                         ></path>
                       </svg>
                       {notificationsCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
+                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 text-white text-[9px] sm:text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
                           {notificationsCount}
                         </span>
                       )}
                     </button>
                     {isNotificationOpen && (
-                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[280px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
                         <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                           <span className="font-bold text-slate-800">
                             Bildirimler
@@ -680,7 +697,6 @@ export default function PublicProfilePage() {
                                 notif.message,
                               );
 
-                              // 🚀 AÇILIR MENÜ SAAT DÜZELTMESİ (UTC)
                               let dropDate = "Yeni";
                               if (notif.createdAt) {
                                 const utcDate = notif.createdAt.endsWith("Z")
@@ -726,9 +742,9 @@ export default function PublicProfilePage() {
 
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-1 sm:gap-2 bg-blue-600 text-white px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
                   >
-                    <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
                       👤
                     </div>
                     <span className="hidden sm:block text-sm">Hesabım</span>
@@ -736,14 +752,15 @@ export default function PublicProfilePage() {
 
                   <button
                     onClick={handleLogout}
-                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
+                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-0.5 sm:ml-2 flex items-center justify-center group"
                     title="Çıkış Yap"
+                    aria-label="Çıkış Yap"
                   >
                     <span className="hidden sm:block font-bold text-sm">
                       Çıkış
                     </span>
                     <svg
-                      className="w-[22px] h-[22px] sm:hidden group-hover:scale-110 transition-transform"
+                      className="w-[18px] h-[18px] sm:hidden group-hover:scale-110 transition-transform"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
@@ -760,7 +777,7 @@ export default function PublicProfilePage() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex items-center justify-center bg-slate-800 text-white px-5 sm:px-6 py-2.5 rounded-full font-bold hover:bg-black transition-colors text-sm shrink-0"
+                  className="flex items-center justify-center bg-slate-800 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold hover:bg-black transition-colors text-xs sm:text-sm shrink-0"
                 >
                   Giriş Yap
                 </Link>
@@ -788,7 +805,7 @@ export default function PublicProfilePage() {
               onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <button type="submit" className="hidden">
+            <button type="submit" aria-label="Arama Yap" className="hidden">
               Ara
             </button>
           </form>
@@ -873,7 +890,7 @@ export default function PublicProfilePage() {
       </div>
 
       {/* 👤 PROFİL KARTI */}
-      <div className="max-w-[800px] mx-auto w-full px-4 sm:px-0 relative">
+      <div className="max-w-[800px] mx-auto w-full px-4 sm:px-0 relative flex-1">
         <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="h-32 sm:h-48 w-full relative bg-gradient-to-r from-blue-500 to-indigo-600">
             {profileData?.coverImage && (
@@ -1042,6 +1059,7 @@ export default function PublicProfilePage() {
               </h2>
               <button
                 onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                aria-label="Kapat"
                 className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors"
               >
                 ✕
@@ -1053,6 +1071,7 @@ export default function PublicProfilePage() {
             <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                aria-label="Anladım Butonu"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base"
               >
                 Anladım
@@ -1062,22 +1081,25 @@ export default function PublicProfilePage() {
         </div>
       )}
 
-      {/* 🌊 FOOTER (PREMIUM) */}
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-2">
+      {/* 🌊 FOOTER (PREMIUM) - Üstünde Boşluk Garantili Spacer Div Eklendi */}
+      <div className="h-24 sm:h-32 w-full shrink-0"></div>
+      <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-4 sm:px-6 mt-auto rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full shrink-0">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
+          <div className="col-span-1 md:col-span-2 text-center md:text-left">
             <div className="mb-4">
               <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
                 Uni<span className="text-[#20B2AA]">Cycle</span>
               </span>
             </div>
-            <p className="text-sm font-medium text-slate-500 max-w-sm">
+            <p className="text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
               öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
             </p>
           </div>
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-base">
+              Platform
+            </h4>
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
@@ -1120,15 +1142,17 @@ export default function PublicProfilePage() {
               </li>
             </ul>
           </div>
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-base">
+              İletişim
+            </h4>
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
                   onClick={() =>
                     openInfoModal(
                       "Destek Merkezi",
-                      "Yaşadığın bir sorun mu var?\n\nEkibimize destek@unicycle.com adresinden ulaşabilirsin.",
+                      "Yaşadığın bir sorun mu var?\n\nEkibimize unicycledestek@gmail.com adresinden ulaşabilirsin.",
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -1141,7 +1165,7 @@ export default function PublicProfilePage() {
                   onClick={() =>
                     openInfoModal(
                       "Bize Ulaşın",
-                      "Adres: UniCycle Öğrenci İnovasyon Merkezi, Teknopark Binası, 3. Kat\n\nE-posta: iletisim@unicycle.com\nTelefon: +90 (850) 123 45 67",
+                      "📍 Adres:\nPiri Reis Üniversitesi Deniz Kampüsü\nPostane Mahallesi, Eflatun Sokak No:8\n34940 Tuzla / İstanbul\n\n✉️ E-posta: unicycledestek@gmail.com",
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -1165,7 +1189,7 @@ export default function PublicProfilePage() {
             </ul>
           </div>
         </div>
-        <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
+        <div className="max-w-[1400px] mx-auto mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>
