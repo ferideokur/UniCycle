@@ -17,31 +17,72 @@ import {
   Upload,
   KeyRound,
   ArrowRight,
-  X 
+  X,
 } from "lucide-react";
 
 const UNIVERSITIES = [
-  "Acıbadem Üniversitesi", "Akdeniz Üniversitesi", "Anadolu Üniversitesi",
-  "Ankara Üniversitesi", "Atatürk Üniversitesi", "Bahçeşehir Üniversitesi",
-  "Başkent Üniversitesi", "Bilkent Üniversitesi", "Boğaziçi Üniversitesi",
-  "Bursa Uludağ Üniversitesi", "Celal Bayar Üniversitesi", "Çanakkale Onsekiz Mart Üniversitesi",
-  "Çukurova Üniversitesi", "Dicle Üniversitesi", "Dokuz Eylül Üniversitesi",
-  "Ege Üniversitesi", "Erciyes Üniversitesi", "Eskişehir Osmangazi Üniversitesi",
-  "Fırat Üniversitesi", "Galatasaray Üniversitesi", "Gazi Üniversitesi",
-  "Gaziantep Üniversitesi", "Gebze Teknik Üniversitesi", "Hacettepe Üniversitesi",
-  "Hasan Kalyoncu Üniversitesi", "Isparta Süleyman Demirel Üniversitesi", "İbn Haldun Üniversitesi",
-  "İstanbul Aydın Üniversitesi", "İstanbul Bilgi Üniversitesi", "İstanbul Kültür Üniversitesi",
-  "İstanbul Medipol Üniversitesi", "İstanbul Okan Üniversitesi", "İstanbul Sabahattin Zaim Üniversitesi",
-  "İstanbul Teknik Üniversitesi (İTÜ)", "İstanbul Ticaret Üniversitesi", "İstanbul Üniversitesi",
-  "İzmir Ekonomi Üniversitesi", "İzmir Katip Çelebi Üniversitesi", "İzmir Yüksek Teknoloji Enstitüsü (İYTE)",
-  "Kadir Has Üniversitesi", "Karadeniz Teknik Üniversitesi (KTÜ)", "Kırıkkale Üniversitesi",
-  "Kocaeli Üniversitesi", "Koç Üniversitesi", "Marmara Üniversitesi",
-  "Mef Üniversitesi", "Mimar Sinan Güzel Sanatlar Üniversitesi", "Muğla Sıtkı Koçman Üniversitesi",
-  "Ondokuz Mayıs Üniversitesi", "Orta Doğu Teknik Üniversitesi (ODTÜ)", "Özyeğin Üniversitesi",
-  "Pamukkale Üniversitesi", "Piri Reis Üniversitesi", "Sabancı Üniversitesi",
-  "Sakarya Üniversitesi", "Selçuk Üniversitesi", "TOBB Ekonomi ve Teknoloji Üniversitesi",
-  "Trakya Üniversitesi", "Türk-Alman Üniversitesi", "Yeditepe Üniversitesi",
-  "Yıldız Teknik Üniversitesi (YTÜ)", "Diğer..."
+  "Acıbadem Üniversitesi",
+  "Akdeniz Üniversitesi",
+  "Anadolu Üniversitesi",
+  "Ankara Üniversitesi",
+  "Atatürk Üniversitesi",
+  "Bahçeşehir Üniversitesi",
+  "Başkent Üniversitesi",
+  "Bilkent Üniversitesi",
+  "Boğaziçi Üniversitesi",
+  "Bursa Uludağ Üniversitesi",
+  "Celal Bayar Üniversitesi",
+  "Çanakkale Onsekiz Mart Üniversitesi",
+  "Çukurova Üniversitesi",
+  "Dicle Üniversitesi",
+  "Dokuz Eylül Üniversitesi",
+  "Ege Üniversitesi",
+  "Erciyes Üniversitesi",
+  "Eskişehir Osmangazi Üniversitesi",
+  "Fırat Üniversitesi",
+  "Galatasaray Üniversitesi",
+  "Gazi Üniversitesi",
+  "Gaziantep Üniversitesi",
+  "Gebze Teknik Üniversitesi",
+  "Hacettepe Üniversitesi",
+  "Hasan Kalyoncu Üniversitesi",
+  "Isparta Süleyman Demirel Üniversitesi",
+  "İbn Haldun Üniversitesi",
+  "İstanbul Aydın Üniversitesi",
+  "İstanbul Bilgi Üniversitesi",
+  "İstanbul Kültür Üniversitesi",
+  "İstanbul Medipol Üniversitesi",
+  "İstanbul Okan Üniversitesi",
+  "İstanbul Sabahattin Zaim Üniversitesi",
+  "İstanbul Teknik Üniversitesi (İTÜ)",
+  "İstanbul Ticaret Üniversitesi",
+  "İstanbul Üniversitesi",
+  "İzmir Ekonomi Üniversitesi",
+  "İzmir Katip Çelebi Üniversitesi",
+  "İzmir Yüksek Teknoloji Enstitüsü (İYTE)",
+  "Kadir Has Üniversitesi",
+  "Karadeniz Teknik Üniversitesi (KTÜ)",
+  "Kırıkkale Üniversitesi",
+  "Kocaeli Üniversitesi",
+  "Koç Üniversitesi",
+  "Marmara Üniversitesi",
+  "Mef Üniversitesi",
+  "Mimar Sinan Güzel Sanatlar Üniversitesi",
+  "Muğla Sıtkı Koçman Üniversitesi",
+  "Ondokuz Mayıs Üniversitesi",
+  "Orta Doğu Teknik Üniversitesi (ODTÜ)",
+  "Özyeğin Üniversitesi",
+  "Pamukkale Üniversitesi",
+  "Piri Reis Üniversitesi",
+  "Sabancı Üniversitesi",
+  "Sakarya Üniversitesi",
+  "Selçuk Üniversitesi",
+  "TOBB Ekonomi ve Teknoloji Üniversitesi",
+  "Trakya Üniversitesi",
+  "Türk-Alman Üniversitesi",
+  "Yeditepe Üniversitesi",
+  "Yıldız Teknik Üniversitesi (YTÜ)",
+  "Diğer...",
 ];
 
 const translateBackendMessage = (msg: string) => {
@@ -50,7 +91,12 @@ const translateBackendMessage = (msg: string) => {
 
   if (lowerMsg.includes("already exist") || lowerMsg.includes("taken"))
     return "Bu e-posta adresi zaten kullanımda.";
-  if (lowerMsg.includes("bad credentials") || lowerMsg.includes("wrong password") || lowerMsg.includes("invalid") || lowerMsg.includes("login failed"))
+  if (
+    lowerMsg.includes("bad credentials") ||
+    lowerMsg.includes("wrong password") ||
+    lowerMsg.includes("invalid") ||
+    lowerMsg.includes("login failed")
+  )
     return "E-posta adresiniz veya şifreniz hatalı.";
   if (lowerMsg.includes("not found") || lowerMsg.includes("does not exist"))
     return "Bu e-posta adresine ait bir hesap bulunamadı.";
@@ -85,12 +131,14 @@ export default function AuthPage() {
   const [university, setUniversity] = useState(UNIVERSITIES[0]);
   const [customUniversity, setCustomUniversity] = useState("");
 
-  const [forgotPasswordStep, setForgotPasswordStep] = useState<1 | 2>(1); 
+  const [forgotPasswordStep, setForgotPasswordStep] = useState<1 | 2>(1);
   const [otpCode, setOtpCode] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error" | "info" | "">("");
+  const [messageType, setMessageType] = useState<
+    "success" | "error" | "info" | ""
+  >("");
   const [isLoading, setIsLoading] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -116,11 +164,12 @@ export default function AuthPage() {
       if (fullName.trim().split(/\s+/).length < 2) {
         newErrors.fullName = "Lütfen adınızı ve soyadınızı tam yazınız.";
       }
-      
+
       const phoneRegex = /^05[345][0-9]{8}$/;
-      const cleanPhone = phone.replace(/\s+/g, '');
+      const cleanPhone = phone.replace(/\s+/g, "");
       if (!phoneRegex.test(cleanPhone)) {
-        newErrors.phone = "Lütfen geçerli bir numara giriniz (Örn: 053X, 054X, 055X).";
+        newErrors.phone =
+          "Lütfen geçerli bir numara giriniz (Örn: 053X, 054X, 055X).";
       }
 
       if (university === "Diğer..." && !customUniversity.trim()) {
@@ -128,9 +177,10 @@ export default function AuthPage() {
       }
 
       if (!studentDoc) {
-        newErrors.studentDoc = "Öğrenci hesabınızın onaylanması için belge yüklemelisiniz.";
+        newErrors.studentDoc =
+          "Öğrenci hesabınızın onaylanması için belge yüklemelisiniz.";
       }
-      
+
       if (password.length < 6) {
         newErrors.password = "Şifreniz en az 6 karakter olmalıdır.";
       }
@@ -144,8 +194,10 @@ export default function AuthPage() {
 
     if (isForgotPassword && forgotPasswordStep === 2) {
       if (otpCode.length !== 6) newErrors.otpCode = "Kod 6 haneli olmalıdır.";
-      if (password.length < 6) newErrors.password = "Yeni şifreniz en az 6 karakter olmalıdır.";
-      if (password !== confirmPassword) newErrors.confirmPassword = "Şifreler birbiriyle eşleşmiyor!";
+      if (password.length < 6)
+        newErrors.password = "Yeni şifreniz en az 6 karakter olmalıdır.";
+      if (password !== confirmPassword)
+        newErrors.confirmPassword = "Şifreler birbiriyle eşleşmiyor!";
     }
 
     setErrors(newErrors);
@@ -155,18 +207,31 @@ export default function AuthPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+      const validTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/jpg",
+        "application/pdf",
+      ];
       if (!validTypes.includes(file.type)) {
-        setErrors({ ...errors, studentDoc: "Lütfen sadece PDF, JPG veya PNG formatında bir belge yükleyin." });
-        e.target.value = ''; 
+        setErrors({
+          ...errors,
+          studentDoc:
+            "Lütfen sadece PDF, JPG veya PNG formatında bir belge yükleyin.",
+        });
+        e.target.value = "";
         setStudentDoc(null);
         return;
       }
-      
+
       const maxSizeInBytes = 5 * 1024 * 1024;
       if (file.size > maxSizeInBytes) {
-        setErrors({ ...errors, studentDoc: "Belgenizin boyutu çok büyük. Lütfen 5MB'dan daha küçük bir dosya yükleyin." });
-        e.target.value = ''; 
+        setErrors({
+          ...errors,
+          studentDoc:
+            "Belgenizin boyutu çok büyük. Lütfen 5MB'dan daha küçük bir dosya yükleyin.",
+        });
+        e.target.value = "";
         setStudentDoc(null);
         return;
       }
@@ -180,29 +245,34 @@ export default function AuthPage() {
 
   const handleSendCode = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!validateForm()) return; 
+    if (!validateForm()) return;
 
     setIsLoading(true);
     setMessageType("info");
     setMessage("E-posta adresiniz kontrol ediliyor ve kod gönderiliyor...");
 
     try {
-      const response = await fetch(`https://unicycle-api.onrender.com/api/users/forgot-password?email=${encodeURIComponent(email)}`, { 
-        method: "POST",
-        headers: { "Accept": "application/json" }
-      });
-      
+      const response = await fetch(
+        `https://unicycle-api.onrender.com/api/users/forgot-password?email=${encodeURIComponent(email)}`,
+        {
+          method: "POST",
+          headers: { Accept: "application/json" },
+        },
+      );
+
       if (!response.ok) {
-        throw new Error("Bu e-posta adresine ait kayıtlı bir hesap bulunamadı!");
+        throw new Error(
+          "Bu e-posta adresine ait kayıtlı bir hesap bulunamadı!",
+        );
       }
 
       const data = await response.json();
-      const generatedOtp = data.otp; 
+      const generatedOtp = data.otp;
 
-      const mailResponse = await fetch('/api/mail', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp: generatedOtp })
+      const mailResponse = await fetch("/api/mail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp: generatedOtp }),
       });
 
       if (!mailResponse.ok) {
@@ -211,7 +281,7 @@ export default function AuthPage() {
 
       setMessageType("success");
       setMessage("Doğrulama maili e-postanıza başarıyla gönderildi!");
-      setForgotPasswordStep(2); 
+      setForgotPasswordStep(2);
     } catch (error: any) {
       setMessageType("error");
       setMessage(error.message || "Bilinmeyen bir hata oluştu.");
@@ -229,41 +299,49 @@ export default function AuthPage() {
     setMessage("Şifreniz sıfırlanıyor...");
 
     try {
-      const response = await fetch("https://unicycle-api.onrender.com/api/users/reset-password", {
-        method: "POST",
-        headers: { 
-          "Accept": "application/json",
-          "Content-Type": "application/json" 
+      const response = await fetch(
+        "https://unicycle-api.onrender.com/api/users/reset-password",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, otpCode, newPassword: password }),
         },
-        body: JSON.stringify({ email, otpCode, newPassword: password }),
-      });
+      );
 
       if (!response.ok) {
-         if(response.status === 400) throw new Error("BAD_REQUEST");
-         throw new Error("SERVER_ERROR");
+        if (response.status === 400) throw new Error("BAD_REQUEST");
+        throw new Error("SERVER_ERROR");
       }
 
       setMessageType("success");
-      setMessage("Şifreniz başarıyla sıfırlandı! Lütfen yeni şifrenizle giriş yapın.");
-      
+      setMessage(
+        "Şifreniz başarıyla sıfırlandı! Lütfen yeni şifrenizle giriş yapın.",
+      );
+
       setPassword("");
       setConfirmPassword("");
       setOtpCode("");
-      
+
       setTimeout(() => {
         setIsForgotPassword(false);
-        setForgotPasswordStep(1); 
+        setForgotPasswordStep(1);
         setIsLogin(true);
         setMessage("");
         setMessageType("");
       }, 2000);
-
     } catch (error: any) {
       setMessageType("error");
-      if(error.message === "BAD_REQUEST") {
-         setMessage("Girdiğiniz doğrulama kodu hatalı. Lütfen tekrar kontrol edin.");
+      if (error.message === "BAD_REQUEST") {
+        setMessage(
+          "Girdiğiniz doğrulama kodu hatalı. Lütfen tekrar kontrol edin.",
+        );
       } else {
-         setMessage("İşlem sırasında bir hata oluştu. Sunucu bağlantısını kontrol edin.");
+        setMessage(
+          "İşlem sırasında bir hata oluştu. Sunucu bağlantısını kontrol edin.",
+        );
       }
     } finally {
       setIsLoading(false);
@@ -272,7 +350,7 @@ export default function AuthPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!validateForm()) return; 
+    if (!validateForm()) return;
 
     setIsLoading(true);
     setMessageType("info");
@@ -290,38 +368,48 @@ export default function AuthPage() {
           base64Document = await convertToBase64(studentDoc as File);
         } catch (error) {
           setMessageType("error");
-          setMessage("Belge yüklenirken bir sorun oluştu, lütfen tekrar deneyin.");
+          setMessage(
+            "Belge yüklenirken bir sorun oluştu, lütfen tekrar deneyin.",
+          );
           setIsLoading(false);
           return;
         }
 
-        const response = await fetch("https://unicycle-api.onrender.com/api/users/register", {
+        const response = await fetch(
+          "https://unicycle-api.onrender.com/api/users/register",
+          {
             method: "POST",
-            headers: { 
-              "Accept": "application/json",
-              "Content-Type": "application/json" 
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
             },
-            body: JSON.stringify({ 
-                fullName, 
-                email, 
-                password, 
-                phone, 
-                university: finalUniversity,
-                documentBase64: base64Document 
+            body: JSON.stringify({
+              fullName,
+              email,
+              password,
+              phone,
+              university: finalUniversity,
+              documentBase64: base64Document,
             }),
-        });
+          },
+        );
 
         const text = await response.text();
         if (response.ok) {
           setMessageType("");
           setMessage("");
           setShowVIPSuccess(true);
-          
-          setFullName(""); setEmail(""); setPassword(""); setPhone(""); setCustomUniversity(""); setStudentDoc(null);
-          
-          setTimeout(() => { 
+
+          setFullName("");
+          setEmail("");
+          setPassword("");
+          setPhone("");
+          setCustomUniversity("");
+          setStudentDoc(null);
+
+          setTimeout(() => {
             setShowVIPSuccess(false);
-            setIsLogin(true); 
+            setIsLogin(true);
           }, 4500);
         } else {
           setMessageType("error");
@@ -335,22 +423,27 @@ export default function AuthPage() {
       }
     } else {
       try {
-        const response = await fetch("https://unicycle-api.onrender.com/api/users/login", {
+        const response = await fetch(
+          "https://unicycle-api.onrender.com/api/users/login",
+          {
             method: "POST",
-            headers: { 
-              "Accept": "application/json",
-              "Content-Type": "application/json" 
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({ email, password }),
-        });
+          },
+        );
 
         if (response.ok) {
           const userData = await response.json();
           if (userData.status === "PENDING") {
-             setMessageType("error");
-             setMessage("Hesabınız henüz Admin tarafından onaylanmadı. Lütfen belgenizin incelenmesini bekleyin.");
-             setIsLoading(false);
-             return;
+            setMessageType("error");
+            setMessage(
+              "Hesabınız henüz Admin tarafından onaylanmadı. Lütfen belgenizin incelenmesini bekleyin.",
+            );
+            setIsLoading(false);
+            return;
           }
           localStorage.clear();
           localStorage.setItem("user", JSON.stringify(userData));
@@ -359,12 +452,18 @@ export default function AuthPage() {
           }
           setMessageType("success");
           setMessage("Giriş başarılı! Yönlendiriliyorsun...");
-          setEmail(""); setPassword("");
+          setEmail("");
+          setPassword("");
           setTimeout(() => (window.location.href = "/profile"), 1500);
         } else {
           const errorText = await response.text();
           setMessageType("error");
-          setMessage(translateBackendMessage(errorText) === "İşlem başarısız oldu. Lütfen bilgilerinizi kontrol edin." ? errorText : translateBackendMessage(errorText));
+          setMessage(
+            translateBackendMessage(errorText) ===
+              "İşlem başarısız oldu. Lütfen bilgilerinizi kontrol edin."
+              ? errorText
+              : translateBackendMessage(errorText),
+          );
         }
       } catch (error) {
         setMessageType("error");
@@ -399,35 +498,33 @@ export default function AuthPage() {
         <div className="sculpture-ring-2"></div>
       </div>
 
-      <div className="absolute top-8 left-8 z-50">
+      {/* 🚀 MOBİL UYUMLU, ERGONOMİK GERİ DÖN BUTONU */}
+      <div className="absolute top-4 left-4 sm:top-8 sm:left-8 z-50">
         <Link
           href="/"
-          className="text-slate-300 hover:text-white font-bold flex items-center gap-2 transition-colors drop-shadow-md text-sm sm:text-base group focus:outline-none"
+          className="text-slate-200 hover:text-white font-bold flex items-center gap-2 transition-all drop-shadow-md text-sm sm:text-base group focus:outline-none bg-slate-900/40 sm:bg-transparent px-4 py-2 sm:p-0 rounded-full sm:rounded-none backdrop-blur-md sm:backdrop-blur-none border border-white/10 sm:border-none hover:bg-slate-800/60 sm:hover:bg-transparent"
         >
-          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1 transition-transform" />
           Ana Sayfaya Dön
         </Link>
       </div>
 
       {showVIPSuccess && (
         <div className="fixed inset-0 z-[99999] bg-white/70 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-in fade-in duration-300">
-          
           <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center animate-pop shadow-[0_0_40px_rgba(16,185,129,0.4)] mb-8 shrink-0">
             <CheckCircle2 className="w-12 h-12 text-white" />
           </div>
-          
           <h2 className="text-3xl sm:text-4xl font-black text-[#0f2e36] tracking-tight animate-in slide-in-from-bottom-4 duration-500 delay-100 text-center">
             Aramıza Hoş Geldin!
           </h2>
-          
           <p className="text-slate-800 mt-4 text-sm sm:text-base font-bold animate-in slide-in-from-bottom-4 duration-500 delay-200 text-center px-6 max-w-md leading-relaxed">
-            Kayıt talebiniz başarıyla alındı.<br/>Admin onayından hemen sonra giriş yapabilirsiniz.
+            Kayıt talebiniz başarıyla alındı.
+            <br />
+            Admin onayından hemen sonra giriş yapabilirsiniz.
           </p>
-          
           <div className="mt-8 flex flex-col items-center gap-6 animate-in slide-in-from-bottom-4 duration-500 delay-300">
             <Loader2 className="w-8 h-8 text-[#20B2AA] animate-spin opacity-80" />
-            
-            <button 
+            <button
               onClick={() => setShowVIPSuccess(false)}
               className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-slate-200/80 hover:bg-slate-300 text-slate-700 font-bold transition-all shadow-sm focus:outline-none"
             >
@@ -464,7 +561,7 @@ export default function AuthPage() {
           </h1>
           <p className="text-slate-500 text-xs sm:text-sm mt-2 font-medium">
             {isForgotPassword
-              ? forgotPasswordStep === 1 
+              ? forgotPasswordStep === 1
                 ? "Kayıtlı e-posta adresini girerek doğrulama kodu alabilirsin."
                 : "Gelen kodu ve kullanmak istediğin yeni şifreni belirle."
               : isLogin
@@ -474,7 +571,6 @@ export default function AuthPage() {
         </div>
 
         <div className="p-6 sm:p-8">
-          
           {message && (
             <div
               className={`mb-5 p-3.5 rounded-xl text-sm font-bold text-left flex items-start gap-3 shadow-sm border animate-in fade-in slide-in-from-top-2 ${
@@ -485,9 +581,15 @@ export default function AuthPage() {
                     : "bg-red-50 text-red-700 border-red-200"
               }`}
             >
-              {messageType === "success" && <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />}
-              {messageType === "error" && <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />}
-              {messageType === "info" && <Loader2 className="w-5 h-5 shrink-0 mt-0.5 animate-spin" />}
+              {messageType === "success" && (
+                <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+              )}
+              {messageType === "error" && (
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              )}
+              {messageType === "info" && (
+                <Loader2 className="w-5 h-5 shrink-0 mt-0.5 animate-spin" />
+              )}
               <span className="leading-snug">{message}</span>
             </div>
           )}
@@ -509,59 +611,84 @@ export default function AuthPage() {
                   <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     İsim ve Soyisim
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <User className={`h-5 w-5 ${errors.fullName ? 'text-red-400' : 'text-slate-400'}`} />
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none transition-colors duration-300">
+                      <User
+                        className={`h-5 w-5 transition-colors duration-300 ${errors.fullName ? "text-red-400" : "text-slate-400 group-focus-within:text-[#20B2AA]"}`}
+                      />
                     </div>
                     <input
                       aria-label="İsim ve Soyisim"
                       type="text"
                       value={fullName}
-                      onChange={(e) => { setFullName(e.target.value); clearError("fullName"); }}
+                      onChange={(e) => {
+                        setFullName(e.target.value);
+                        clearError("fullName");
+                      }}
                       placeholder="Örn: Feride Okur"
-                      className={`block w-full border text-slate-900 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:bg-white text-sm font-semibold transition-all ${
-                        errors.fullName ? 'bg-red-50/50 border-red-400 focus:ring-red-400' : 'bg-slate-100 border-slate-200 focus:ring-[#20B2AA]'
+                      className={`block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-4 text-sm font-semibold transition-all duration-300 ${
+                        errors.fullName
+                          ? "bg-red-50/50 border-red-400 focus:ring-red-400/20"
+                          : "bg-slate-50 hover:bg-slate-100 focus:bg-white border-slate-200 focus:border-[#20B2AA] focus:ring-[#20B2AA]/20"
                       }`}
                     />
                   </div>
-                  {errors.fullName && <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">{errors.fullName}</p>}
+                  {errors.fullName && (
+                    <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">
+                      {errors.fullName}
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     Telefon Numarası
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <Phone className={`h-5 w-5 ${errors.phone ? 'text-red-400' : 'text-slate-400'}`} />
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none transition-colors duration-300">
+                      <Phone
+                        className={`h-5 w-5 transition-colors duration-300 ${errors.phone ? "text-red-400" : "text-slate-400 group-focus-within:text-[#20B2AA]"}`}
+                      />
                     </div>
                     <input
                       aria-label="Telefon Numarası"
                       type="tel"
                       value={phone}
-                      onChange={(e) => { setPhone(e.target.value); clearError("phone"); }}
+                      onChange={(e) => {
+                        setPhone(e.target.value);
+                        clearError("phone");
+                      }}
                       placeholder="05XX XXX XX XX"
-                      className={`block w-full border text-slate-900 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:bg-white text-sm font-semibold transition-all ${
-                        errors.phone ? 'bg-red-50/50 border-red-400 focus:ring-red-400' : 'bg-slate-100 border-slate-200 focus:ring-[#20B2AA]'
+                      className={`block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-4 text-sm font-semibold transition-all duration-300 ${
+                        errors.phone
+                          ? "bg-red-50/50 border-red-400 focus:ring-red-400/20"
+                          : "bg-slate-50 hover:bg-slate-100 focus:bg-white border-slate-200 focus:border-[#20B2AA] focus:ring-[#20B2AA]/20"
                       }`}
                     />
                   </div>
-                  {errors.phone && <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">{errors.phone}</p>}
+                  {errors.phone && (
+                    <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">
+                      {errors.phone}
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     Üniversiteniz
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <Building2 className="h-5 w-5 text-slate-400" />
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none transition-colors duration-300">
+                      <Building2 className="h-5 w-5 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors duration-300" />
                     </div>
                     <select
                       aria-label="Üniversite Seçimi"
                       value={university}
-                      onChange={(e) => { setUniversity(e.target.value); clearError("customUniversity"); }}
-                      className="block w-full bg-slate-100 border border-slate-200 text-slate-900 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] focus:bg-white font-semibold text-sm appearance-none cursor-pointer transition-all"
+                      onChange={(e) => {
+                        setUniversity(e.target.value);
+                        clearError("customUniversity");
+                      }}
+                      className="block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-4 text-sm font-semibold transition-all duration-300 bg-slate-50 hover:bg-slate-100 focus:bg-white border-slate-200 focus:border-[#20B2AA] focus:ring-[#20B2AA]/20 appearance-none cursor-pointer"
                     >
                       {UNIVERSITIES.map((uni, idx) => (
                         <option key={idx} value={uni}>
@@ -577,22 +704,33 @@ export default function AuthPage() {
                     <label className="block text-[11px] sm:text-xs font-bold text-[#20B2AA] mb-1.5 uppercase tracking-wider px-1">
                       Okulunuzun Adı
                     </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <Building2 className={`h-5 w-5 ${errors.customUniversity ? 'text-red-400' : 'text-[#20B2AA]'}`} />
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none transition-colors duration-300">
+                        <Building2
+                          className={`h-5 w-5 transition-colors duration-300 ${errors.customUniversity ? "text-red-400" : "text-[#20B2AA]"}`}
+                        />
                       </div>
                       <input
                         aria-label="Özel Üniversite Adı"
                         type="text"
                         value={customUniversity}
-                        onChange={(e) => { setCustomUniversity(e.target.value); clearError("customUniversity"); }}
+                        onChange={(e) => {
+                          setCustomUniversity(e.target.value);
+                          clearError("customUniversity");
+                        }}
                         placeholder="Örn: X Teknik Üniversitesi"
-                        className={`block w-full border text-[#20B2AA] rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:bg-white font-bold text-sm transition-all ${
-                          errors.customUniversity ? 'bg-red-50/50 border-red-400 text-slate-900 focus:ring-red-400' : 'bg-[#20B2AA]/5 border-[#20B2AA]/20 focus:ring-[#20B2AA]'
+                        className={`block w-full border text-[#20B2AA] rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-4 font-bold text-sm transition-all duration-300 ${
+                          errors.customUniversity
+                            ? "bg-red-50/50 border-red-400 text-slate-900 focus:ring-red-400/20"
+                            : "bg-[#20B2AA]/5 border-[#20B2AA]/30 focus:border-[#20B2AA] focus:bg-white focus:ring-[#20B2AA]/20"
                         }`}
                       />
                     </div>
-                    {errors.customUniversity && <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">{errors.customUniversity}</p>}
+                    {errors.customUniversity && (
+                      <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">
+                        {errors.customUniversity}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -600,52 +738,71 @@ export default function AuthPage() {
                   <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     Öğrenci Belgesi (PDF, JPG, PNG)
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <Upload className={`h-5 w-5 ${errors.studentDoc ? 'text-red-400' : 'text-slate-400'}`} />
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none transition-colors duration-300">
+                      <Upload
+                        className={`h-5 w-5 transition-colors duration-300 ${errors.studentDoc ? "text-red-400" : "text-slate-400 group-focus-within:text-[#20B2AA]"}`}
+                      />
                     </div>
                     <input
                       aria-label="Öğrenci Belgesi Yükle"
                       type="file"
                       accept=".pdf,image/jpeg,image/png,image/jpg"
                       onChange={handleFileChange}
-                      className={`block w-full border text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#20B2AA]/10 file:text-[#20B2AA] hover:file:bg-[#20B2AA]/20 rounded-xl py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-[#20B2AA] text-sm transition-all cursor-pointer ${
-                        errors.studentDoc ? 'bg-red-50/50 border-red-400 focus:ring-red-400' : 'bg-slate-100 border-slate-200 focus:ring-[#20B2AA]'
+                      className={`block w-full border text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#20B2AA]/10 file:text-[#20B2AA] hover:file:bg-[#20B2AA]/20 file:transition-colors file:cursor-pointer rounded-2xl py-2.5 pl-11 pr-4 focus:outline-none focus:ring-4 text-sm transition-all duration-300 cursor-pointer ${
+                        errors.studentDoc
+                          ? "bg-red-50/50 border-red-400 focus:ring-red-400/20"
+                          : "bg-slate-50 hover:bg-slate-100 focus:bg-white border-slate-200 focus:border-[#20B2AA] focus:ring-[#20B2AA]/20"
                       }`}
                     />
                   </div>
                   {errors.studentDoc ? (
-                    <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">{errors.studentDoc}</p>
+                    <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">
+                      {errors.studentDoc}
+                    </p>
                   ) : (
                     <p className="text-[10px] text-slate-400 mt-1.5 px-1 font-medium">
-                      Belgeniz sadece Admin onay sürecinde incelenecektir. (Maks 5MB)
+                      Belgeniz sadece Admin onay sürecinde incelenecektir. (Maks
+                      5MB)
                     </p>
                   )}
                 </div>
               </div>
             )}
 
-            {(!isForgotPassword || (isForgotPassword && forgotPasswordStep === 1)) && (
+            {(!isForgotPassword ||
+              (isForgotPassword && forgotPasswordStep === 1)) && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                 <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                   Üniversite E-Postası
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Mail className={`h-5 w-5 ${errors.email ? 'text-red-400' : 'text-slate-400'}`} />
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none transition-colors duration-300">
+                    <Mail
+                      className={`h-5 w-5 transition-colors duration-300 ${errors.email ? "text-red-400" : "text-slate-400 group-focus-within:text-blue-500"}`}
+                    />
                   </div>
                   <input
                     aria-label="E-Posta Adresi"
                     type="email"
                     value={email}
-                    onChange={(e) => { setEmail(e.target.value); clearError("email"); }}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      clearError("email");
+                    }}
                     placeholder="isim@ogrenci.edu.tr"
-                    className={`block w-full border text-slate-900 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:bg-white text-sm font-semibold transition-all ${
-                      errors.email ? 'bg-red-50/50 border-red-400 focus:ring-red-400' : 'bg-slate-100 border-slate-200 focus:ring-blue-500'
+                    className={`block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-4 text-sm font-semibold transition-all duration-300 ${
+                      errors.email
+                        ? "bg-red-50/50 border-red-400 focus:ring-red-400/20"
+                        : "bg-slate-50 hover:bg-slate-100 focus:bg-white border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
                     }`}
                   />
                 </div>
-                {errors.email && <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">{errors.email}</p>}
+                {errors.email && (
+                  <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">
+                    {errors.email}
+                  </p>
+                )}
               </div>
             )}
 
@@ -655,26 +812,36 @@ export default function AuthPage() {
                   <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     6 Haneli Doğrulama Kodu
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <KeyRound className={`h-5 w-5 ${errors.otpCode ? 'text-red-400' : 'text-slate-400'}`} />
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none transition-colors duration-300">
+                      <KeyRound
+                        className={`h-5 w-5 transition-colors duration-300 ${errors.otpCode ? "text-red-400" : "text-slate-400 group-focus-within:text-blue-500"}`}
+                      />
                     </div>
                     <input
                       type="text"
                       maxLength={6}
                       value={otpCode}
-                      onChange={(e) => { setOtpCode(e.target.value.replace(/[^0-9]/g, '')); clearError("otpCode"); }}
+                      onChange={(e) => {
+                        setOtpCode(e.target.value.replace(/[^0-9]/g, ""));
+                        clearError("otpCode");
+                      }}
                       placeholder="••••••"
-                      className={`block w-full border text-slate-900 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:bg-white text-lg font-black tracking-widest text-center transition-all ${
-                        errors.otpCode ? 'bg-red-50/50 border-red-400 focus:ring-red-400' : 'bg-slate-100 border-slate-200 focus:ring-blue-500'
+                      className={`block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-4 text-lg font-black tracking-widest text-center transition-all duration-300 ${
+                        errors.otpCode
+                          ? "bg-red-50/50 border-red-400 focus:ring-red-400/20"
+                          : "bg-slate-50 hover:bg-slate-100 focus:bg-white border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
                       }`}
                     />
                   </div>
                   {errors.otpCode ? (
-                    <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 text-center animate-in fade-in">{errors.otpCode}</p>
+                    <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 text-center animate-in fade-in">
+                      {errors.otpCode}
+                    </p>
                   ) : (
                     <p className="text-[10px] text-slate-400 mt-1.5 text-right font-medium">
-                      <span className="text-[#20B2AA]">{email}</span> adresine gönderildi.
+                      <span className="text-blue-500">{email}</span> adresine
+                      gönderildi.
                     </p>
                   )}
                 </div>
@@ -683,42 +850,65 @@ export default function AuthPage() {
                   <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     Yeni Şifre
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <Lock className={`h-5 w-5 ${errors.password ? 'text-red-400' : 'text-slate-400'}`} />
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none transition-colors duration-300">
+                      <Lock
+                        className={`h-5 w-5 transition-colors duration-300 ${errors.password ? "text-red-400" : "text-slate-400 group-focus-within:text-blue-500"}`}
+                      />
                     </div>
                     <input
                       type="password"
                       value={password}
-                      onChange={(e) => { setPassword(e.target.value); clearError("password"); clearError("confirmPassword"); }}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        clearError("password");
+                        clearError("confirmPassword");
+                      }}
                       placeholder="••••••••"
-                      className={`block w-full border text-slate-900 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:bg-white text-sm font-bold tracking-widest transition-all ${
-                        errors.password ? 'bg-red-50/50 border-red-400 focus:ring-red-400' : 'bg-slate-100 border-slate-200 focus:ring-blue-500'
+                      className={`block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-4 text-sm font-bold tracking-widest transition-all duration-300 ${
+                        errors.password
+                          ? "bg-red-50/50 border-red-400 focus:ring-red-400/20"
+                          : "bg-slate-50 hover:bg-slate-100 focus:bg-white border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
                       }`}
                     />
                   </div>
-                  {errors.password && <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">{errors.password}</p>}
+                  {errors.password && (
+                    <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">
+                      {errors.password}
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                     Yeni Şifre (Tekrar)
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <Lock className={`h-5 w-5 ${errors.confirmPassword ? 'text-red-400' : 'text-slate-400'}`} />
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none transition-colors duration-300">
+                      <Lock
+                        className={`h-5 w-5 transition-colors duration-300 ${errors.confirmPassword ? "text-red-400" : "text-slate-400 group-focus-within:text-blue-500"}`}
+                      />
                     </div>
                     <input
                       type="password"
                       value={confirmPassword}
-                      onChange={(e) => { setConfirmPassword(e.target.value); clearError("confirmPassword"); }}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        clearError("confirmPassword");
+                      }}
                       placeholder="••••••••"
-                      className={`block w-full border text-slate-900 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:bg-white text-sm font-bold tracking-widest transition-all ${
-                        errors.confirmPassword ? 'bg-red-50/50 border-red-400 focus:ring-red-400' : 'bg-slate-100 border-slate-200 focus:ring-blue-500'
+                      className={`block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-4 text-sm font-bold tracking-widest transition-all duration-300 ${
+                        errors.confirmPassword
+                          ? "bg-red-50/50 border-red-400 focus:ring-red-400/20"
+                          : "bg-slate-50 hover:bg-slate-100 focus:bg-white border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
                       }`}
                     />
                   </div>
-                  {errors.confirmPassword && <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">{errors.confirmPassword}</p>}
+                  {errors.confirmPassword && (
+                    <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">
+                      {errors.confirmPassword}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -728,36 +918,47 @@ export default function AuthPage() {
                 <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
                   Şifre
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Lock className={`h-5 w-5 ${errors.password ? 'text-red-400' : 'text-slate-400'}`} />
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none transition-colors duration-300">
+                    <Lock
+                      className={`h-5 w-5 transition-colors duration-300 ${errors.password ? "text-red-400" : "text-slate-400 group-focus-within:text-blue-500"}`}
+                    />
                   </div>
                   <input
                     aria-label="Şifre"
                     type="password"
                     value={password}
-                    onChange={(e) => { setPassword(e.target.value); clearError("password"); }}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      clearError("password");
+                    }}
                     placeholder="••••••••"
-                    className={`block w-full border text-slate-900 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:bg-white text-sm font-bold tracking-widest transition-all ${
-                      errors.password ? 'bg-red-50/50 border-red-400 focus:ring-red-400' : 'bg-slate-100 border-slate-200 focus:ring-blue-500'
+                    className={`block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-4 text-sm font-bold tracking-widest transition-all duration-300 ${
+                      errors.password
+                        ? "bg-red-50/50 border-red-400 focus:ring-red-400/20"
+                        : "bg-slate-50 hover:bg-slate-100 focus:bg-white border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
                     }`}
                   />
                 </div>
-                {errors.password && <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">{errors.password}</p>}
+                {errors.password && (
+                  <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">
+                    {errors.password}
+                  </p>
+                )}
 
                 {isLogin && (
-                  <div className="flex justify-end mt-2">
+                  <div className="flex justify-end mt-3">
                     <button
                       type="button"
                       aria-label="Şifremi Unuttum"
                       onClick={() => {
                         setIsForgotPassword(true);
-                        setForgotPasswordStep(1); 
+                        setForgotPasswordStep(1);
                         setIsLogin(false);
                         setMessage("");
                         setMessageType("");
                         setErrors({});
-                        setPassword(""); 
+                        setPassword("");
                       }}
                       className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors focus:outline-none focus:ring-0"
                     >
@@ -780,7 +981,7 @@ export default function AuthPage() {
                       setConfirmPassword("");
                       setErrors({});
                     }}
-                    className="w-14 flex items-center justify-center bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-colors focus:outline-none"
+                    className="w-[60px] flex items-center justify-center bg-slate-100 text-slate-500 rounded-2xl hover:bg-slate-200 active:scale-[0.96] transition-all focus:outline-none mt-6"
                     title="Geri Dön"
                   >
                     <ArrowLeft className="w-5 h-5" />
@@ -789,14 +990,14 @@ export default function AuthPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 flex justify-center items-center gap-2 text-white font-black text-base sm:text-lg py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg mt-6 disabled:opacity-70 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 focus:outline-none"
+                  className="flex-1 w-full flex justify-center items-center gap-2 text-white font-black text-base sm:text-lg py-4 rounded-2xl transition-all duration-300 shadow-[0_4px_14px_rgba(37,99,235,0.2)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.3)] active:scale-[0.98] mt-6 disabled:opacity-70 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/30"
                 >
                   {isLoading ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" /> Bekleyiniz...
                     </>
                   ) : forgotPasswordStep === 1 ? (
-                    <>Kod Gönder <ArrowRight className="w-5 h-5" /></>
+                    "Kod Gönder"
                   ) : (
                     "Şifreyi Güncelle"
                   )}
@@ -806,7 +1007,7 @@ export default function AuthPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center items-center gap-2 text-white font-black text-base sm:text-lg py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg mt-6 disabled:opacity-70 disabled:cursor-not-allowed bg-[#20B2AA] hover:bg-teal-600 focus:outline-none"
+                className="w-full flex justify-center items-center gap-2 text-white font-black text-base sm:text-lg py-4 rounded-2xl transition-all duration-300 shadow-[0_4px_14px_rgba(32,178,170,0.25)] hover:shadow-[0_6px_20px_rgba(32,178,170,0.35)] active:scale-[0.98] mt-6 disabled:opacity-70 disabled:cursor-not-allowed bg-[#20B2AA] hover:bg-[#1a958e] focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/30"
               >
                 {isLoading ? (
                   <>
@@ -820,7 +1021,7 @@ export default function AuthPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center items-center gap-2 text-white font-black text-base sm:text-lg py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg mt-6 disabled:opacity-70 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 focus:outline-none"
+                className="w-full flex justify-center items-center gap-2 text-white font-black text-base sm:text-lg py-4 rounded-2xl transition-all duration-300 shadow-[0_4px_14px_rgba(37,99,235,0.2)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.3)] active:scale-[0.98] mt-6 disabled:opacity-70 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/30"
               >
                 {isLoading ? (
                   <>
@@ -833,7 +1034,7 @@ export default function AuthPage() {
             )}
           </form>
 
-          <div className="mt-6 text-center text-xs sm:text-sm font-medium text-slate-500 bg-slate-50 py-3.5 rounded-xl border border-slate-100">
+          <div className="mt-8 text-center text-xs sm:text-sm font-semibold text-slate-500 bg-slate-50/80 py-4 rounded-2xl border border-slate-100">
             {isForgotPassword ? (
               <>
                 Şifreni hatırladın mı?
@@ -847,7 +1048,7 @@ export default function AuthPage() {
                     setMessageType("");
                     setErrors({});
                   }}
-                  className="ml-1.5 font-black text-blue-600 hover:text-[#20B2AA] transition-colors focus:outline-none focus:ring-0"
+                  className="ml-1.5 font-black text-blue-600 hover:text-blue-700 transition-colors focus:outline-none focus:ring-0"
                 >
                   Giriş Ekranına Dön
                 </button>
@@ -864,7 +1065,7 @@ export default function AuthPage() {
                     setMessageType("");
                     setErrors({});
                   }}
-                  className="ml-1.5 font-black text-[#20B2AA] hover:text-teal-700 transition-colors focus:outline-none focus:ring-0"
+                  className="ml-1.5 font-black text-[#20B2AA] hover:text-[#1a958e] transition-colors focus:outline-none focus:ring-0"
                 >
                   Hemen Kayıt Ol
                 </button>
@@ -881,7 +1082,7 @@ export default function AuthPage() {
                     setMessageType("");
                     setErrors({});
                   }}
-                  className="ml-1.5 font-black text-blue-600 hover:text-blue-800 transition-colors focus:outline-none focus:ring-0"
+                  className="ml-1.5 font-black text-blue-600 hover:text-blue-700 transition-colors focus:outline-none focus:ring-0"
                 >
                   Giriş Yap
                 </button>

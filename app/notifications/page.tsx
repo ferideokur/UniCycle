@@ -143,6 +143,11 @@ export default function NotificationsPage() {
               ),
           );
 
+          // 4. 👻 HAYALET BİLDİRİM FİLTRESİ: Eğer temizlendikten sonra boş kalıyorsa çöpe at!
+          activeNotifs = activeNotifs.filter(
+            (n: any) => cleanNotification(n.message).length > 0,
+          );
+
           const unreadNotifs = activeNotifs.filter(
             (n: any) => !seenNotifs.includes(n.id),
           );
@@ -444,6 +449,7 @@ export default function NotificationsPage() {
             </div>
 
             <div className="flex items-center justify-end gap-1.5 sm:gap-4 shrink-0">
+              {/* 🚀 SADECE AKTİF KULLANICILARA MASAÜSTÜ İLAN VER BUTONU */}
               {user && user.status === "ACTIVE" && (
                 <Link
                   href="/create-listing"
@@ -734,7 +740,7 @@ export default function NotificationsPage() {
                 onClick={handleSearchSubmit}
               >
                 <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör
+                  Tüm sonuçları gör &rarr;
                 </span>
               </div>
             </div>

@@ -870,7 +870,7 @@ export default function PublicProfilePage() {
                 onClick={handleSearchSubmit}
               >
                 <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör &rarr;
+                  Tüm sonuçları gör
                 </span>
               </div>
             </div>
