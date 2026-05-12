@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import toast, { Toaster } from "react-hot-toast"; 
+import toast, { Toaster } from "react-hot-toast";
 import {
   MapPin,
   Heart,
@@ -19,7 +19,7 @@ import {
   AlertTriangle,
   X,
   CheckCircle,
-  XCircle
+  XCircle,
 } from "lucide-react";
 
 const formatName = (name: string) => {
@@ -52,14 +52,13 @@ const cleanNotification = (msg: string) => {
 };
 
 export default function UserProfilePage() {
-  // 🚀 GÜNCELLENDİ: status özelliğini ekledik ki pasif/aktif kontrolü yapabilelim
   const [user, setUser] = useState<{
     id: number;
     fullName: string;
     email: string;
     university?: string;
-    role?: string; 
-    status?: string; 
+    role?: string;
+    status?: string;
   } | null>(null);
 
   const [listings, setListings] = useState<any[]>([]);
@@ -70,7 +69,7 @@ export default function UserProfilePage() {
   const [bio, setBio] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [coverImage, setCoverImage] = useState<string | null>(null);
-  const [coverY, setCoverY] = useState(50); 
+  const [coverY, setCoverY] = useState(50);
   const [isDraggingCover, setIsDraggingCover] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -90,7 +89,12 @@ export default function UserProfilePage() {
     desc: string;
     buttonText: string;
   }>({
-    isOpen: false, type: null, itemId: null, title: "", desc: "", buttonText: ""
+    isOpen: false,
+    type: null,
+    itemId: null,
+    title: "",
+    desc: "",
+    buttonText: "",
   });
 
   const [infoModal, setInfoModal] = useState<{
@@ -98,37 +102,44 @@ export default function UserProfilePage() {
     title: string;
     content: string;
   }>({ isOpen: false, title: "", content: "" });
-  
+
   const openInfoModal = (title: string, content: string) =>
     setInfoModal({ isOpen: true, title, content });
 
   const notify = (msg: string, type: "success" | "error") => {
-    toast.custom((t) => (
-      <div className={`${t.visible ? 'animate-in fade-in slide-in-from-bottom-4' : 'animate-out fade-out slide-out-to-right-4'} max-w-sm w-full bg-white shadow-xl rounded-2xl pointer-events-auto flex items-center p-3 gap-3 border border-slate-200 relative group`}>
-        {type === "success" ? (
-          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-            <CheckCircle className="w-5 h-5 text-emerald-600" />
-          </div>
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-            <XCircle className="w-5 h-5 text-red-600" />
-          </div>
-        )}
-        <p className="flex-1 text-sm font-bold text-slate-800 leading-snug pr-10">{msg}</p>
-        
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toast.remove(t.id);
-          }}
-          className="absolute top-1/2 -translate-y-1/2 right-2 p-2 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all z-50 focus:outline-none cursor-pointer"
-          title="Kapat"
+    toast.custom(
+      (t) => (
+        <div
+          className={`${t.visible ? "animate-in fade-in slide-in-from-bottom-4" : "animate-out fade-out slide-out-to-right-4"} max-w-sm w-full bg-white shadow-xl rounded-2xl pointer-events-auto flex items-center p-3 gap-3 border border-slate-200 relative group`}
         >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-    ), { duration: 4000 });
+          {type === "success" ? (
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+              <CheckCircle className="w-5 h-5 text-emerald-600" />
+            </div>
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+              <XCircle className="w-5 h-5 text-red-600" />
+            </div>
+          )}
+          <p className="flex-1 text-sm font-bold text-slate-800 leading-snug pr-10">
+            {msg}
+          </p>
+
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toast.remove(t.id);
+            }}
+            className="absolute top-1/2 -translate-y-1/2 right-2 p-2 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all z-50 focus:outline-none cursor-pointer"
+            title="Kapat"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      ),
+      { duration: 4000 },
+    );
   };
 
   useEffect(() => {
@@ -138,7 +149,7 @@ export default function UserProfilePage() {
       return;
     }
     const parsedUser = JSON.parse(storedUser);
-    setUser(parsedUser); 
+    setUser(parsedUser);
 
     const savedProfile = localStorage.getItem(`profile_${parsedUser.email}`);
     if (savedProfile) {
@@ -152,7 +163,7 @@ export default function UserProfilePage() {
     const cachedListings = localStorage.getItem(`listings_${parsedUser.id}`);
     if (cachedListings) {
       setListings(JSON.parse(cachedListings));
-      setIsLoading(false); 
+      setIsLoading(false);
     }
 
     fetch("https://unicycle-api.onrender.com/api/products")
@@ -162,9 +173,14 @@ export default function UserProfilePage() {
           const userProducts = allProducts.filter(
             (p: any) => p.user && p.user.id === parsedUser.id,
           );
-          const sortedListings = userProducts.sort((a: any, b: any) => b.id - a.id);
+          const sortedListings = userProducts.sort(
+            (a: any, b: any) => b.id - a.id,
+          );
           setListings(sortedListings);
-          localStorage.setItem(`listings_${parsedUser.id}`, JSON.stringify(sortedListings));
+          localStorage.setItem(
+            `listings_${parsedUser.id}`,
+            JSON.stringify(sortedListings),
+          );
         }
       })
       .catch((err) => {
@@ -178,27 +194,49 @@ export default function UserProfilePage() {
       try {
         const res = await fetch(
           `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
-          { cache: "no-store", headers: { "Cache-Control": "no-cache" } }
+          { cache: "no-store", headers: { "Cache-Control": "no-cache" } },
         );
         const data = await res.json();
 
         if (Array.isArray(data)) {
-          const deletedNotifs = JSON.parse(localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]");
-          const seenNotifs = JSON.parse(localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]");
+          const deletedNotifs = JSON.parse(
+            localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
+          );
+          const seenNotifs = JSON.parse(
+            localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
+          );
 
-          let activeNotifs = data.filter((n: any) => !deletedNotifs.includes(n.id));
+          let activeNotifs = data.filter(
+            (n: any) => !deletedNotifs.includes(n.id),
+          );
 
           activeNotifs.sort((a: any, b: any) => {
-            const dateA = a.createdAt ? new Date(a.createdAt.endsWith("Z") ? a.createdAt : `${a.createdAt}Z`).getTime() : 0;
-            const dateB = b.createdAt ? new Date(b.createdAt.endsWith("Z") ? b.createdAt : `${b.createdAt}Z`).getTime() : 0;
+            const dateA = a.createdAt
+              ? new Date(
+                  a.createdAt.endsWith("Z") ? a.createdAt : `${a.createdAt}Z`,
+                ).getTime()
+              : 0;
+            const dateB = b.createdAt
+              ? new Date(
+                  b.createdAt.endsWith("Z") ? b.createdAt : `${b.createdAt}Z`,
+                ).getTime()
+              : 0;
             return dateB - dateA;
           });
 
-          activeNotifs = activeNotifs.filter((notif: any, index: number, self: any[]) =>
-            index === self.findIndex((n: any) => n.message?.trim().toLowerCase() === notif.message?.trim().toLowerCase())
+          activeNotifs = activeNotifs.filter(
+            (notif: any, index: number, self: any[]) =>
+              index ===
+              self.findIndex(
+                (n: any) =>
+                  n.message?.trim().toLowerCase() ===
+                  notif.message?.trim().toLowerCase(),
+              ),
           );
 
-          const unreadNotifs = activeNotifs.filter((n: any) => !seenNotifs.includes(n.id));
+          const unreadNotifs = activeNotifs.filter(
+            (n: any) => !seenNotifs.includes(n.id),
+          );
           setNotificationsCount(unreadNotifs.length);
           setNotificationsList(activeNotifs);
         }
@@ -220,7 +258,9 @@ export default function UserProfilePage() {
       }
       try {
         const isUserSearch = searchTerm.startsWith("@");
-        const isIdSearch = searchTerm.startsWith("#") || (!isNaN(Number(searchTerm.trim())) && searchTerm.trim() !== "");
+        const isIdSearch =
+          searchTerm.startsWith("#") ||
+          (!isNaN(Number(searchTerm.trim())) && searchTerm.trim() !== "");
 
         let query = searchTerm.trim();
         if (isUserSearch) query = searchTerm.substring(1).trim();
@@ -229,28 +269,52 @@ export default function UserProfilePage() {
 
         let combined: any[] = [];
         if (isUserSearch) {
-          const res = await fetch(`https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`);
-          if (res.ok) combined = (await res.json()).map((u: any) => ({ type: "user", item: u }));
+          const res = await fetch(
+            `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
+          );
+          if (res.ok)
+            combined = (await res.json()).map((u: any) => ({
+              type: "user",
+              item: u,
+            }));
         } else if (isIdSearch && !isNaN(Number(query))) {
-          const prodRes = await fetch(`https://unicycle-api.onrender.com/api/products`);
+          const prodRes = await fetch(
+            `https://unicycle-api.onrender.com/api/products`,
+          );
           if (prodRes.ok) {
             const allProducts = await prodRes.json();
             if (Array.isArray(allProducts)) {
-              const matchedProduct = allProducts.find((p: any) => p.id.toString() === query.toString());
-              if (matchedProduct) combined = [{ type: "product", item: matchedProduct }];
+              const matchedProduct = allProducts.find(
+                (p: any) => p.id.toString() === query.toString(),
+              );
+              if (matchedProduct)
+                combined = [{ type: "product", item: matchedProduct }];
             }
           }
         } else {
-          const res = await fetch(`https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`);
-          if (res.ok) combined = (await res.json()).map((p: any) => ({ type: "product", item: p }));
+          const res = await fetch(
+            `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`,
+          );
+          if (res.ok)
+            combined = (await res.json()).map((p: any) => ({
+              type: "product",
+              item: p,
+            }));
         }
 
-        const uniqueLive = combined.filter((v: any, i: number, a: any[]) =>
-          a.findIndex((v2: any) => {
-            if (v.type === "user" && v2.type === "user")
-              return v2.item.id === v.item.id || (v2.item.fullName && v.item.fullName && v2.item.fullName.toLowerCase() === v.item.fullName.toLowerCase());
-            return v2.type === v.type && v2.item.id === v.item.id;
-          }) === i
+        const uniqueLive = combined.filter(
+          (v: any, i: number, a: any[]) =>
+            a.findIndex((v2: any) => {
+              if (v.type === "user" && v2.type === "user")
+                return (
+                  v2.item.id === v.item.id ||
+                  (v2.item.fullName &&
+                    v.item.fullName &&
+                    v2.item.fullName.toLowerCase() ===
+                      v.item.fullName.toLowerCase())
+                );
+              return v2.type === v.type && v2.item.id === v.item.id;
+            }) === i,
         );
 
         setLiveResults(uniqueLive);
@@ -273,10 +337,13 @@ export default function UserProfilePage() {
   const handleLogout = async () => {
     if (user) {
       try {
-        await fetch(`https://unicycle-api.onrender.com/api/users/${user.id}/logout`, { method: "POST" });
+        await fetch(
+          `https://unicycle-api.onrender.com/api/users/${user.id}/logout`,
+          { method: "POST" },
+        );
       } catch (e) {}
     }
-    localStorage.clear(); 
+    localStorage.clear();
     setUser(null);
     window.location.href = "/";
   };
@@ -288,7 +355,7 @@ export default function UserProfilePage() {
       itemId: null,
       title: "Üyeliği İptal Et 🚨",
       desc: "Hesabınızı silmek istediğinize emin misiniz? Bu işlem kesinlikle geri alınamaz ve tüm ilanlarınız, mesajlarınız kalıcı olarak yok edilir.",
-      buttonText: "Hesabımı Sil"
+      buttonText: "Hesabımı Sil",
     });
   };
 
@@ -301,7 +368,7 @@ export default function UserProfilePage() {
       itemId: id,
       title: "İlanı Sil 🗑️",
       desc: "Bu ilanı silmek istediğinize emin misiniz? Bu işlem kesinlikle geri alınamaz.",
-      buttonText: "İlanı Sil"
+      buttonText: "İlanı Sil",
     });
   };
 
@@ -309,32 +376,49 @@ export default function UserProfilePage() {
     const { type, itemId } = confirmModal;
 
     if (type === "account") {
-      if (!user || !user.id) return; 
+      if (!user || !user.id) return;
       try {
-        const res = await fetch(`https://unicycle-api.onrender.com/api/users/${user.id}`, { method: "DELETE" });
+        const res = await fetch(
+          `https://unicycle-api.onrender.com/api/users/${user.id}`,
+          { method: "DELETE" },
+        );
         if (res.ok) {
-          notify("Hesabınız başarıyla silindi. Sizi özleyeceğiz! 🥺", "success");
+          notify(
+            "Hesabınız başarıyla silindi. Sizi özleyeceğiz! 🥺",
+            "success",
+          );
           localStorage.clear();
-          setTimeout(() => window.location.href = "/", 2000);
+          setTimeout(() => (window.location.href = "/"), 2000);
         } else {
-          notify("Hesap silinirken bir hata oluştu. Lütfen tekrar deneyin.", "error");
+          notify(
+            "Hesap silinirken bir hata oluştu. Lütfen tekrar deneyin.",
+            "error",
+          );
         }
       } catch (error) {
         notify("Sunucuyla bağlantı kurulamadı.", "error");
       }
     } else if (type === "listing" && itemId !== null) {
       try {
-        const res = await fetch(`https://unicycle-api.onrender.com/api/products/${itemId}`, { method: "DELETE" });
+        const res = await fetch(
+          `https://unicycle-api.onrender.com/api/products/${itemId}`,
+          { method: "DELETE" },
+        );
         if (res.ok) {
-          setListings((prev) => prev.filter((listing) => listing.id !== itemId));
+          setListings((prev) =>
+            prev.filter((listing) => listing.id !== itemId),
+          );
           notify("İlan başarıyla silindi! 🗑️", "success");
-          
-          if (user && user.id) { 
-             const cachedListings = localStorage.getItem(`listings_${user.id}`);
-             if (cachedListings) {
-               const parsed = JSON.parse(cachedListings);
-               localStorage.setItem(`listings_${user.id}`, JSON.stringify(parsed.filter((l: any) => l.id !== itemId)));
-             }
+
+          if (user && user.id) {
+            const cachedListings = localStorage.getItem(`listings_${user.id}`);
+            if (cachedListings) {
+              const parsed = JSON.parse(cachedListings);
+              localStorage.setItem(
+                `listings_${user.id}`,
+                JSON.stringify(parsed.filter((l: any) => l.id !== itemId)),
+              );
+            }
           }
         }
       } catch (error) {
@@ -346,20 +430,20 @@ export default function UserProfilePage() {
   };
 
   const handleSaveProfile = async () => {
-    if (!user || !user.id) return; 
+    if (!user || !user.id) return;
 
     try {
       const updateData = {
         bio: bio,
-        profileImage: profileImage, 
-        coverImage: coverImage, 
+        profileImage: profileImage,
+        coverImage: coverImage,
         coverY: coverY,
       };
 
       const res = await fetch(
         `https://unicycle-api.onrender.com/api/users/${user.id}`,
         {
-          method: "PUT", 
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
@@ -369,15 +453,27 @@ export default function UserProfilePage() {
 
       if (res.ok) {
         setIsEditing(false);
-        localStorage.setItem(`profile_${user.email}`, JSON.stringify({
-            bio, profileImage, coverImage, coverY
-        }));
+        localStorage.setItem(
+          `profile_${user.email}`,
+          JSON.stringify({
+            bio,
+            profileImage,
+            coverImage,
+            coverY,
+          }),
+        );
         notify("Profil başarıyla kaydedildi! 🎉", "success");
       } else {
-        notify("Kaydetme başarısız oldu. Backend bu verileri eksik bulmuş olabilir.", "error");
+        notify(
+          "Kaydetme başarısız oldu. Backend bu verileri eksik bulmuş olabilir.",
+          "error",
+        );
       }
     } catch (error) {
-      notify("Sunucuya bağlanılamadı. İnternetini veya API'yi kontrol et.", "error");
+      notify(
+        "Sunucuya bağlanılamadı. İnternetini veya API'yi kontrol et.",
+        "error",
+      );
     }
   };
 
@@ -407,7 +503,8 @@ export default function UserProfilePage() {
   const safeFullName = user.fullName || "Kullanıcı";
   const formattedSafeFullName = formatName(safeFullName);
   const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(formattedSafeFullName)}&background=20B2AA&color=fff&size=256`;
-  const isAdmin = user.email === "ferideokur343@gmail.com" || user.role === "ADMIN";
+  const isAdmin =
+    user.email === "ferideokur343@gmail.com" || user.role === "ADMIN";
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-0 font-sans relative w-full overflow-x-hidden flex flex-col">
@@ -417,18 +514,22 @@ export default function UserProfilePage() {
       {confirmModal.isOpen && (
         <div className="fixed inset-0 z-[99999] bg-slate-900/60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl w-full max-w-sm flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 relative">
-            
-            <button 
-             aria-label="Kapat"
-             onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
-             className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none"
-             >
+            <button
+              aria-label="Kapat"
+              onClick={() =>
+                setConfirmModal({ ...confirmModal, isOpen: false })
+              }
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none"
+            >
               <X className="w-5 h-5" />
             </button>
 
             <div className="p-6 sm:p-8 text-center mt-2">
               <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-yellow-500">
-                <AlertTriangle className="w-8 h-8 text-black" strokeWidth={2.5} />
+                <AlertTriangle
+                  className="w-8 h-8 text-black"
+                  strokeWidth={2.5}
+                />
               </div>
               <h3 className="text-xl font-black text-slate-800 mb-2">
                 {confirmModal.title}
@@ -437,10 +538,12 @@ export default function UserProfilePage() {
                 {confirmModal.desc}
               </p>
             </div>
-            
+
             <div className="flex items-center gap-3 p-4 sm:p-6 bg-slate-50 border-t border-slate-100">
               <button
-                onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                onClick={() =>
+                  setConfirmModal({ ...confirmModal, isOpen: false })
+                }
                 className="flex-1 px-4 py-3 rounded-xl font-black text-black bg-white border border-slate-300 hover:bg-slate-100 transition-colors shadow-sm focus:outline-none"
               >
                 İptal Et
@@ -456,6 +559,7 @@ export default function UserProfilePage() {
         </div>
       )}
 
+      {/* 🚀 ÜST MENÜ NAVBAR (Premium İkiz) */}
       <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 flex flex-col">
         <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20 gap-2 sm:gap-6 pt-1 sm:pt-0">
@@ -478,6 +582,7 @@ export default function UserProfilePage() {
               </Link>
             </div>
 
+            {/* ✨ PREMIUM ARAMA ÇUBUĞU (Masaüstü) */}
             <div className="hidden md:flex flex-1 max-w-2xl relative group z-50 px-6 lg:px-10 mx-auto">
               <form
                 onSubmit={handleSearchSubmit}
@@ -496,7 +601,7 @@ export default function UserProfilePage() {
                   className="w-full bg-[#F1F5F9] hover:bg-[#E2E8F0] text-slate-800 rounded-full py-3 px-6 pl-12 focus:outline-none focus:ring-4 focus:ring-[#20B2AA]/20 focus:bg-white border border-transparent focus:border-[#20B2AA]/30 transition-all duration-300 font-semibold text-sm shadow-inner"
                 />
                 <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#20B2AA] transition-colors pointer-events-none" />
-                <button type="submit" className="hidden">
+                <button type="submit" aria-label="Arama Yap" className="hidden">
                   Ara
                 </button>
               </form>
@@ -571,9 +676,8 @@ export default function UserProfilePage() {
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              
-              {/* 🚀 GÜVENLİK DUVARI: SADECE AKTİF KULLANICILAR İLAN VEREBİLİR */}
+            <div className="flex items-center justify-end gap-1.5 sm:gap-4 shrink-0">
+              {/* 🚀 SADECE AKTİF KULLANICILARA MASAÜSTÜ İLAN VER BUTONU */}
               {user && user.status === "ACTIVE" && (
                 <Link
                   href="/create-listing"
@@ -583,35 +687,16 @@ export default function UserProfilePage() {
                 </Link>
               )}
 
-              <div className="flex items-center gap-2 sm:gap-4 relative">
-                <Link
-                  href="/favorites"
-                  className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
-                  title="Favorilerim"
-                >
-                  <svg
-                    className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                    />
-                  </svg>
-                </Link>
-
-                <div className="relative shrink-0">
-                  <button
-                    onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                    className="relative w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
-                    title="Bildirimler"
+              {user ? (
+                <div className="flex items-center gap-1.5 sm:gap-4 relative">
+                  <Link
+                    href="/favorites"
+                    className="relative w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                    title="Favorilerim"
+                    aria-label="Favorilerim"
                   >
                     <svg
-                      className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-red-500 group-hover:scale-110 transition-all duration-300"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
@@ -620,147 +705,181 @@ export default function UserProfilePage() {
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
+                    </svg>
+                  </Link>
+
+                  <div className="relative shrink-0">
+                    <button
+                      onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                      className="relative w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 hover:bg-slate-200 transition-all rounded-full flex items-center justify-center border border-slate-200 shadow-sm group shrink-0"
+                      title="Bildirimler"
+                      aria-label="Bildirimleri Aç"
+                    >
+                      <svg
+                        className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                        ></path>
+                      </svg>
+                      {notificationsCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 text-white text-[9px] sm:text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
+                          {notificationsCount}
+                        </span>
+                      )}
+                    </button>
+                    {isNotificationOpen && (
+                      <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[280px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+                        <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                          <span className="font-bold text-slate-800">
+                            Bildirimler
+                          </span>
+                          {notificationsCount > 0 && (
+                            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                              {notificationsCount} Yeni
+                            </span>
+                          )}
+                        </div>
+                        <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                          {notificationsList.length === 0 ? (
+                            <div className="px-4 py-8 text-center text-slate-500 text-sm font-medium">
+                              Şu an hiç bildirimin yok.
+                            </div>
+                          ) : (
+                            notificationsList.slice(0, 5).map((notif: any) => {
+                              let icon = <Bell className="w-5 h-5" />;
+                              let bg = "bg-blue-50";
+                              let text = "text-blue-500";
+                              const msgLower =
+                                notif.message?.toLowerCase() || "";
+
+                              if (
+                                msgLower.includes("beğen") ||
+                                msgLower.includes("favori")
+                              ) {
+                                icon = (
+                                  <Heart className="w-5 h-5 fill-current" />
+                                );
+                                bg = "bg-red-50";
+                                text = "text-red-500";
+                              } else if (
+                                msgLower.includes("mesaj") ||
+                                msgLower.includes("yorum") ||
+                                msgLower.includes("soru")
+                              ) {
+                                icon = <MessageCircle className="w-5 h-5" />;
+                                bg = "bg-green-50";
+                                text = "text-green-500";
+                              } else if (msgLower.includes("takip")) {
+                                icon = <UserPlus className="w-5 h-5" />;
+                                bg = "bg-pink-50";
+                                text = "text-pink-500";
+                              } else if (
+                                msgLower.includes("ilan") ||
+                                msgLower.includes("ekledi")
+                              ) {
+                                icon = <Package className="w-5 h-5" />;
+                                bg = "bg-orange-50";
+                                text = "text-orange-500";
+                              }
+
+                              const formattedMessage = cleanNotification(
+                                notif.message,
+                              );
+
+                              let dropDate = "Yeni";
+                              if (notif.createdAt) {
+                                const utcDate = notif.createdAt.endsWith("Z")
+                                  ? notif.createdAt
+                                  : `${notif.createdAt}Z`;
+                                const dObj = new Date(utcDate);
+                                dropDate = `${dObj.toLocaleDateString("tr-TR")} • ${dObj.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
+                              }
+
+                              return (
+                                <div
+                                  key={notif.id}
+                                  className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center group"
+                                >
+                                  <div
+                                    className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} shrink-0 transition-transform group-hover:scale-105`}
+                                  >
+                                    {icon}
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="text-sm text-slate-700 leading-snug font-semibold">
+                                      {formattedMessage}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                                      {dropDate}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                        <Link
+                          href="/notifications"
+                          onClick={() => setIsNotificationOpen(false)}
+                          className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors"
+                        >
+                          Tüm Bildirimleri Gör
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-1 sm:gap-2 bg-blue-600 text-white px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
+                  >
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
+                      👤
+                    </div>
+                    <span className="hidden sm:block text-sm">Hesabım</span>
+                  </Link>
+
+                  <button
+                    onClick={handleLogout}
+                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-0.5 sm:ml-2 flex items-center justify-center group"
+                    title="Çıkış Yap"
+                    aria-label="Çıkış Yap"
+                  >
+                    <span className="hidden sm:block font-bold text-sm">
+                      Çıkış
+                    </span>
+                    <svg
+                      className="w-[18px] h-[18px] sm:hidden group-hover:scale-110 transition-transform"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                       ></path>
                     </svg>
-                    {notificationsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full animate-pulse shadow-md">
-                        {notificationsCount}
-                      </span>
-                    )}
                   </button>
-
-                  {isNotificationOpen && (
-                    <div className="absolute top-full right-[-50px] sm:right-0 mt-3 w-[300px] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
-                      <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <span className="font-bold text-slate-800">
-                          Bildirimler
-                        </span>
-                        {notificationsCount > 0 && (
-                          <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                            {notificationsCount} Yeni
-                          </span>
-                        )}
-                      </div>
-                      <div className="max-h-80 overflow-y-auto custom-scrollbar">
-                        {notificationsList.length === 0 ? (
-                          <div className="px-4 py-8 text-center text-slate-500 text-sm font-medium">
-                            Şu an hiç bildirimin yok.
-                          </div>
-                        ) : (
-                          notificationsList.slice(0, 5).map((notif: any) => {
-                            let icon = <Bell className="w-5 h-5" />;
-                            let bg = "bg-blue-50";
-                            let text = "text-blue-500";
-                            const msgLower = notif.message?.toLowerCase() || "";
-
-                            if (
-                              msgLower.includes("beğen") ||
-                              msgLower.includes("favori")
-                            ) {
-                              icon = <Heart className="w-5 h-5 fill-current" />;
-                              bg = "bg-red-50";
-                              text = "text-red-500";
-                            } else if (
-                              msgLower.includes("mesaj") ||
-                              msgLower.includes("yorum") ||
-                              msgLower.includes("soru")
-                            ) {
-                              icon = <MessageCircle className="w-5 h-5" />;
-                              bg = "bg-green-50";
-                              text = "text-green-500";
-                            } else if (msgLower.includes("takip")) {
-                              icon = <UserPlus className="w-5 h-5" />;
-                              bg = "bg-pink-50";
-                              text = "text-pink-500";
-                            } else if (
-                              msgLower.includes("ilan") ||
-                              msgLower.includes("ekledi")
-                            ) {
-                              icon = <Package className="w-5 h-5" />;
-                              bg = "bg-orange-50";
-                              text = "text-orange-500";
-                            }
-
-                            const formattedMessage = cleanNotification(
-                              notif.message,
-                            );
-
-                            let dropDate = "Yeni";
-                            if (notif.createdAt) {
-                              const utcDate = notif.createdAt.endsWith("Z")
-                                ? notif.createdAt
-                                : `${notif.createdAt}Z`;
-                              const dObj = new Date(utcDate);
-                              dropDate = `${dObj.toLocaleDateString("tr-TR")} • ${dObj.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
-                            }
-
-                            return (
-                              <div
-                                key={notif.id}
-                                className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 cursor-pointer flex gap-3 items-center group"
-                              >
-                                <div
-                                  className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center ${text} shrink-0 transition-transform group-hover:scale-105`}
-                                >
-                                  {icon}
-                                </div>
-                                <div className="flex-1">
-                                  <p className="text-sm text-slate-700 leading-snug font-semibold">
-                                    {formattedMessage}
-                                  </p>
-                                  <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                                    {dropDate}
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                      <Link
-                        href="/notifications"
-                        onClick={() => setIsNotificationOpen(false)}
-                        className="block w-full text-center px-4 py-3 bg-slate-50 text-xs font-bold text-blue-600 hover:bg-slate-100 transition-colors"
-                      >
-                        Tüm Bildirimleri Gör
-                      </Link>
-                    </div>
-                  )}
                 </div>
-
+              ) : (
                 <Link
-                  href="/profile"
-                  className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full font-bold shadow-md hover:bg-blue-700 transition-colors"
+                  href="/login"
+                  className="flex items-center justify-center bg-slate-800 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold hover:bg-black transition-colors text-xs sm:text-sm shrink-0"
                 >
-                  <div className="w-5 h-5 sm:w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[10px] sm:text-xs">
-                    👤
-                  </div>
-                  <span className="hidden sm:block text-sm">Hesabım</span>
+                  Giriş Yap
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="text-slate-400 hover:text-red-500 transition-colors shrink-0 ml-1 sm:ml-2 flex items-center justify-center group"
-                  title="Çıkış Yap"
-                >
-                  <span className="hidden sm:block font-bold text-sm">
-                    Çıkış
-                  </span>
-                  <svg
-                    className="w-[22px] h-[22px] sm:hidden group-hover:scale-110 transition-transform"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    ></path>
-                  </svg>
-                </button>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -784,7 +903,7 @@ export default function UserProfilePage() {
               onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <button type="submit" className="hidden">
+            <button type="submit" aria-label="Arama Yap" className="hidden">
               Ara
             </button>
           </form>
@@ -857,20 +976,8 @@ export default function UserProfilePage() {
         </div>
       </header>
 
-      {/* 🚀 GÜVENLİK DUVARI: SADECE AKTİF KULLANICILAR MOBİLDE "İLAN VER" GÖRÜR */}
-      {user && user.status === "ACTIVE" && (
-        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
-          <Link
-            href="/create-listing"
-            className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20"
-          >
-            <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
-          </Link>
-        </div>
-      )}
-
       {/* 👤 PROFİL KARTI */}
-      <div className="max-w-[800px] mx-auto w-full px-4 sm:px-0 mt-6 sm:mt-10 relative">
+      <div className="max-w-[800px] mx-auto w-full px-4 sm:px-0 mt-6 sm:mt-10 relative flex-1">
         <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
           <div className="h-32 sm:h-48 w-full relative bg-gradient-to-r from-blue-600 to-indigo-600 overflow-hidden group">
             {coverImage && (
@@ -987,7 +1094,7 @@ export default function UserProfilePage() {
                 <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
                   {formattedSafeFullName}
                 </h1>
-                
+
                 {isAdmin && (
                   <span className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-600 border border-indigo-200 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider shadow-sm">
                     <Crown className="w-4 h-4" />
@@ -995,7 +1102,7 @@ export default function UserProfilePage() {
                   </span>
                 )}
               </div>
-              
+
               <p className="text-sm font-bold text-slate-400 mt-1">
                 {user?.email}
               </p>
@@ -1052,7 +1159,7 @@ export default function UserProfilePage() {
               <p className="text-slate-500 font-medium mb-6">
                 Artık kullanmadığın eşyaları satarak değerlendirmeye ne dersin?
               </p>
-              
+
               {/* 🚀 GÜVENLİK DUVARI: SADECE AKTİF KULLANICILAR İLAN VEREBİLİR */}
               {user && user.status === "ACTIVE" ? (
                 <Link
@@ -1063,7 +1170,8 @@ export default function UserProfilePage() {
                 </Link>
               ) : (
                 <div className="text-xs sm:text-sm font-bold text-slate-500 mt-4 bg-white py-3 px-6 rounded-xl inline-block border border-slate-200 shadow-sm">
-                  İlan verebilmek için hesabınızın yöneticiler tarafından onaylanması gerekmektedir.
+                  İlan verebilmek için hesabınızın yöneticiler tarafından
+                  onaylanması gerekmektedir.
                 </div>
               )}
             </div>
@@ -1139,6 +1247,7 @@ export default function UserProfilePage() {
               </h2>
               <button
                 onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                aria-label="Kapat"
                 className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors"
               >
                 ✕
@@ -1150,6 +1259,7 @@ export default function UserProfilePage() {
             <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                aria-label="Anladım Butonu"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base"
               >
                 Anladım

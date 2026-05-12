@@ -444,7 +444,6 @@ export default function NotificationsPage() {
             </div>
 
             <div className="flex items-center justify-end gap-1.5 sm:gap-4 shrink-0">
-              {/* 🚀 SADECE AKTİF KULLANICILARA MASAÜSTÜ İLAN VER BUTONU */}
               {user && user.status === "ACTIVE" && (
                 <Link
                   href="/create-listing"
@@ -735,7 +734,7 @@ export default function NotificationsPage() {
                 onClick={handleSearchSubmit}
               >
                 <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör &rarr;
+                  Tüm sonuçları gör
                 </span>
               </div>
             </div>
@@ -894,21 +893,23 @@ export default function NotificationsPage() {
 
       {/* 🌊 FOOTER (PREMIUM) - Üstünde Boşluk Garantili Spacer Div Eklendi */}
       <div className="h-24 sm:h-32 w-full shrink-0"></div>
-      <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full shrink-0">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-2">
+      <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-4 sm:px-6 mt-auto rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full shrink-0">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
+          <div className="col-span-1 md:col-span-2 text-center md:text-left">
             <div className="mb-4">
               <span className="text-3xl font-extrabold text-slate-800 tracking-tight">
                 Uni<span className="text-[#20B2AA]">Cycle</span>
               </span>
             </div>
-            <p className="text-sm font-medium text-slate-500 max-w-sm">
+            <p className="text-sm font-medium text-slate-500 max-w-sm mx-auto md:mx-0">
               Kampüs içindeki güvenli 2. el pazar yerin. Sadece üniversite
               öğrencilerine özel, doğrulanmış ve güvenilir alışveriş deneyimi.
             </p>
           </div>
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">Platform</h4>
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-base">
+              Platform
+            </h4>
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
@@ -951,8 +952,10 @@ export default function NotificationsPage() {
               </li>
             </ul>
           </div>
-          <div>
-            <h4 className="text-slate-800 font-bold mb-4">İletişim</h4>
+          <div className="text-center md:text-left">
+            <h4 className="text-slate-800 font-bold mb-3 sm:mb-4 text-base">
+              İletişim
+            </h4>
             <ul className="space-y-2 text-sm font-medium text-slate-500">
               <li>
                 <button
@@ -996,7 +999,7 @@ export default function NotificationsPage() {
             </ul>
           </div>
         </div>
-        <div className="max-w-[1400px] mx-auto mt-12 pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
+        <div className="max-w-[1400px] mx-auto mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
       </footer>
