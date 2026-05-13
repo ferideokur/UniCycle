@@ -18,6 +18,8 @@ import {
   KeyRound,
   ArrowRight,
   X,
+  Eye,        // 🚀 YENİ EKLENDİ
+  EyeOff,     // 🚀 YENİ EKLENDİ
 } from "lucide-react";
 
 const UNIVERSITIES = [
@@ -144,6 +146,10 @@ export default function AuthPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showVIPSuccess, setShowVIPSuccess] = useState(false);
 
+  // 🚀 ŞİFRE GÖSTER/GİZLE STATE'LERİ EKLENDİ
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const clearError = (field: string) => {
     if (errors[field]) {
       const newErrors = { ...errors };
@@ -253,7 +259,7 @@ export default function AuthPage() {
 
     try {
       const response = await fetch(
-        `https://unicycle-api.onrender.com/api/users/forgot-password?email=${encodeURIComponent(email)}`,
+        `http://localhost:8080/api/users/forgot-password?email=${encodeURIComponent(email)}`,
         {
           method: "POST",
           headers: { Accept: "application/json" },
@@ -300,7 +306,7 @@ export default function AuthPage() {
 
     try {
       const response = await fetch(
-        "https://unicycle-api.onrender.com/api/users/reset-password",
+        "http://localhost:8080/api/users/reset-password",
         {
           method: "POST",
           headers: {
@@ -376,7 +382,7 @@ export default function AuthPage() {
         }
 
         const response = await fetch(
-          "https://unicycle-api.onrender.com/api/users/register",
+          "http://localhost:8080/api/users/register",
           {
             method: "POST",
             headers: {
@@ -424,7 +430,7 @@ export default function AuthPage() {
     } else {
       try {
         const response = await fetch(
-          "https://unicycle-api.onrender.com/api/users/login",
+          "http://localhost:8080/api/users/login",
           {
             method: "POST",
             headers: {
@@ -498,7 +504,6 @@ export default function AuthPage() {
         <div className="sculpture-ring-2"></div>
       </div>
 
-      {/* 🚀 MOBİL UYUMLU, ERGONOMİK GERİ DÖN BUTONU */}
       <div className="absolute top-4 left-4 sm:top-8 sm:left-8 z-50">
         <Link
           href="/"
@@ -566,7 +571,8 @@ export default function AuthPage() {
                 : "Gelen kodu ve kullanmak istediğin yeni şifreni belirle."
               : isLogin
                 ? "Kampüs pazaryerine güvenle giriş yap."
-                : "Öğrenci e-postan ve okulunla saniyeler içinde kayıt ol."}
+                : "E-postan ve okulunla saniyeler içinde kayıt ol."} 
+                {/* 🚀 DEĞİŞTİRİLDİ */}
           </p>
         </div>
 
@@ -762,8 +768,7 @@ export default function AuthPage() {
                     </p>
                   ) : (
                     <p className="text-[10px] text-slate-400 mt-1.5 px-1 font-medium">
-                      Belgeniz sadece Admin onay sürecinde incelenecektir. (Maks
-                      5MB)
+                      Belgeniz sadece Admin onay sürecinde incelenecektir. (Maks 5MB)
                     </p>
                   )}
                 </div>
@@ -774,7 +779,7 @@ export default function AuthPage() {
               (isForgotPassword && forgotPasswordStep === 1)) && (
               <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                 <label className="block text-[11px] sm:text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider px-1">
-                  Üniversite E-Postası
+                  E-Posta {/* 🚀 DEĞİŞTİRİLDİ */}
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none transition-colors duration-300">
@@ -790,7 +795,7 @@ export default function AuthPage() {
                       setEmail(e.target.value);
                       clearError("email");
                     }}
-                    placeholder="isim@ogrenci.edu.tr"
+                    placeholder="isim@gmail.com" /* 🚀 DEĞİŞTİRİLDİ */
                     className={`block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-4 text-sm font-semibold transition-all duration-300 ${
                       errors.email
                         ? "bg-red-50/50 border-red-400 focus:ring-red-400/20"
@@ -857,7 +862,7 @@ export default function AuthPage() {
                       />
                     </div>
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"} // 🚀 DEĞİŞTİRİLDİ
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);
@@ -865,12 +870,20 @@ export default function AuthPage() {
                         clearError("confirmPassword");
                       }}
                       placeholder="••••••••"
-                      className={`block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-4 text-sm font-bold tracking-widest transition-all duration-300 ${
+                      className={`block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-12 focus:outline-none focus:ring-4 text-sm font-bold tracking-widest transition-all duration-300 ${
                         errors.password
                           ? "bg-red-50/50 border-red-400 focus:ring-red-400/20"
                           : "bg-slate-50 hover:bg-slate-100 focus:bg-white border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
                       }`}
                     />
+                    {/* 🚀 GÖZ İKONU EKLENDİ */}
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-blue-500 transition-colors focus:outline-none"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
                   </div>
                   {errors.password && (
                     <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">
@@ -890,19 +903,27 @@ export default function AuthPage() {
                       />
                     </div>
                     <input
-                      type="password"
+                      type={showConfirmPassword ? "text" : "password"} // 🚀 DEĞİŞTİRİLDİ
                       value={confirmPassword}
                       onChange={(e) => {
                         setConfirmPassword(e.target.value);
                         clearError("confirmPassword");
                       }}
                       placeholder="••••••••"
-                      className={`block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-4 text-sm font-bold tracking-widest transition-all duration-300 ${
+                      className={`block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-12 focus:outline-none focus:ring-4 text-sm font-bold tracking-widest transition-all duration-300 ${
                         errors.confirmPassword
                           ? "bg-red-50/50 border-red-400 focus:ring-red-400/20"
                           : "bg-slate-50 hover:bg-slate-100 focus:bg-white border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
                       }`}
                     />
+                    {/* 🚀 GÖZ İKONU EKLENDİ */}
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-blue-500 transition-colors focus:outline-none"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
                   </div>
                   {errors.confirmPassword && (
                     <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">
@@ -926,19 +947,27 @@ export default function AuthPage() {
                   </div>
                   <input
                     aria-label="Şifre"
-                    type="password"
+                    type={showPassword ? "text" : "password"} // 🚀 DEĞİŞTİRİLDİ
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
                       clearError("password");
                     }}
                     placeholder="••••••••"
-                    className={`block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-4 text-sm font-bold tracking-widest transition-all duration-300 ${
+                    className={`block w-full border text-slate-900 rounded-2xl py-3.5 pl-11 pr-12 focus:outline-none focus:ring-4 text-sm font-bold tracking-widest transition-all duration-300 ${
                       errors.password
                         ? "bg-red-50/50 border-red-400 focus:ring-red-400/20"
                         : "bg-slate-50 hover:bg-slate-100 focus:bg-white border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
                     }`}
                   />
+                  {/* 🚀 GÖZ İKONU EKLENDİ */}
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-blue-500 transition-colors focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
                 </div>
                 {errors.password && (
                   <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-1.5 px-1 animate-in fade-in">

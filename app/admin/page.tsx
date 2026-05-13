@@ -1,11 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-
 import Link from "next/link";
-
 import toast, { Toaster } from "react-hot-toast";
-
 import {
   ArrowLeft,
   CheckCircle,
@@ -23,13 +20,9 @@ import {
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<"pending" | "active">("pending");
-
   const [pendingUsers, setPendingUsers] = useState<any[]>([]);
-
   const [activeUsers, setActiveUsers] = useState<any[]>([]);
-
   const [searchTerm, setSearchTerm] = useState("");
-
   const [isLoading, setIsLoading] = useState(true);
 
   const [docModal, setDocModal] = useState<{ isOpen: boolean; url: string }>({
@@ -39,15 +32,10 @@ export default function AdminDashboard() {
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
-
     type: "suspend" | "reactivate" | "delete" | "reject" | null;
-
     userId: number | null;
-
     title: string;
-
     desc: string;
-
     buttonText: string;
   }>({
     isOpen: false,
@@ -81,9 +69,7 @@ export default function AdminDashboard() {
           <button
             onClick={(e) => {
               e.preventDefault();
-
               e.stopPropagation();
-
               toast.remove(t.id);
             }}
             className="absolute top-1/2 -translate-y-1/2 right-2 p-2 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all z-50 focus:outline-none cursor-pointer"
@@ -99,34 +85,26 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const cachedPending = localStorage.getItem("admin_pendingUsers");
-
     const cachedActive = localStorage.getItem("admin_activeUsers");
 
     if (cachedPending || cachedActive) {
       if (cachedPending) setPendingUsers(JSON.parse(cachedPending));
-
       if (cachedActive) setActiveUsers(JSON.parse(cachedActive));
-
       setIsLoading(false);
     }
 
     const fetchUsers = async () => {
       try {
         const [pendingRes, activeRes, suspendedRes] = await Promise.all([
-          fetch("https://unicycle-api.onrender.com/api/users/status/PENDING"),
-
-          fetch("https://unicycle-api.onrender.com/api/users/status/ACTIVE"),
-
-          fetch("https://unicycle-api.onrender.com/api/users/status/SUSPENDED"),
+          fetch("http://localhost:8080/api/users/status/PENDING"),
+          fetch("http://localhost:8080/api/users/status/ACTIVE"),
+          fetch("http://localhost:8080/api/users/status/SUSPENDED"),
         ]);
 
         if (pendingRes.ok) {
           const pendingData = await pendingRes.json();
-
           const pUsers = Array.isArray(pendingData) ? pendingData : [];
-
           setPendingUsers(pUsers);
-
           localStorage.setItem("admin_pendingUsers", JSON.stringify(pUsers));
         }
 
@@ -134,20 +112,17 @@ export default function AdminDashboard() {
 
         if (activeRes.ok) {
           const activeData = await activeRes.json();
-
           if (Array.isArray(activeData))
             combinedUsers = [...combinedUsers, ...activeData];
         }
 
         if (suspendedRes.ok) {
           const suspendedData = await suspendedRes.json();
-
           if (Array.isArray(suspendedData))
             combinedUsers = [...combinedUsers, ...suspendedData];
         }
 
         setActiveUsers(combinedUsers);
-
         localStorage.setItem(
           "admin_activeUsers",
           JSON.stringify(combinedUsers),
@@ -165,7 +140,7 @@ export default function AdminDashboard() {
   const handleApprove = async (id: number) => {
     try {
       const res = await fetch(
-        `https://unicycle-api.onrender.com/api/users/${id}/approve`,
+        `http://localhost:8080/api/users/${id}/approve`,
         { method: "PUT" },
       );
 
@@ -181,14 +156,12 @@ export default function AdminDashboard() {
           ];
 
           setPendingUsers(newPending);
-
           setActiveUsers(newActive);
 
           localStorage.setItem(
             "admin_pendingUsers",
             JSON.stringify(newPending),
           );
-
           localStorage.setItem("admin_activeUsers", JSON.stringify(newActive));
 
           notify(
@@ -197,30 +170,24 @@ export default function AdminDashboard() {
           );
 
           // 🚀 İŞTE BURASI YENİ EKLENDİ: ONAY MAİLİNİ VERCEL'E FIRLATIYORUZ 🚀
-
           try {
             if (userToApprove.email) {
               await fetch("/api/mail", {
                 method: "POST",
-
                 headers: { "Content-Type": "application/json" },
-
                 body: JSON.stringify({
                   email: userToApprove.email,
-
                   type: "approve", // Type'ı approve gönderiyoruz ki hoş geldin tasarımı gitsin
                 }),
               });
             }
           } catch (mailError) {
             // Eğer mail atarken anlık bir kopma olursa admin paneli çökmesin diye hatayı yutuyoruz.
-
             console.error(
               "Arka planda mail gönderilirken hata oluştu:",
               mailError,
             );
           }
-
           // 🚀 YENİ EKLENEN KISIM BİTTİ 🚀
         }
       }
@@ -237,13 +204,12 @@ export default function AdminDashboard() {
     try {
       if (type === "reject") {
         const res = await fetch(
-          `https://unicycle-api.onrender.com/api/users/${userId}`,
+          `http://localhost:8080/api/users/${userId}`,
           { method: "DELETE" },
         );
 
         if (res.ok) {
           const newPending = pendingUsers.filter((u) => u.id !== userId);
-
           setPendingUsers(newPending);
 
           localStorage.setItem(
@@ -255,7 +221,7 @@ export default function AdminDashboard() {
         }
       } else if (type === "suspend") {
         const res = await fetch(
-          `https://unicycle-api.onrender.com/api/users/${userId}/suspend`,
+          `http://localhost:8080/api/users/${userId}/suspend`,
           { method: "PUT" },
         );
 
@@ -265,14 +231,13 @@ export default function AdminDashboard() {
           );
 
           setActiveUsers(newActive);
-
           localStorage.setItem("admin_activeUsers", JSON.stringify(newActive));
 
           notify("Kullanıcı hesabı başarıyla askıya alındı. 🚫", "error");
         }
       } else if (type === "reactivate") {
         const res = await fetch(
-          `https://unicycle-api.onrender.com/api/users/${userId}/approve`,
+          `http://localhost:8080/api/users/${userId}/approve`,
           { method: "PUT" },
         );
 
@@ -282,7 +247,6 @@ export default function AdminDashboard() {
           );
 
           setActiveUsers(newActive);
-
           localStorage.setItem("admin_activeUsers", JSON.stringify(newActive));
 
           notify(
@@ -292,13 +256,12 @@ export default function AdminDashboard() {
         }
       } else if (type === "delete") {
         const res = await fetch(
-          `https://unicycle-api.onrender.com/api/users/${userId}`,
+          `http://localhost:8080/api/users/${userId}`,
           { method: "DELETE" },
         );
 
         if (res.ok) {
           const newActive = activeUsers.filter((u) => u.id !== userId);
-
           setActiveUsers(newActive);
 
           localStorage.setItem("admin_activeUsers", JSON.stringify(newActive));
@@ -320,11 +283,8 @@ export default function AdminDashboard() {
       isOpen: true,
       type: "reject",
       userId: id,
-
       title: "Talebi Reddet ❌",
-
       desc: "Bu kayıt talebini reddetmek ve sistemden kalıcı olarak silmek üzeresiniz. Bu işlem geri alınamaz. Onaylıyor musunuz?",
-
       buttonText: "Reddet ve Sil",
     });
   };
@@ -334,11 +294,8 @@ export default function AdminDashboard() {
       isOpen: true,
       type: "suspend",
       userId: id,
-
       title: "Hesabı Askıya Al 🛑",
-
       desc: "Bu kullanıcının hesabını askıya almak üzeresiniz. Kullanıcı platforma erişim sağlayamayacaktır. İşlemi onaylıyor musunuz?",
-
       buttonText: "Pasife Al",
     });
   };
@@ -348,11 +305,8 @@ export default function AdminDashboard() {
       isOpen: true,
       type: "reactivate",
       userId: id,
-
       title: "Erişimi Geri Ver ✨",
-
       desc: "Bu kullanıcının hesabındaki kısıtlamayı kaldırmak üzeresiniz. Kullanıcı platformu tekrar tam yetkiyle kullanabilecektir.",
-
       buttonText: "Erişimi Aç",
     });
   };
@@ -362,11 +316,8 @@ export default function AdminDashboard() {
       isOpen: true,
       type: "delete",
       userId: id,
-
       title: "Kritik Sistem Uyarısı 🚨",
-
       desc: "DİKKAT: Bu kullanıcıyı sistemden kalıcı olarak silmek üzeresiniz. Bu işlem kesinlikle geri alınamaz ve kullanıcıya ait tüm veriler (ilanlar, mesajlar vb.) kalıcı olarak yok edilir.",
-
       buttonText: "Kalıcı Olarak Sil",
     });
   };
@@ -427,7 +378,6 @@ export default function AdminDashboard() {
       )}
 
       {/* 🚀 GERÇEKTEN DÜZELTİLMİŞ KİBAR BELGE GÖRÜNTÜLEYİCİ 🚀 */}
-
       {docModal.isOpen && (
         <div className="fixed inset-0 z-[99999] bg-slate-900/80 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100">
@@ -447,7 +397,6 @@ export default function AdminDashboard() {
             </div>
 
             {/* O devasa siyah kutuyu ve zoraki yükseklikleri sildik! */}
-
             <div className="p-2 bg-white overflow-auto">
               {docModal.url.startsWith("data:application/pdf") ? (
                 <iframe
@@ -514,11 +463,8 @@ export default function AdminDashboard() {
           {isLoading ? (
             <div className="w-full p-4 animate-pulse">
               <div className="h-10 bg-slate-100 rounded-lg mb-4 w-full"></div>
-
               <div className="h-16 bg-slate-50 rounded-xl mb-2 w-full"></div>
-
               <div className="h-16 bg-slate-50 rounded-xl mb-2 w-full"></div>
-
               <div className="h-16 bg-slate-50 rounded-xl w-full"></div>
             </div>
           ) : (
@@ -534,17 +480,11 @@ export default function AdminDashboard() {
                       <thead className="bg-slate-50 text-slate-500 uppercase text-[11px] font-black tracking-wider border-b border-slate-200">
                         <tr>
                           <th className="px-6 py-4">Kullanıcı Bilgileri</th>
-
                           <th className="px-6 py-4">Üniversite</th>
-
-                          <th className="px-6 py-4 text-center">
-                            Öğrenci Belgesi
-                          </th>
-
+                          <th className="px-6 py-4 text-center">Öğrenci Belgesi</th>
                           <th className="px-6 py-4 text-right">Aksiyonlar</th>
                         </tr>
                       </thead>
-
                       <tbody className="divide-y divide-slate-100">
                         {pendingUsers.map((user) => (
                           <tr
@@ -555,28 +495,23 @@ export default function AdminDashboard() {
                               <div className="font-bold text-slate-900 text-base">
                                 {user.fullName || user.name}
                               </div>
-
                               <div className="text-slate-500 text-xs mt-0.5">
                                 {user.email}
                               </div>
                             </td>
-
                             <td className="px-6 py-4 text-slate-600 font-semibold">
                               {user.university || user.uni}
                             </td>
-
                             <td className="px-6 py-4 text-center">
                               <button
                                 onClick={async () => {
                                   try {
                                     const res = await fetch(
-                                      `https://unicycle-api.onrender.com/api/users/${user.id}`,
+                                      `http://localhost:8080/api/users/${user.id}`,
                                     );
-
                                     if (!res.ok) throw new Error("Ağ hatası");
 
                                     const fullUser = await res.json();
-
                                     let docUrl =
                                       fullUser.documentBase64 ||
                                       fullUser.documentUrl ||
@@ -595,7 +530,6 @@ export default function AdminDashboard() {
                                           fullUser[key].length > 500
                                         ) {
                                           docUrl = fullUser[key];
-
                                           break;
                                         }
                                       }
@@ -607,15 +541,11 @@ export default function AdminDashboard() {
                                         !docUrl.startsWith("data:")
                                       ) {
                                         if (docUrl.startsWith("JVBERi0")) {
-                                          docUrl =
-                                            "data:application/pdf;base64," +
-                                            docUrl;
+                                          docUrl = "data:application/pdf;base64," + docUrl;
                                         } else {
-                                          docUrl =
-                                            "data:image/jpeg;base64," + docUrl;
+                                          docUrl = "data:image/jpeg;base64," + docUrl;
                                         }
                                       }
-
                                       setDocModal({
                                         isOpen: true,
                                         url: docUrl,
@@ -648,7 +578,6 @@ export default function AdminDashboard() {
                                 >
                                   <CheckCircle className="w-5 h-5" />
                                 </button>
-
                                 <button
                                   onClick={() => openRejectModal(user.id)}
                                   className="p-2.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-lg transition-colors shadow-sm"
@@ -673,7 +602,6 @@ export default function AdminDashboard() {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Search className="w-4 h-4 text-slate-400" />
                       </div>
-
                       <input
                         type="text"
                         placeholder="İsim veya e-posta ara..."
@@ -689,34 +617,19 @@ export default function AdminDashboard() {
                       <thead className="bg-slate-50 text-slate-500 uppercase text-[11px] font-black tracking-wider border-b border-slate-200">
                         <tr>
                           <th className="px-6 py-4 w-1/3">Kullanıcı</th>
-
                           <th className="px-6 py-4 w-1/4">Üniversite</th>
-
                           <th className="px-6 py-4 w-32 text-center">Durum</th>
-
                           <th className="px-6 py-4 w-48 text-right">Yönetim</th>
                         </tr>
                       </thead>
-
                       <tbody className="divide-y divide-slate-100">
                         {activeUsers
-
                           .filter((u) => {
-                            const name = (
-                              u.fullName ||
-                              u.name ||
-                              ""
-                            ).toLowerCase();
-
+                            const name = (u.fullName || u.name || "").toLowerCase();
                             const email = (u.email || "").toLowerCase();
-
                             const search = searchTerm.toLowerCase();
-
-                            return (
-                              name.includes(search) || email.includes(search)
-                            );
+                            return name.includes(search) || email.includes(search);
                           })
-
                           .map((user) => (
                             <tr
                               key={user.id}
@@ -729,21 +642,17 @@ export default function AdminDashboard() {
                                   >
                                     <Users className="w-3.5 h-3.5" />
                                   </div>
-
                                   <span className="truncate">
                                     {user.fullName || user.name}
                                   </span>
                                 </div>
-
                                 <div className="text-slate-500 text-xs mt-0.5 ml-9 truncate">
                                   {user.email}
                                 </div>
                               </td>
-
                               <td className="px-6 py-4 text-slate-600 font-semibold truncate">
                                 {user.university || user.uni}
                               </td>
-
                               <td className="px-6 py-4 text-center">
                                 {user.status === "SUSPENDED" ? (
                                   <span className="inline-flex items-center justify-center w-24 gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-black bg-red-100 text-red-700 border border-red-200 shadow-sm">
@@ -756,14 +665,11 @@ export default function AdminDashboard() {
                                   </span>
                                 )}
                               </td>
-
                               <td className="px-6 py-4 text-right">
                                 <div className="flex items-center justify-end gap-2">
                                   {user.status === "SUSPENDED" ? (
                                     <button
-                                      onClick={() =>
-                                        openReactivateModal(user.id)
-                                      }
+                                      onClick={() => openReactivateModal(user.id)}
                                       className="inline-flex items-center justify-center w-28 gap-1.5 text-emerald-600 hover:text-white bg-emerald-50 hover:bg-emerald-500 px-3 py-2 rounded-lg font-bold transition-all text-xs shadow-sm"
                                       title="Yasağı Kaldır"
                                     >
