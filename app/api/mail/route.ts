@@ -8,8 +8,7 @@ export async function POST(req: Request) {
     // 1. Ortam değişkenlerini (Environment Variables) alıyoruz
     const { GMAIL_USER, CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN } = process.env;
 
-    // 2. VERCEL İÇİN KRİTİK KONTROL: Değişkenler okunabiliyor mu?
-    // Vercel loglarında (Runtime Logs) bu kısmı kontrol edip hangisinin eksik olduğunu görebilirsin.
+    // 2. VERCEL İÇİN KRİTİK KONTROL
     console.log("🛠️ UniCycle ENV DEĞİŞKENLERİ KONTROLÜ:", {
       GMAIL_USER: GMAIL_USER ? "✅ VAR" : "❌ YOK",
       CLIENT_ID: CLIENT_ID ? "✅ VAR" : "❌ YOK",
@@ -17,8 +16,15 @@ export async function POST(req: Request) {
       REFRESH_TOKEN: REFRESH_TOKEN ? "✅ VAR" : "❌ YOK",
     });
 
+    // 🕵️ VERCEL AJAN LOGU: Vercel bu değişkenleri bozuyor mu?
+    console.log("🕵️ AJAN KONTROLÜ:", {
+      clientIdLength: CLIENT_ID ? CLIENT_ID.length : 0,
+      startsWithQuote: CLIENT_ID ? (CLIENT_ID.startsWith('"') || CLIENT_ID.startsWith("'")) : false,
+      endsWithGoogle: CLIENT_ID ? CLIENT_ID.trim().endsWith('googleusercontent.com') : false,
+      hasTrailingSpace: CLIENT_ID ? CLIENT_ID !== CLIENT_ID.trim() : false
+    });
+
     // 3. Eğer değişkenlerden biri bile eksikse işlemi durdur!
-    // Bu sayede Nodemailer çaresiz kalıp "PLAIN" hatası fırlatamaz.
     if (!GMAIL_USER || !CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
       console.error("🚨 HATA: OAuth2 kimlik bilgileri eksik! Vercel Environment Variables kısmını kontrol et.");
       return NextResponse.json(
@@ -27,15 +33,21 @@ export async function POST(req: Request) {
       );
     }
 
-    // 4. Taşıyıcıyı (Transporter) güvenle oluştur
+    // 4. Taşıyıcıyı (Transporter) GÜVENLE VE TEMİZLEYEREK oluştur
+    // DİKKAT: Vercel'in ekleyebileceği gizli tırnakları ve boşlukları zorla siliyoruz!
+    const cleanClientId = CLIENT_ID.replace(/['"]/g, '').trim();
+    const cleanClientSecret = CLIENT_SECRET.replace(/['"]/g, '').trim();
+    const cleanRefreshToken = REFRESH_TOKEN.replace(/['"]/g, '').trim();
+    const cleanGmailUser = GMAIL_USER.replace(/['"]/g, '').trim();
+
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         type: 'OAuth2',
-        user: GMAIL_USER,
-        clientId: CLIENT_ID,
-        clientSecret: CLIENT_SECRET,
-        refreshToken: REFRESH_TOKEN
+        user: cleanGmailUser,
+        clientId: cleanClientId,
+        clientSecret: cleanClientSecret,
+        refreshToken: cleanRefreshToken
       }
     });
 
@@ -44,7 +56,7 @@ export async function POST(req: Request) {
     // EĞER ADMİN ONAYLADIYSA BU MAİL GİDECEK
     if (type === 'approve') {
       mailOptions = {
-        from: `"UniCycle" <${GMAIL_USER}>`,
+        from: `"UniCycle" <${cleanGmailUser}>`,
         to: email,
         subject: '🎉 UniCycle Hesabınız Onaylandı!',
         html: `
@@ -65,7 +77,7 @@ export async function POST(req: Request) {
     // EĞER ŞİFREMİ UNUTTUM DEDİYSE ESKİ MAİL GİDECEK
     else {
       mailOptions = {
-        from: `"UniCycle Destek" <${GMAIL_USER}>`,
+        from: `"UniCycle Destek" <${cleanGmailUser}>`,
         to: email,
         subject: 'UniCycle - Şifre Sıfırlama Kodunuz',
         html: `
