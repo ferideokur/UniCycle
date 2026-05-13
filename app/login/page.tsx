@@ -259,7 +259,7 @@ export default function AuthPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/users/forgot-password?email=${encodeURIComponent(email)}`,
+        `https://unicycle-api.onrender.com/api/users/forgot-password?email=${encodeURIComponent(email)}`,
         {
           method: "POST",
           headers: { Accept: "application/json" },
@@ -306,7 +306,7 @@ export default function AuthPage() {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/api/users/reset-password",
+        "https://unicycle-api.onrender.com/api/users/reset-password",
         {
           method: "POST",
           headers: {
@@ -382,7 +382,7 @@ export default function AuthPage() {
         }
 
         const response = await fetch(
-          "http://localhost:8080/api/users/register",
+          "https://unicycle-api.onrender.com/api/users/register",
           {
             method: "POST",
             headers: {
@@ -430,7 +430,7 @@ export default function AuthPage() {
     } else {
       try {
         const response = await fetch(
-          "http://localhost:8080/api/users/login",
+          "https://unicycle-api.onrender.com/api/users/login",
           {
             method: "POST",
             headers: {

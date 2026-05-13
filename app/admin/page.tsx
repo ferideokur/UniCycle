@@ -96,9 +96,9 @@ export default function AdminDashboard() {
     const fetchUsers = async () => {
       try {
         const [pendingRes, activeRes, suspendedRes] = await Promise.all([
-          fetch("http://localhost:8080/api/users/status/PENDING"),
-          fetch("http://localhost:8080/api/users/status/ACTIVE"),
-          fetch("http://localhost:8080/api/users/status/SUSPENDED"),
+          fetch("https://unicycle-api.onrender.com/api/users/status/PENDING"),
+          fetch("https://unicycle-api.onrender.com/api/users/status/ACTIVE"),
+          fetch("https://unicycle-api.onrender.com/api/users/status/SUSPENDED"),
         ]);
 
         if (pendingRes.ok) {
@@ -140,7 +140,7 @@ export default function AdminDashboard() {
   const handleApprove = async (id: number) => {
     try {
       const res = await fetch(
-        `http://localhost:8080/api/users/${id}/approve`,
+        `https://unicycle-api.onrender.com/api/users/${id}/approve`,
         { method: "PUT" },
       );
 
@@ -204,7 +204,7 @@ export default function AdminDashboard() {
     try {
       if (type === "reject") {
         const res = await fetch(
-          `http://localhost:8080/api/users/${userId}`,
+          `https://unicycle-api.onrender.com/api/users/${userId}`,
           { method: "DELETE" },
         );
 
@@ -221,7 +221,7 @@ export default function AdminDashboard() {
         }
       } else if (type === "suspend") {
         const res = await fetch(
-          `http://localhost:8080/api/users/${userId}/suspend`,
+          `https://unicycle-api.onrender.com/api/users/${userId}/suspend`,
           { method: "PUT" },
         );
 
@@ -237,7 +237,7 @@ export default function AdminDashboard() {
         }
       } else if (type === "reactivate") {
         const res = await fetch(
-          `http://localhost:8080/api/users/${userId}/approve`,
+          `https://unicycle-api.onrender.com/api/users/${userId}/approve`,
           { method: "PUT" },
         );
 
@@ -256,7 +256,7 @@ export default function AdminDashboard() {
         }
       } else if (type === "delete") {
         const res = await fetch(
-          `http://localhost:8080/api/users/${userId}`,
+          `https://unicycle-api.onrender.com/api/users/${userId}`,
           { method: "DELETE" },
         );
 
@@ -507,7 +507,7 @@ export default function AdminDashboard() {
                                 onClick={async () => {
                                   try {
                                     const res = await fetch(
-                                      `http://localhost:8080/api/users/${user.id}`,
+                                      `https://unicycle-api.onrender.com/api/users/${user.id}`,
                                     );
                                     if (!res.ok) throw new Error("Ağ hatası");
 
