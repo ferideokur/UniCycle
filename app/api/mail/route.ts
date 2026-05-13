@@ -3,17 +3,40 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    // type değişkeni ekledik: 'reset' veya 'approve' olacak
     const { email, otp, type } = await req.json();
 
+    // 1. Ortam değişkenlerini (Environment Variables) alıyoruz
+    const { GMAIL_USER, CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN } = process.env;
+
+    // 2. VERCEL İÇİN KRİTİK KONTROL: Değişkenler okunabiliyor mu?
+    // Vercel loglarında (Runtime Logs) bu kısmı kontrol edip hangisinin eksik olduğunu görebilirsin.
+    console.log("🛠️ UniCycle ENV DEĞİŞKENLERİ KONTROLÜ:", {
+      GMAIL_USER: GMAIL_USER ? "✅ VAR" : "❌ YOK",
+      CLIENT_ID: CLIENT_ID ? "✅ VAR" : "❌ YOK",
+      CLIENT_SECRET: CLIENT_SECRET ? "✅ VAR" : "❌ YOK",
+      REFRESH_TOKEN: REFRESH_TOKEN ? "✅ VAR" : "❌ YOK",
+    });
+
+    // 3. Eğer değişkenlerden biri bile eksikse işlemi durdur!
+    // Bu sayede Nodemailer çaresiz kalıp "PLAIN" hatası fırlatamaz.
+    if (!GMAIL_USER || !CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
+      console.error("🚨 HATA: OAuth2 kimlik bilgileri eksik! Vercel Environment Variables kısmını kontrol et.");
+      return NextResponse.json(
+        { error: 'Sunucu e-posta yapılandırması eksik.' },
+        { status: 500 }
+      );
+    }
+
+    // 4. Taşıyıcıyı (Transporter) güvenle oluştur
     const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
+      service: 'gmail',
       auth: {
-        user: process.env.GMAIL_USER,
-        pass: (process.env.GMAIL_PASS || '').replace(/\s/g, ''), 
-      },
+        type: 'OAuth2',
+        user: GMAIL_USER,
+        clientId: CLIENT_ID,
+        clientSecret: CLIENT_SECRET,
+        refreshToken: REFRESH_TOKEN
+      }
     });
 
     let mailOptions = {};
@@ -21,7 +44,7 @@ export async function POST(req: Request) {
     // EĞER ADMİN ONAYLADIYSA BU MAİL GİDECEK
     if (type === 'approve') {
       mailOptions = {
-        from: `"UniCycle" <${process.env.GMAIL_USER}>`,
+        from: `"UniCycle" <${GMAIL_USER}>`,
         to: email,
         subject: '🎉 UniCycle Hesabınız Onaylandı!',
         html: `
@@ -42,7 +65,7 @@ export async function POST(req: Request) {
     // EĞER ŞİFREMİ UNUTTUM DEDİYSE ESKİ MAİL GİDECEK
     else {
       mailOptions = {
-        from: `"UniCycle Destek" <${process.env.GMAIL_USER}>`,
+        from: `"UniCycle Destek" <${GMAIL_USER}>`,
         to: email,
         subject: 'UniCycle - Şifre Sıfırlama Kodunuz',
         html: `
@@ -61,11 +84,12 @@ export async function POST(req: Request) {
       };
     }
 
+    // 5. Maili gönder
     await transporter.sendMail(mailOptions);
     return NextResponse.json({ message: 'Mail başarıyla gönderildi!' }, { status: 200 });
     
   } catch (error) {
-    console.error("Mail Hatası:", error);
+    console.error("❌ Mail Gönderme Hatası:", error);
     return NextResponse.json({ error: 'Mail gönderilemedi.' }, { status: 500 });
   }
 }
