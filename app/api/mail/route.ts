@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     // 1. Yeni ve Basit Ortam Değişkenleri
     const { GMAIL_USER, GMAIL_APP_PASSWORD } = process.env;
 
-    // 2. Eksik değişken kontrolü (Vercel loglarında kolayca görmek için)
+    // 2. Eksik değişken kontrolü
     if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
       console.error("🚨 HATA: GMAIL_USER veya GMAIL_APP_PASSWORD Vercel'de eksik!");
       return NextResponse.json(
@@ -17,12 +17,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Taşıyıcıyı (Transporter) Uygulama Şifresi ile oluşturuyoruz
+    // 3. 🚀 GÜNCELLENDİ: Vercel'de çok daha stabil çalışan doğrudan SMTP ayarı
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // SSL/TLS kullanımı zorunlu kılındı
       auth: {
         user: GMAIL_USER,
-        pass: GMAIL_APP_PASSWORD // Vercel'den gelecek olan şifren (zwxedrbebiofrdqd)
+        pass: GMAIL_APP_PASSWORD // Vercel'den gelecek olan boşluksuz şifren (zwxedrbebiofrdqd)
       }
     });
 
