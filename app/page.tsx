@@ -313,90 +313,53 @@ export default function Home() {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
 
-        const likes = JSON.parse(
-          localStorage.getItem(`likes_${parsedUser.email}`) || "[]",
-        );
-        setLikedProducts(likes);
+        // 🚀 İŞTE ÇÖZÜM: Java'dan güncel favorileri çekiyoruz
+        fetch(
+          `https://unicycle-api.onrender.com/api/interaction/likes/user/${parsedUser.id}`,
+          { cache: "no-store" },
+        )
+          .then((res) => (res.ok ? res.json() : []))
+          .then((likedData) => {
+            if (Array.isArray(likedData)) {
+              const serverLikedIds = likedData.map((item: any) => item.id);
+              setLikedProducts(serverLikedIds);
+            }
+          })
+          .catch((err) =>
+            console.error("Sunucudan favoriler çekilemedi:", err),
+          );
 
         const fetchNotifications = async () => {
           try {
             const res = await fetch(
               `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
-              {
-                cache: "no-store",
-                headers: { "Cache-Control": "no-cache" },
-              },
+              { cache: "no-store", headers: { "Cache-Control": "no-cache" } },
             );
             const data = await res.json();
-
             if (Array.isArray(data)) {
-              const deletedNotifs = JSON.parse(
-                localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
+              setNotificationsCount(
+                data.filter(
+                  (n: any) =>
+                    !JSON.parse(
+                      localStorage.getItem(`seenNotifs_${parsedUser.id}`) ||
+                        "[]",
+                    ).includes(n.id),
+                ).length,
               );
-              const seenNotifs = JSON.parse(
-                localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
-              );
-
-              let activeNotifs = data.filter(
-                (n: any) => !deletedNotifs.includes(n.id),
-              );
-
-              activeNotifs.sort((a: any, b: any) => {
-                const dateA = a.createdAt
-                  ? new Date(
-                      a.createdAt.endsWith("Z")
-                        ? a.createdAt
-                        : `${a.createdAt}Z`,
-                    ).getTime()
-                  : 0;
-                const dateB = b.createdAt
-                  ? new Date(
-                      b.createdAt.endsWith("Z")
-                        ? b.createdAt
-                        : `${b.createdAt}Z`,
-                    ).getTime()
-                  : 0;
-                return dateB - dateA;
-              });
-
-              activeNotifs = activeNotifs.filter(
-                (notif: any, index: number, self: any[]) =>
-                  index ===
-                  self.findIndex(
-                    (n: any) =>
-                      n.message?.trim().toLowerCase() ===
-                      notif.message?.trim().toLowerCase(),
-                  ),
-              );
-
-              const unreadNotifs = activeNotifs.filter(
-                (n: any) => !seenNotifs.includes(n.id),
-              );
-
-              setNotificationsCount(unreadNotifs.length);
-              setNotificationsList(activeNotifs);
+              setNotificationsList(data);
             }
           } catch (err) {
-            console.error("Bildirimler çekilemedi:", err);
+            console.error(err);
           }
         };
-
         fetchNotifications();
         interval = setInterval(fetchNotifications, 10000);
-
-        window.addEventListener("notificationsSeen", () =>
-          setNotificationsCount(0),
-        );
       } catch (e) {
         console.error(e);
       }
     }
-
     return () => {
       if (interval) clearInterval(interval);
-      window.removeEventListener("notificationsSeen", () =>
-        setNotificationsCount(0),
-      );
     };
   }, []);
 
@@ -823,7 +786,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* 🚀 NAVBAR SAĞ KISIM: FAVORİLER İLE BİREBİR AYNI YAPILDI */}
             <div className="flex items-center justify-end gap-1.5 sm:gap-4 shrink-0">
               {user && user.status === "ACTIVE" && (
                 <Link
@@ -1115,25 +1077,13 @@ export default function Home() {
                 onClick={handleSearchSubmit}
               >
                 <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör
+                  Tüm sonuçları gör &rarr;
                 </span>
               </div>
             </div>
           )}
         </div>
       </header>
-
-      {/* 📱 YENİ: MOBİL İÇİN YÜZEN İLAN VER BUTONU (Ortalanmış Şık FAB) */}
-      {user && user.status === "ACTIVE" && (
-        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
-          <Link
-            href="/create-listing"
-            className="flex items-center gap-2 bg-[#20B2AA] text-white px-6 py-3.5 rounded-full shadow-[0_8px_30px_rgba(32,178,170,0.4)] hover:bg-teal-600 active:scale-95 transition-all font-black text-sm border border-white/20 whitespace-nowrap"
-          >
-            <span className="text-xl leading-none -mt-0.5">+</span> İlan Ver
-          </Link>
-        </div>
-      )}
 
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8 flex gap-8 items-start w-full flex-1">
         <aside className="w-72 hidden lg:block sticky top-28 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
