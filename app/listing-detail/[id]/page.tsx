@@ -152,10 +152,40 @@ export default function ListingDetailPage() {
       try {
         const parsedUser = JSON.parse(storedUser);
         setCurrentUser(parsedUser);
-        const likes = JSON.parse(
-          localStorage.getItem(`likes_${parsedUser.email}`) || "[]",
-        );
-        setIsLiked(likes.includes(Number(id)));
+
+        // 🌐 isLiked'i API'den kontrol et — localStorage'a güvenme (cihazlar arası senkron)
+        fetch(
+          `https://unicycle-api.onrender.com/api/interaction/likes/user/${parsedUser.id}`,
+          { cache: "no-store", headers: { "Cache-Control": "no-cache" } },
+        )
+          .then((res) => res.json())
+          .then((data) => {
+            if (Array.isArray(data)) {
+              let likedIds: number[] = [];
+              if (data.length > 0 && data[0].product) {
+                likedIds = data
+                  .map((item: any) => item.product?.id)
+                  .filter(Boolean);
+              } else if (data.length > 0 && data[0].id) {
+                likedIds = data.map((item: any) => item.id);
+              } else if (data.length > 0 && data[0].productId) {
+                likedIds = data.map((item: any) => item.productId);
+              }
+              setIsLiked(likedIds.includes(Number(id)));
+              // localStorage'ı güncelle (hızlı erişim için)
+              localStorage.setItem(
+                `likes_${parsedUser.email}`,
+                JSON.stringify(likedIds),
+              );
+            }
+          })
+          .catch(() => {
+            // API başarısız olursa localStorage'a fallback
+            const likes = JSON.parse(
+              localStorage.getItem(`likes_${parsedUser.email}`) || "[]",
+            );
+            setIsLiked(likes.includes(Number(id)));
+          });
 
         updateNotificationCount(parsedUser.id);
 

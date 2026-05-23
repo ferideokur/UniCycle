@@ -13,7 +13,6 @@ import {
   Search,
 } from "lucide-react";
 
-// 🚀 İsimleri her yerde büyük harfle başlatan formül
 const formatName = (name: string) => {
   if (!name) return "";
   return name
@@ -22,7 +21,6 @@ const formatName = (name: string) => {
     .join(" ");
 };
 
-// 🧹 BİLDİRİM TEMİZLEYİCİ: Backend'den gelen ID'leri ve emojileri tamamen uçurur.
 const cleanNotification = (msg: string) => {
   if (!msg) return "";
 
@@ -57,7 +55,6 @@ export default function FavoritesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // 🚀 Premium Navbar State'leri
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [liveResults, setLiveResults] = useState<
@@ -67,7 +64,6 @@ export default function FavoritesPage() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notificationsList, setNotificationsList] = useState<any[]>([]);
 
-  // 📜 Footer Bilgi Modalı State'leri
   const [infoModal, setInfoModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -130,6 +126,72 @@ export default function FavoritesPage() {
       .catch((err) => console.error("Bildirimler çekilemedi:", err));
   };
 
+  // 🌐 FAVORİLERİ API'DEN ÇEKME — artık localStorage'a bağlı değil, her cihazda aynı
+  const fetchFavoritesFromApi = async (userId: number) => {
+    try {
+      const res = await fetch(
+        `https://unicycle-api.onrender.com/api/interaction/likes/user/${userId}`,
+        { cache: "no-store", headers: { "Cache-Control": "no-cache" } },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        // API ya product listesi ya da like objeleri döndürüyor olabilir
+        // Her iki formatı da destekle
+        let products: any[] = [];
+        if (Array.isArray(data)) {
+          if (data.length > 0 && data[0].product) {
+            // { product: {...}, userId, productId } formatı
+            products = data.map((item: any) => item.product);
+          } else if (data.length > 0 && data[0].id) {
+            // Doğrudan product listesi formatı
+            products = data;
+          }
+        }
+        const sorted = products.sort((a: any, b: any) => b.id - a.id);
+        setFavorites(sorted);
+        // localStorage'ı da güncelle (listing-detail'deki isLiked için fallback)
+        if (sorted.length > 0) {
+          const storedUser = localStorage.getItem("user");
+          if (storedUser) {
+            const parsedUser = JSON.parse(storedUser);
+            const likesKey = `likes_${parsedUser.email}`;
+            localStorage.setItem(
+              likesKey,
+              JSON.stringify(sorted.map((p: any) => p.id)),
+            );
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Favoriler API'den çekilemedi:", err);
+      // API başarısız olursa localStorage'a fallback
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        const likesKey = `likes_${parsedUser.email}`;
+        const likedProductIds = JSON.parse(
+          localStorage.getItem(likesKey) || "[]",
+        );
+        if (likedProductIds.length > 0) {
+          const prodRes = await fetch(
+            "https://unicycle-api.onrender.com/api/products",
+          );
+          if (prodRes.ok) {
+            const allProducts = await prodRes.json();
+            if (Array.isArray(allProducts)) {
+              const favoriteProducts = allProducts
+                .filter((p: any) => likedProductIds.includes(p.id))
+                .sort((a: any, b: any) => b.id - a.id);
+              setFavorites(favoriteProducts);
+            }
+          }
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     let interval: any;
@@ -141,44 +203,14 @@ export default function FavoritesPage() {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
 
-        // Bildirimleri çekme ve güncelleme
         updateNotificationCount(parsedUser.id);
         interval = setInterval(() => {
           updateNotificationCount(parsedUser.id);
         }, 10000);
         window.addEventListener("notificationsSeen", handleNotificationsSeen);
 
-        // 🚀 İŞTE EKSİK OLAN KISIM: FAVORİLERİ ÇEKME MANTIĞI EKLENDİ 🚀
-        const likesKey = `likes_${parsedUser.email}`;
-        const likedProductIds = JSON.parse(
-          localStorage.getItem(likesKey) || "[]",
-        );
-
-        if (likedProductIds.length > 0) {
-          fetch("https://unicycle-api.onrender.com/api/products")
-            .then((res) => res.json())
-            .then((allProducts) => {
-              if (Array.isArray(allProducts)) {
-                // Tüm ürünler içinden sadece ID'si kullanıcının beğendiklerinde olanları filtrele
-                const favoriteProducts = allProducts.filter((p: any) =>
-                  likedProductIds.includes(p.id),
-                );
-                // Yeniden eskiye doğru sırala
-                const sortedFavorites = favoriteProducts.sort(
-                  (a: any, b: any) => b.id - a.id,
-                );
-                setFavorites(sortedFavorites);
-              }
-            })
-            .catch((err) => console.error("Favoriler çekilirken hata:", err))
-            .finally(() => {
-              setIsLoading(false);
-            });
-        } else {
-          // Hiç beğenilen ürün yoksa yüklemeyi bitir ve boş göster
-          setFavorites([]);
-          setIsLoading(false);
-        }
+        // 🌐 API'den favorileri çek
+        fetchFavoritesFromApi(parsedUser.id);
       } catch (e) {
         console.error(e);
         setIsLoading(false);
@@ -298,19 +330,24 @@ export default function FavoritesPage() {
 
     if (!user) return;
 
+    // Anlık UI güncelle
     setFavorites((prev) => prev.filter((p) => p.id !== productId));
 
+    // localStorage'ı da güncelle (listing-detail isLiked için)
     const likesKey = `likes_${user.email}`;
     const currentLikes = JSON.parse(localStorage.getItem(likesKey) || "[]");
     const newLikes = currentLikes.filter((id: number) => id !== productId);
     localStorage.setItem(likesKey, JSON.stringify(newLikes));
 
+    // 🌐 API'den sil
     try {
       await fetch(
         `https://unicycle-api.onrender.com/api/interaction/likes?userId=${user.id}&productId=${productId}`,
         { method: "DELETE" },
       );
-    } catch (err) {}
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -906,7 +943,6 @@ export default function FavoritesPage() {
         </div>
       )}
 
-      {/* 🌊 FOOTER (PREMIUM) - Üstünde Boşluk Garantili Spacer Div Eklendi */}
       <div className="h-24 sm:h-32 w-full shrink-0"></div>
       <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full shrink-0">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -1022,15 +1058,11 @@ export default function FavoritesPage() {
       <style
         dangerouslySetInnerHTML={{
           __html: `
-            /* Yatay menüler için alt kaydırma çubuğunu gizler */
             .custom-scrollbar::-webkit-scrollbar { height: 0px; width: 6px; } 
             @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { width: 8px; } } 
-            
-            /* Bildirimler gibi dikey alanlar için şık kaydırma çubuğu tasarımı */
             .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; } 
             .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
             .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-            
             .desktop-search { display: none; }
             .mobile-search { display: block; }
             @media (min-width: 768px) { .desktop-search { display: flex; } .mobile-search { display: none; } }
