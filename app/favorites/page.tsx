@@ -141,19 +141,51 @@ export default function FavoritesPage() {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
 
+        // Bildirimleri çekme ve güncelleme
         updateNotificationCount(parsedUser.id);
-
         interval = setInterval(() => {
           updateNotificationCount(parsedUser.id);
         }, 10000);
-
         window.addEventListener("notificationsSeen", handleNotificationsSeen);
+
+        // 🚀 İŞTE EKSİK OLAN KISIM: FAVORİLERİ ÇEKME MANTIĞI EKLENDİ 🚀
+        const likesKey = `likes_${parsedUser.email}`;
+        const likedProductIds = JSON.parse(
+          localStorage.getItem(likesKey) || "[]",
+        );
+
+        if (likedProductIds.length > 0) {
+          fetch("https://unicycle-api.onrender.com/api/products")
+            .then((res) => res.json())
+            .then((allProducts) => {
+              if (Array.isArray(allProducts)) {
+                // Tüm ürünler içinden sadece ID'si kullanıcının beğendiklerinde olanları filtrele
+                const favoriteProducts = allProducts.filter((p: any) =>
+                  likedProductIds.includes(p.id),
+                );
+                // Yeniden eskiye doğru sırala
+                const sortedFavorites = favoriteProducts.sort(
+                  (a: any, b: any) => b.id - a.id,
+                );
+                setFavorites(sortedFavorites);
+              }
+            })
+            .catch((err) => console.error("Favoriler çekilirken hata:", err))
+            .finally(() => {
+              setIsLoading(false);
+            });
+        } else {
+          // Hiç beğenilen ürün yoksa yüklemeyi bitir ve boş göster
+          setFavorites([]);
+          setIsLoading(false);
+        }
       } catch (e) {
         console.error(e);
+        setIsLoading(false);
       }
+    } else {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
 
     return () => {
       if (interval) clearInterval(interval);
@@ -690,7 +722,7 @@ export default function FavoritesPage() {
                 onClick={handleSearchSubmit}
               >
                 <span className="text-xs font-black text-blue-600">
-                  Tüm sonuçları gör
+                  Tüm sonuçları gör &rarr;
                 </span>
               </div>
             </div>
@@ -852,6 +884,7 @@ export default function FavoritesPage() {
               </h2>
               <button
                 onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                aria-label="Kapat"
                 className="text-slate-400 hover:text-red-500 text-2xl font-bold transition-colors"
               >
                 ✕
@@ -863,6 +896,7 @@ export default function FavoritesPage() {
             <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setInfoModal({ ...infoModal, isOpen: false })}
+                aria-label="Anladım Butonu"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-xl transition-colors shadow-md text-sm sm:text-base"
               >
                 Anladım

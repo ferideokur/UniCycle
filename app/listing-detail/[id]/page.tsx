@@ -58,7 +58,6 @@ export default function ListingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [toastMessage, setToastMessage] = useState("");
-  // 🚀 User state'ine status eklendi
   const [currentUser, setCurrentUser] = useState<{
     id: number;
     fullName: string;
@@ -339,7 +338,6 @@ export default function ListingDetailPage() {
   const handleMessageClick = () => {
     if (!currentUser) return showToast("🔒 Mesaj atmak için giriş yapmalısın!");
 
-    // 🚀 GÜVENLİK KONTROLÜ: Pasif/Onaysız kullanıcı mesaj atamaz
     if (currentUser.status !== "ACTIVE") {
       return showToast(
         "🚨 Mesaj atmak için hesabınız onaylı ve aktif olmalıdır.",
@@ -442,7 +440,6 @@ export default function ListingDetailPage() {
     if (!currentUser)
       return showToast("🔒 Yorum yapmak için giriş yapmalısın!");
 
-    // 🚀 GÜVENLİK KONTROLÜ: Pasif/Onaysız kullanıcı yorum yazamaz
     if (currentUser.status !== "ACTIVE") {
       return showToast(
         "🚨 Yorum yapabilmek için hesabınız onaylı ve aktif olmalıdır.",
@@ -655,7 +652,6 @@ export default function ListingDetailPage() {
             </div>
 
             <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
-              {/* 🚀 GÜVENLİK DUVARI: SADECE AKTİF KULLANICILAR İLAN VEREBİLİR */}
               {currentUser && currentUser.status === "ACTIVE" && (
                 <Link
                   href="/create-listing"
@@ -1132,16 +1128,16 @@ export default function ListingDetailPage() {
                             {commentUser.charAt(0)}
                           </Link>
 
-                          <div className="flex-1 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl rounded-tl-none border border-slate-100">
-                            <div className="flex justify-between items-center mb-1">
-                              <div className="flex items-center gap-1.5 sm:gap-2 font-bold text-slate-800 text-xs sm:text-sm capitalize">
+                          <div className="flex-1 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <div className="flex items-center gap-1.5 sm:gap-2">
                                 <Link
                                   href={
                                     comment.user?.id
                                       ? `/user/${comment.user.id}`
                                       : "#"
                                   }
-                                  className="hover:text-blue-600 hover:underline transition-colors"
+                                  className="font-bold text-slate-800 text-xs sm:text-sm capitalize hover:text-blue-600 hover:underline transition-colors"
                                 >
                                   {commentUser}
                                 </Link>
@@ -1152,22 +1148,27 @@ export default function ListingDetailPage() {
                                   </span>
                                 )}
                               </div>
-                              <span className="text-[9px] sm:text-xs font-semibold text-slate-400">
-                                {formatDate(comment.createdAt)}
-                              </span>
+
+                              <div className="flex items-center gap-2">
+                                <span className="text-[9px] sm:text-xs font-semibold text-slate-400">
+                                  {formatDate(comment.createdAt)}
+                                </span>
+                                {canDelete && (
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteComment(comment.id)
+                                    }
+                                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 hover:bg-red-50 border border-transparent hover:border-red-200 px-2 py-0.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all duration-200 shadow-sm"
+                                  >
+                                    Sil
+                                  </button>
+                                )}
+                              </div>
                             </div>
                             <p className="text-slate-600 text-xs sm:text-sm font-medium">
                               {comment.text}
                             </p>
                           </div>
-                          {canDelete && (
-                            <button
-                              onClick={() => handleDeleteComment(comment.id)}
-                              className="absolute top-1 sm:top-2 right-[-5px] sm:right-[-10px] opacity-100 lg:opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 bg-white px-2 py-1 rounded-md shadow-sm border border-red-100 text-[10px] sm:text-xs font-bold transition-all"
-                            >
-                              Sil
-                            </button>
-                          )}
                         </div>
                       );
                     })
@@ -1325,11 +1326,8 @@ export default function ListingDetailPage() {
       <style
         dangerouslySetInnerHTML={{
           __html: `
-            /* Yatay menüler için alt kaydırma çubuğunu gizler */
             .custom-scrollbar::-webkit-scrollbar { height: 0px; width: 6px; } 
             @media (min-width: 640px) { .custom-scrollbar::-webkit-scrollbar { width: 8px; } } 
-            
-            /* Bildirimler gibi dikey alanlar için şık kaydırma çubuğu tasarımı */
             .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; } 
             .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
             .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
@@ -1371,7 +1369,6 @@ export default function ListingDetailPage() {
         </div>
       )}
 
-      {/* 🌊 FOOTER (PREMIUM) - Üstünde Boşluk Garantili Spacer Div Eklendi */}
       <div className="h-24 sm:h-32 w-full shrink-0"></div>
       <footer className="bg-white border-t border-slate-200 py-12 px-6 mt-auto rounded-t-[3rem] shadow-sm w-full shrink-0">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">

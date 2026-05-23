@@ -408,7 +408,7 @@ export default function UserProfilePage() {
           setListings((prev) =>
             prev.filter((listing) => listing.id !== itemId),
           );
-          notify("İlan başarıyla silindi! 🗑️", "success");
+          notify("İlan başarıyla silindi! ", "success");
 
           if (user && user.id) {
             const cachedListings = localStorage.getItem(`listings_${user.id}`);
@@ -462,7 +462,7 @@ export default function UserProfilePage() {
             coverY,
           }),
         );
-        notify("Profil başarıyla kaydedildi! 🎉", "success");
+        notify("Profil başarıyla kaydedildi! ", "success");
       } else {
         notify(
           "Kaydetme başarısız oldu. Backend bu verileri eksik bulmuş olabilir.",
