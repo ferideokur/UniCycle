@@ -31,14 +31,13 @@ const cleanNotification = (msg: string) => {
   // 1. Emojileri ve köşeli parantez içindeki HER ŞEYİ (örn: [id:3], [id: 3]) acımadan sil
   let text = msg
     .replace(/[💭💬🗨️]/g, "")
-    .replace(/\[.*?\]/g, "") // Hileli kodları uçuran kısım!
-    .replace(/\s+/g, " ") // Fazla boşlukları teke düşürür
+    .replace(/\[.*?\]/g, "")
+    .replace(/\s+/g, " ")
     .trim();
 
   // 2. Virgül varsa (örn: "Feride Okur, ilanını beğendi")
   if (text.includes(",")) {
     const parts = text.split(",");
-    // Sadece ismin olduğu ilk kısmı büyüt, geri kalanını olduğu gibi bırak
     return `${formatName(parts[0].trim())}, ${parts.slice(1).join(",").trim()}`;
   }
 
@@ -48,13 +47,12 @@ const cleanNotification = (msg: string) => {
     return `${formatName(namePart)} sana bir mesaj gönderdi.`;
   }
 
-  // 4. Varsayılan (Her ihtimale karşı ilk harfi büyüt)
+  // 4. Varsayılan
   return text.charAt(0).toUpperCase() + text.slice(1);
 };
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
-  // 🚀 User tipine "status" eklendi
   const [user, setUser] = useState<{
     id: number;
     fullName: string;
@@ -92,7 +90,6 @@ export default function NotificationsPage() {
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
 
-    // Bildirimleri Çekme Fonksiyonu
     const fetchNotifications = async () => {
       try {
         const res = await fetch(
@@ -100,62 +97,56 @@ export default function NotificationsPage() {
           {
             cache: "no-store",
             headers: { "Cache-Control": "no-cache" },
-          },
+          }
         );
         const data = await res.json();
 
         if (Array.isArray(data)) {
           const deletedNotifs = JSON.parse(
-            localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]",
+            localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]"
           );
           const seenNotifs = JSON.parse(
-            localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]",
+            localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]"
           );
 
-          // 1. Silinmemiş olanları al
           let activeNotifs = data.filter(
-            (n: any) => !deletedNotifs.includes(n.id),
+            (n: any) => !deletedNotifs.includes(n.id)
           );
 
-          // 2. 🚀 KESİN SIRALAMA: Yeniden Eskiye (En Yeni En Üstte)
           activeNotifs.sort((a: any, b: any) => {
             const dateA = a.createdAt
               ? new Date(
-                  a.createdAt.endsWith("Z") ? a.createdAt : `${a.createdAt}Z`,
+                  a.createdAt.endsWith("Z") ? a.createdAt : `${a.createdAt}Z`
                 ).getTime()
               : 0;
             const dateB = b.createdAt
               ? new Date(
-                  b.createdAt.endsWith("Z") ? b.createdAt : `${b.createdAt}Z`,
+                  b.createdAt.endsWith("Z") ? b.createdAt : `${b.createdAt}Z`
                 ).getTime()
               : 0;
             return dateB - dateA;
           });
 
-          // 3. 🚀 DB'DEKİ İKİZLERİ GİZLE (Büyük/Küçük Harf Duyarsız)
           activeNotifs = activeNotifs.filter(
             (notif: any, index: number, self: any[]) =>
               index ===
               self.findIndex(
                 (n: any) =>
                   n.message?.trim().toLowerCase() ===
-                  notif.message?.trim().toLowerCase(),
-              ),
+                  notif.message?.trim().toLowerCase()
+              )
           );
 
-          // 4. 👻 HAYALET BİLDİRİM FİLTRESİ: Eğer temizlendikten sonra boş kalıyorsa çöpe at!
           activeNotifs = activeNotifs.filter(
-            (n: any) => cleanNotification(n.message).length > 0,
+            (n: any) => cleanNotification(n.message).length > 0
           );
 
           const unreadNotifs = activeNotifs.filter(
-            (n: any) => !seenNotifs.includes(n.id),
+            (n: any) => !seenNotifs.includes(n.id)
           );
 
           setNotificationsCount(unreadNotifs.length);
           setNotificationsList(activeNotifs);
-
-          // Ana sayfa için bildirimleri state'e basıyoruz
           setNotifications(activeNotifs);
         }
       } catch (err) {
@@ -165,15 +156,11 @@ export default function NotificationsPage() {
       }
     };
 
-    // İlk yüklemede çek
     fetchNotifications();
-
-    // 🚀 YENİ: Her 10 saniyede bir sessizce kontrol et (Polling)
     const interval = setInterval(fetchNotifications, 10000);
     return () => clearInterval(interval);
   }, []);
 
-  // 🚀 Premium Arama Motoru
   useEffect(() => {
     const fetchLive = async () => {
       if (searchTerm.trim().length < 1) {
@@ -195,7 +182,9 @@ export default function NotificationsPage() {
         let combined: any[] = [];
         if (isUserSearch) {
           const res = await fetch(
-            `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
+            `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(
+              query
+            )}`
           );
           if (res.ok)
             combined = (await res.json()).map((u: any) => ({
@@ -204,13 +193,13 @@ export default function NotificationsPage() {
             }));
         } else if (isIdSearch && !isNaN(Number(query))) {
           const prodRes = await fetch(
-            `https://unicycle-api.onrender.com/api/products`,
+            `https://unicycle-api.onrender.com/api/products`
           );
           if (prodRes.ok) {
             const allProducts = await prodRes.json();
             if (Array.isArray(allProducts)) {
               const matchedProduct = allProducts.find(
-                (p: any) => p.id.toString() === query.toString(),
+                (p: any) => p.id.toString() === query.toString()
               );
               if (matchedProduct)
                 combined = [{ type: "product", item: matchedProduct }];
@@ -218,7 +207,9 @@ export default function NotificationsPage() {
           }
         } else {
           const res = await fetch(
-            `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`,
+            `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(
+              query
+            )}`
           );
           if (res.ok)
             combined = (await res.json()).map((p: any) => ({
@@ -239,7 +230,7 @@ export default function NotificationsPage() {
                       v.item.fullName.toLowerCase())
                 );
               return v2.type === v.type && v2.item.id === v.item.id;
-            }) === i,
+            }) === i
         );
 
         setLiveResults(uniqueLive);
@@ -264,7 +255,7 @@ export default function NotificationsPage() {
       try {
         await fetch(
           `https://unicycle-api.onrender.com/api/users/${user.id}/logout`,
-          { method: "POST" },
+          { method: "POST" }
         );
       } catch (e) {}
     }
@@ -273,51 +264,63 @@ export default function NotificationsPage() {
     window.location.href = "/";
   };
 
+  // 🚀 GÜNCELLENMİŞ TEKLİ SİLME FONKSİYONU
   const handleDelete = async (id: number) => {
+    // 1. Arayüzden anında kaldır (Bekleme yok)
     setNotifications((prev) => prev.filter((n) => n.id !== id));
     setNotificationsList((prev) => prev.filter((n) => n.id !== id));
+    
+    // 2. Navbar'daki zil sayısını güncelle
+    setNotificationsCount((prev) => Math.max(0, prev - 1));
 
+    // 3. LocalStorage'ı koruma amaçlı güncelle
     const deleted = JSON.parse(
-      localStorage.getItem(`deletedNotifs_${user?.id}`) || "[]",
+      localStorage.getItem(`deletedNotifs_${user?.id}`) || "[]"
     );
     localStorage.setItem(
       `deletedNotifs_${user?.id}`,
-      JSON.stringify([...deleted, id]),
+      JSON.stringify([...deleted, id])
     );
+
+    // 4. Backend'e sil komutu gönder
     try {
-      await fetch(
+      const res = await fetch(
         `https://unicycle-api.onrender.com/api/interaction/notifications/${id}`,
-        { method: "DELETE" },
+        { method: "DELETE" }
       );
-    } catch (err) {}
+      if (!res.ok) console.error("Backend bildirimi silemedi!");
+    } catch (err) {
+      console.error("Silme işlemi sırasında ağ hatası:", err);
+    }
   };
 
+  // 🚀 GÜNCELLENMİŞ TÜMÜNÜ SİLME FONKSİYONU
   const handleClearAll = async () => {
     if (
       !window.confirm(
-        "Tüm bildirimleri kalıcı olarak silmek istediğine emin misin?",
+        "Tüm bildirimleri kalıcı olarak silmek istediğine emin misin?"
       )
     )
       return;
-    const allIds = notifications.map((n) => n.id);
+      
+    // 1. Ekranı ve navbar'ı anında sıfırla
     setNotifications([]);
     setNotificationsList([]);
-    setNotificationsCount(0);
+    setNotificationsCount(0); 
 
-    const deleted = JSON.parse(
-      localStorage.getItem(`deletedNotifs_${user?.id}`) || "[]",
-    );
-    localStorage.setItem(
-      `deletedNotifs_${user?.id}`,
-      JSON.stringify([...deleted, ...allIds]),
-    );
-    for (const id of allIds) {
-      try {
-        await fetch(
-          `https://unicycle-api.onrender.com/api/interaction/notifications/${id}`,
-          { method: "DELETE" },
-        );
-      } catch (err) {}
+    try {
+      // 2. Yeni yazdığımız güçlü backend endpoint'ine tek bir istek at!
+      const res = await fetch(
+        `https://unicycle-api.onrender.com/api/interaction/notifications/user/${user?.id}`,
+        { method: "DELETE" }
+      );
+      
+      if (res.ok) {
+         // Veritabanı temizlendiğine göre local storage'daki gereksiz ID listesini silebiliriz.
+         localStorage.removeItem(`deletedNotifs_${user?.id}`);
+      }
+    } catch (err) {
+       console.error("Tümünü silme isteği başarısız oldu:", err);
     }
   };
 
@@ -449,7 +452,6 @@ export default function NotificationsPage() {
             </div>
 
             <div className="flex items-center justify-end gap-1.5 sm:gap-4 shrink-0">
-              {/* 🚀 SADECE AKTİF KULLANICILARA MASAÜSTÜ İLAN VER BUTONU */}
               {user && user.status === "ACTIVE" && (
                 <Link
                   href="/create-listing"
@@ -564,7 +566,7 @@ export default function NotificationsPage() {
                               }
 
                               const formattedMessage = cleanNotification(
-                                notif.message,
+                                notif.message
                               );
 
                               let dropDate = "Yeni";
@@ -814,7 +816,6 @@ export default function NotificationsPage() {
 
                 const formattedMessage = cleanNotification(notif.message);
 
-                // 🚀 ANA SAYFA İÇİN SAAT DÜZELTMESİ (UTC)
                 let mainDate = "Bugün";
                 let mainTime = "Yeni";
 
@@ -897,7 +898,7 @@ export default function NotificationsPage() {
         </div>
       )}
 
-      {/* 🌊 FOOTER (PREMIUM) - Üstünde Boşluk Garantili Spacer Div Eklendi */}
+      {/* 🌊 FOOTER (PREMIUM) */}
       <div className="h-24 sm:h-32 w-full shrink-0"></div>
       <footer className="bg-white border-t border-slate-200 py-8 sm:py-12 px-4 sm:px-6 mt-auto rounded-t-[2rem] sm:rounded-t-[3rem] shadow-sm w-full shrink-0">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
@@ -922,7 +923,7 @@ export default function NotificationsPage() {
                   onClick={() =>
                     openInfoModal(
                       "Nasıl Çalışır?",
-                      "UniCycle'da alışveriş yapmak çok kolay!\n\n1. Kendi üniversitenin e-postasıyla kayıt ol.\n2. İhtiyacın olmayan eşyalarını ilan olarak ekle.\n3. Kampüsündeki diğer öğrencilerle mesajlaşarak güvenle alışveriş yap!",
+                      "UniCycle'da alışveriş yapmak çok kolay!\n\n1. Kendi üniversitenin e-postasıyla kayıt ol.\n2. İhtiyacın olmayan eşyalarını ilan olarak ekle.\n3. Kampüsündeki diğer öğrencilerle mesajlaşarak güvenle alışveriş yap!"
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -935,7 +936,7 @@ export default function NotificationsPage() {
                   onClick={() =>
                     openInfoModal(
                       "Güvenlik İpuçları",
-                      "Alışverişlerinde güvenliğin için şu kurallara dikkat et:\n\n• Sadece kampüs içindeki güvenli ve kalabalık alanlarda (kütüphane, kafeterya vb.) buluşun.\n• Kimseye önceden para veya kapora göndermeyin.\n• Şüpheli durumlarda ilanları bize şikayet edin.",
+                      "Alışverişlerinde güvenliğin için şu kurallara dikkat et:\n\n• Sadece kampüs içindeki güvenli ve kalabalık alanlarda (kütüphane, kafeterya vb.) buluşun.\n• Kimseye önceden para veya kapora göndermeyin.\n• Şüpheli durumlarda ilanları bize şikayet edin."
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -948,7 +949,7 @@ export default function NotificationsPage() {
                   onClick={() =>
                     openInfoModal(
                       "Kampüs Kuralları",
-                      "Bu platform tamamen öğrencilere aittir.\n\n• Saygılı bir iletişim dili kullanmak zorunludur.\n• Sadece yasal ve kampüs kurallarına uygun ürünler satılabilir.\n• Kopya veya telif hakkı ihlali içeren materyallerin satışı yasaktır.",
+                      "Bu platform tamamen öğrencilere aittir.\n\n• Saygılı bir iletişim dili kullanmak zorunludur.\n• Sadece yasal ve kampüs kurallarına uygun ürünler satılabilir.\n• Kopya veya telif hakkı ihlali içeren materyallerin satışı yasaktır."
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -968,7 +969,7 @@ export default function NotificationsPage() {
                   onClick={() =>
                     openInfoModal(
                       "Destek Merkezi",
-                      "Yaşadığın bir sorun mu var?\n\nEkibimize unicycledestek@gmail.com adresinden ulaşabilirsin.",
+                      "Yaşadığın bir sorun mu var?\n\nEkibimize unicycledestek@gmail.com adresinden ulaşabilirsin."
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -981,7 +982,7 @@ export default function NotificationsPage() {
                   onClick={() =>
                     openInfoModal(
                       "Bize Ulaşın",
-                      "📍 Adres:\nPiri Reis Üniversitesi Deniz Kampüsü\nPostane Mahallesi, Eflatun Sokak No:8\n34940 Tuzla / İstanbul\n\n✉️ E-posta: unicycledestek@gmail.com",
+                      "📍 Adres:\nPiri Reis Üniversitesi Deniz Kampüsü\nPostane Mahallesi, Eflatun Sokak No:8\n34940 Tuzla / İstanbul\n\n✉️ E-posta: unicycledestek@gmail.com"
                     )
                   }
                   className="hover:text-blue-600 transition-colors"
@@ -994,7 +995,7 @@ export default function NotificationsPage() {
                   onClick={() =>
                     openInfoModal(
                       "Sıkça Sorulan Sorular",
-                      "S: Üye olmak ücretli mi?\nC: Hayır, UniCycle üniversite öğrencileri için tamamen ücretsizdir.\n\nS: Kargo ile ürün gönderebilir miyim?\nC: Platformumuz kampüs içi elden teslim odaklıdır ancak satıcı ile anlaşırsanız kargo da yapabilirsiniz.",
+                      "S: Üye olmak ücretli mi?\nC: Hayır, UniCycle üniversite öğrencileri için tamamen ücretsizdir.\n\nS: Kargo ile ürün gönderebilir miyim?\nC: Platformumuz kampüs içi elden teslim odaklıdır ancak satıcı ile anlaşırsanız kargo da yapabilirsiniz."
                     )
                   }
                   className="hover:text-blue-600 transition-colors"

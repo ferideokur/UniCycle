@@ -291,13 +291,13 @@ export default function Home() {
         setFetchError(
           "Java sunucusu ilanları vermeyi reddetti (Durum Kodu: " +
             response.status +
-            ")",
+            ")"
         );
       }
     } catch (error) {
       console.error("Java bağlanılamadı", error);
       setFetchError(
-        "Java API'sine hiç bağlanılamadı! Muhtemelen CORS hatası alıyorsunuz.",
+        "Java API'sine hiç bağlanılamadı! Muhtemelen CORS hatası alıyorsunuz."
       );
     } finally {
       setIsLoading(false);
@@ -313,10 +313,10 @@ export default function Home() {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
 
-        // 🚀 İŞTE ÇÖZÜM: Java'dan güncel favorileri çekiyoruz
+        // Java'dan güncel favorileri çekiyoruz
         fetch(
           `https://unicycle-api.onrender.com/api/interaction/likes/user/${parsedUser.id}`,
-          { cache: "no-store" },
+          { cache: "no-store" }
         )
           .then((res) => (res.ok ? res.json() : []))
           .then((likedData) => {
@@ -326,32 +326,77 @@ export default function Home() {
             }
           })
           .catch((err) =>
-            console.error("Sunucudan favoriler çekilemedi:", err),
+            console.error("Sunucudan favoriler çekilemedi:", err)
           );
 
+        // 🚀 İŞTE EKSİK OLAN VE SENİ DELİRTEN KISIM BURASIYDI! 
+        // Ana sayfadaki fetch metodunu tamamen akıllı hale getirdik.
         const fetchNotifications = async () => {
           try {
             const res = await fetch(
               `https://unicycle-api.onrender.com/api/interaction/notifications/${parsedUser.id}`,
-              { cache: "no-store", headers: { "Cache-Control": "no-cache" } },
+              { cache: "no-store", headers: { "Cache-Control": "no-cache" } }
             );
             const data = await res.json();
+
             if (Array.isArray(data)) {
-              setNotificationsCount(
-                data.filter(
-                  (n: any) =>
-                    !JSON.parse(
-                      localStorage.getItem(`seenNotifs_${parsedUser.id}`) ||
-                        "[]",
-                    ).includes(n.id),
-                ).length,
+              // 1. Silinenleri ve Görülenleri kontrol et
+              const deletedNotifs = JSON.parse(
+                localStorage.getItem(`deletedNotifs_${parsedUser.id}`) || "[]"
               );
-              setNotificationsList(data);
+              const seenNotifs = JSON.parse(
+                localStorage.getItem(`seenNotifs_${parsedUser.id}`) || "[]"
+              );
+
+              // 2. Silinmiş olanları data'nın içinden uçur
+              let activeNotifs = data.filter(
+                (n: any) => !deletedNotifs.includes(n.id)
+              );
+
+              // 3. Yeniden Eskiye Sırala
+              activeNotifs.sort((a: any, b: any) => {
+                const dateA = a.createdAt
+                  ? new Date(
+                      a.createdAt.endsWith("Z") ? a.createdAt : `${a.createdAt}Z`
+                    ).getTime()
+                  : 0;
+                const dateB = b.createdAt
+                  ? new Date(
+                      b.createdAt.endsWith("Z") ? b.createdAt : `${b.createdAt}Z`
+                    ).getTime()
+                  : 0;
+                return dateB - dateA;
+              });
+
+              // 4. İkiz Kopyaları Gizle (Songül Işık kopyaları vb.)
+              activeNotifs = activeNotifs.filter(
+                (notif: any, index: number, self: any[]) =>
+                  index ===
+                  self.findIndex(
+                    (n: any) =>
+                      n.message?.trim().toLowerCase() ===
+                      notif.message?.trim().toLowerCase()
+                  )
+              );
+
+              // 5. Hayalet bildirimleri temizle
+              activeNotifs = activeNotifs.filter(
+                (n: any) => cleanNotification(n.message).length > 0
+              );
+
+              // 6. Okunmamışları (Zil üzerindeki kırmızı sayı) hesapla
+              const unreadNotifs = activeNotifs.filter(
+                (n: any) => !seenNotifs.includes(n.id)
+              );
+
+              setNotificationsCount(unreadNotifs.length);
+              setNotificationsList(activeNotifs);
             }
           } catch (err) {
             console.error(err);
           }
         };
+
         fetchNotifications();
         interval = setInterval(fetchNotifications, 10000);
       } catch (e) {
@@ -388,7 +433,7 @@ export default function Home() {
         let combined: any[] = [];
         if (isUserSearch) {
           const res = await fetch(
-            `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`,
+            `https://unicycle-api.onrender.com/api/users/search?q=${encodeURIComponent(query)}`
           );
           if (res.ok)
             combined = (await res.json()).map((u: any) => ({
@@ -397,13 +442,13 @@ export default function Home() {
             }));
         } else if (isIdSearch && !isNaN(Number(query))) {
           const prodRes = await fetch(
-            `https://unicycle-api.onrender.com/api/products`,
+            `https://unicycle-api.onrender.com/api/products`
           );
           if (prodRes.ok) {
             const allProducts = await prodRes.json();
             if (Array.isArray(allProducts)) {
               const matchedProduct = allProducts.find(
-                (p: any) => p.id.toString() === query.toString(),
+                (p: any) => p.id.toString() === query.toString()
               );
               if (matchedProduct)
                 combined = [{ type: "product", item: matchedProduct }];
@@ -411,7 +456,7 @@ export default function Home() {
           }
         } else {
           const res = await fetch(
-            `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`,
+            `https://unicycle-api.onrender.com/api/products/search?q=${encodeURIComponent(query)}`
           );
           if (res.ok)
             combined = (await res.json()).map((p: any) => ({
@@ -432,7 +477,7 @@ export default function Home() {
                       v.item.fullName.toLowerCase())
                 );
               return v2.type === v.type && v2.item.id === v.item.id;
-            }) === i,
+            }) === i
         );
 
         setLiveResults(uniqueLive);
@@ -472,7 +517,7 @@ export default function Home() {
       try {
         await fetch(
           `https://unicycle-api.onrender.com/api/interaction/likes?userId=${user.id}&productId=${productObject.id}`,
-          { method: "DELETE" },
+          { method: "DELETE" }
         );
       } catch (err) {
         console.error(err);
@@ -503,7 +548,7 @@ export default function Home() {
                 userId: productObject.user.id,
                 message: `${user.fullName}, "${productObject.title}" adlı ilanını beğendi.`,
               }),
-            },
+            }
           );
         } catch (err) {
           console.error(err);
@@ -615,7 +660,7 @@ export default function Home() {
         (!user || user.status !== "ACTIVE")
       ) {
         alert(
-          "İlan verebilmek için hesabınızın yöneticiler tarafından onaylanması ve aktif olması gerekmektedir.",
+          "İlan verebilmek için hesabınızın yöneticiler tarafından onaylanması ve aktif olması gerekmektedir."
         );
         return;
       }
@@ -901,7 +946,7 @@ export default function Home() {
                               }
 
                               const formattedMessage = cleanNotification(
-                                notif.message,
+                                notif.message
                               );
 
                               let dropDate = "Yeni";
@@ -1708,7 +1753,6 @@ export default function Home() {
             </ul>
           </div>
         </div>
-
         <div className="max-w-[1400px] mx-auto mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
           © 2026 UniCycle. Tüm hakları saklıdır.
         </div>
